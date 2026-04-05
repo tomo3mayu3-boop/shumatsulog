@@ -8,6 +8,9 @@
   <meta property="og:description" content="週末のちょうどいい時間を、ゆるく記録しています">
   <meta property="og:image" content="https://tomo3mayu3-boop.github.io/homepage/images/travel/travel1.webp">
   <meta property="og:url" content="https://tomo3mayu3-boop.github.io/homepage/">
+  <meta name="description" content="洗車・料理・旅行をゆるく楽しむ週末の記録ブログ。日常のちょうどいい時間をのんびり更新中。">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="週末ログ">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,10 +18,11 @@
   <header>
     <h1>🚗 週末ログ</h1>
     <nav>
-  <a href="index.html">ホーム</a>
+  <a href="index.html" aria-current="page">ホーム</a>
   <a href="carwash.html">洗車</a>
   <span class="category disabled">料理</span>
   <a href="travel.html">旅行</a>
+  <a href="yurulog.html">ゆるログ</a>
 </nav>    
   </header>
 
@@ -35,7 +39,7 @@
        
 <div class="article-row">
   <div class="mosaic-wrap">
-    <img id="slideshow" src="images/car1.webp" alt="" class="photo">
+    <img id="slideshow" src="images/car1.webp" alt="最近のゆる洗車の様子" class="photo">
     <div class="mosaic" id="mosaic"></div>
   </div>
 
@@ -51,7 +55,7 @@
       </section>
 
       <section id="cooking">
-  <h2>🍳 料理</h2>
+  <h2>🍳 料理 <span class="coming-soon-badge">Coming Soon</span></h2>
 <div class="article-row">
   <div class="mosaic-wrap cooking-split">
     <img src="cooking.jpg" alt="料理1">
@@ -79,13 +83,26 @@
           </div>
         </div>
       </section>
+
+      <section id="yurulog">
+        <h2>🗒️ ゆるログ</h2>
+        <div class="article-row">
+          <img src="images/rs-ducati.jpg" alt="ゆるログのイメージ" class="photo travel-photo"><!-- ここを変更：rs-ducati.jpg -->
+          <div class="article-text">
+            <h3>最近のゆるログ</h3>
+            <p>日々の感想や気になったことを、</p>
+            <p>ゆるく残しています。</p>
+            <a href="yurulog.html" class="btn">ゆるログを見る</a>
+          </div>
+        </div>
+      </section>
     </div>
 
     <aside class="sidebar">
       <div class="sidebar-box">
      <h3>プロフィール</h3>
 
-  <img src="profile-car.jpg" class="profile-img">
+  <img src="profile-car.jpg" alt="プロフィール画像" class="profile-img">
   <p>
   洗車・料理・旅行をゆるく楽しんでいます。<br>
   週末の記録をのんびり更新中です。
@@ -98,14 +115,23 @@
   <p class="profile-tags">
   #洗車 #料理 #旅行
   </p>
+  <p class="last-updated">最終更新：2026年4月4日</p>
 </div>
+
+      <div class="sidebar-box">
+        <h3>🔗 SNS</h3>
+        <ul class="sns-list">
+          <li><a href="https://x.com/potato_weekend" target="_blank" rel="noopener noreferrer">𝕏（Twitter）</a></li>
+        </ul>
+      </div>
 
       <div class="sidebar-box">
         <h3>📂 カテゴリ</h3>
         <ul>
           <li><a href="carwash.html">🚗 洗車</a></li>
           <li><span class="category disabled">🍳 料理</span></li>
-          <li><a href="travel.html">✈️ 旅行</a></li>        
+          <li><a href="travel.html">✈️ 旅行</a></li>
+          <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
         </ul>
       </div>
     </aside>
@@ -116,8 +142,6 @@
     <p>© 2026 週末ログ</p>
     <p>
       <a href="https://x.com/potato_weekend" target="_blank" rel="noopener noreferrer">X（Twitter）</a>
-      ／
-      <a href="https://tomo3mayu3-boop.github.io/homepage/" target="_blank" rel="noopener noreferrer">HP</a>
     </p>
   </footer>
 
