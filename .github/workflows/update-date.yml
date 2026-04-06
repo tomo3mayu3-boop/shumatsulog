@@ -25,9 +25,9 @@ jobs:
           DAY=$(echo $RAW | awk '{print $3}' | sed 's/^0//')
           echo "label=${YEAR}年${MONTH}月${DAY}日" >> $GITHUB_OUTPUT
 
-      - name: Replace __LAST_UPDATED__ in index.html
+      - name: Replace date in index.html
         run: |
-          sed -i 's/__LAST_UPDATED__/${{ steps.date.outputs.label }}/g' index.html
+          sed -i 's|<p class="last-updated">最終更新：.*</p>|<p class="last-updated">最終更新：${{ steps.date.outputs.label }}</p>|g' index.html
 
       - name: Commit and push if changed
         run: |
