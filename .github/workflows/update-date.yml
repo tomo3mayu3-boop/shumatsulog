@@ -1,0 +1,40 @@
+name: Update last-updated date
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-date:
+    runs-on: ubuntu-latest
+
+    # GitHub Actions bot のコミットではスキップ（無限ループ防止）
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get latest commit date (JST)
+        id: date
+        run: |
+          RAW=$(TZ='Asia/Tokyo' date '+%Y %m %d')
+          YEAR=$(echo $RAW | awk '{print $1}')
+          MONTH=$(echo $RAW | awk '{print $2}' | sed 's/^0//')
+          DAY=$(echo $RAW | awk '{print $3}' | sed 's/^0//')
+          echo "label=${YEAR}年${MONTH}月${DAY}日" >> $GITHUB_OUTPUT
+
+      - name: Replace __LAST_UPDATED__ in index.html
+        run: |
+          sed -i 's/__LAST_UPDATED__/${{ steps.date.outputs.label }}/g' index.html
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet index.html || (
+            git add index.html &&
+            git commit -m "chore: 最終更新日を自動更新 (${{ steps.date.outputs.label }})" &&
+            git push
+          )
