@@ -118,8 +118,10 @@ section,
   max-width: 500px;
   height: 300px;
   object-fit: cover;
-  display: block;
-  border-radius: 10px;
+}
+
+.bridge-photo {
+  object-position: bottom;
 }
 
 .detail-photo {
@@ -789,4 +791,8 @@ nav span {
   font-size: 13px;
   color: #888;
   margin-top: -4px;
+}
+
+.viewer-photo.bridge-photo {
+  object-position: bottom !important;
 }
