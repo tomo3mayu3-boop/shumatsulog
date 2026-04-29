@@ -169,8 +169,18 @@
   </footer>
 
   <script src="script.js"></script>
+<script>
+document.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    gtag('event', 'button_click', {
+      'button_text': btn.innerText
+    });
+  });
+});
+</script>
 </body>
 </html>
+
 
 
 
