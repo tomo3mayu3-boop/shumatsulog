@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ゆる洗車ゲーム | 週末ログ</title>
+<title>めE��洗車ゲーム | 週末ログ</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&display=swap');
 
@@ -393,29 +393,37 @@
     text-decoration:none;
   }
 </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-Q5ZM4M1DXH');
+</script>
 </head>
 <body>
 
 <div class="header">
   <span class="car-icon">🚗</span>
-  <h1>ゆる洗車ゲーム</h1>
-  <p>汚れた車を綺麗にしよう！</p>
+  <h1>めE��洗車ゲーム</h1>
+  <p>汚れた車を綺麗にしよぁE��E/p>
 </div>
 
 <div class="card" id="difficulty-screen">
   <div class="title">🧽 難易度を選んでね</div>
   <div class="diff-buttons">
     <button class="diff-btn easy" onclick="startGame('easy')">
-      <span>🟢</span><span class="diff-label">かるい汚れ</span><span class="diff-info">60秒・70%クリア</span>
+      <span>🟢</span><span class="diff-label">かるぁE��れ</span><span class="diff-info">60秒�E70%クリア</span>
     </button>
     <button class="diff-btn normal" onclick="startGame('normal')">
-      <span>🟡</span><span class="diff-label">ふつう</span><span class="diff-info">50秒・85%クリア</span>
+      <span>🟡</span><span class="diff-label">ふつぁE/span><span class="diff-info">50秒�E85%クリア</span>
     </button>
     <button class="diff-btn hard" onclick="startGame('hard')">
-      <span>🔴</span><span class="diff-label">がんこな汚れ</span><span class="diff-info">40秒・95%クリア</span>
+      <span>🔴</span><span class="diff-label">がんこな汚れ</span><span class="diff-info">40秒�E95%クリア</span>
     </button>
   </div>
-  <button class="reset-btn" onclick="resetData()">🗑 保存データをリセット</button>
+  <button class="reset-btn" onclick="resetData()">🗑 保存データをリセチE��</button>
 </div>
 
 <div class="card" id="game-screen">
@@ -425,17 +433,17 @@
       <div class="timer-box" id="timer">--</div>
     </div>
     <div style="text-align:center">
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">きれい度</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">きれぁE��</div>
       <div id="clean-pct" style="font-weight:700;font-size:22px;color:var(--green)">0%</div>
     </div>
     <div style="text-align:right">
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">コンボ</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">コンチE/div>
       <div class="combo-box" id="combo-display">x1</div>
     </div>
   </div>
 
   <div class="gauge-label">
-    <span>🫧 洗浄進捗</span>
+    <span>🫧 洗流E��捁E/span>
     <span><span id="pct-text">0%</span> / <span id="goal-text">--%</span></span>
   </div>
   <div class="gauge-track"><div class="gauge-fill" id="gauge-fill"></div></div>
@@ -445,13 +453,13 @@
     <canvas id="dirty-canvas"></canvas>
   </div>
 
-  <div class="hint-bar" id="hint-bar">💧 車をこすって汚れを落とそう！</div>
+  <div class="hint-bar" id="hint-bar">💧 車をこすって汚れを落とそう�E�E/div>
 
   <div class="best-time-box">
     <div class="label">🏆 ベストタイム</div>
     <div class="best-time-list">
-      <div class="best-time-item"><span>かるい汚れ</span><span class="val" id="best-easy">-</span></div>
-      <div class="best-time-item"><span>ふつう</span><span class="val" id="best-normal">-</span></div>
+      <div class="best-time-item"><span>かるぁE��れ</span><span class="val" id="best-easy">-</span></div>
+      <div class="best-time-item"><span>ふつぁE/span><span class="val" id="best-normal">-</span></div>
       <div class="best-time-item"><span>がんこな汚れ</span><span class="val" id="best-hard">-</span></div>
     </div>
   </div>
@@ -459,17 +467,17 @@
 
 <div class="card" id="result-screen">
   <span class="result-icon" id="result-icon">🎉</span>
-  <div class="result-title" id="result-title">クリア！</div>
-  <div class="result-time" id="result-time">--.-秒</div>
+  <div class="result-title" id="result-title">クリア�E�E/div>
+  <div class="result-time" id="result-time">--.-私E/div>
   <div class="result-sub" id="result-sub"></div>
   <div class="result-best" id="result-best"></div>
   <div class="btns">
-    <button class="btn btn-primary" onclick="restartSameDiff()">🔄 もう一回</button>
-    <button class="btn btn-back" onclick="goToSelect()">← 難易度を選び直す</button>
+    <button class="btn btn-primary" onclick="restartSameDiff()">🔄 もう一囁E/button>
+    <button class="btn btn-back" onclick="goToSelect()">ↁE難易度を選び直ぁE/button>
   </div>
 </div>
 
-<div class="footer"><a href="index.html">← 週末ログに戻る</a></div>
+<div class="footer"><a href="index.html">ↁE週末ログに戻めE/a></div>
 
 <script>
 // =============================================================
@@ -479,17 +487,17 @@ var DIRTY_IMG_SRC = 'car_dirty.jpg';
 var CLEAN_IMG_SRC = 'car_clean.jpg';
 
 // =============================================================
-// 設定
+// 設宁E
 // =============================================================
 var STORAGE_KEY = 'yuru_carwash_best_times';
 var DIFFICULTY_CONFIG = {
-  easy:   { timeLimit: 60, goalPct: 70, brushMin: 26, brushMax: 42, label: 'かるい汚れ' },
-  normal: { timeLimit: 50, goalPct: 85, brushMin: 20, brushMax: 34, label: 'ふつう' },
+  easy:   { timeLimit: 60, goalPct: 70, brushMin: 26, brushMax: 42, label: 'かるぁE��れ' },
+  normal: { timeLimit: 50, goalPct: 85, brushMin: 20, brushMax: 34, label: 'ふつぁE },
   hard:   { timeLimit: 40, goalPct: 95, brushMin: 16, brushMax: 26, label: 'がんこな汚れ' }
 };
 
 // =============================================================
-// 状態
+// 状慁E
 // =============================================================
 var currentDiff = 'normal';
 var cfg = DIFFICULTY_CONFIG.normal;
@@ -534,21 +542,21 @@ function setBestTimes(data) {
 
 function updateBestTimeDisplay() {
   var b = getBestTimes();
-  document.getElementById('best-easy').textContent   = b.easy   ? b.easy.toFixed(1) + '秒' : '-';
-  document.getElementById('best-normal').textContent = b.normal ? b.normal.toFixed(1) + '秒' : '-';
-  document.getElementById('best-hard').textContent   = b.hard   ? b.hard.toFixed(1) + '秒' : '-';
+  document.getElementById('best-easy').textContent   = b.easy   ? b.easy.toFixed(1) + '私E : '-';
+  document.getElementById('best-normal').textContent = b.normal ? b.normal.toFixed(1) + '私E : '-';
+  document.getElementById('best-hard').textContent   = b.hard   ? b.hard.toFixed(1) + '私E : '-';
 }
 
 function resetData() {
-  if (confirm('ベストタイムをリセットしますか？')) {
+  if (confirm('ベストタイムをリセチE��しますか�E�E)) {
     localStorage.removeItem(STORAGE_KEY);
     updateBestTimeDisplay();
-    alert('リセットしました！');
+    alert('リセチE��しました�E�E);
   }
 }
 
 // =============================================================
-// 画面切替
+// 画面刁E��
 // =============================================================
 function goToSelect() {
   clearInterval(timerInterval);
@@ -571,7 +579,7 @@ function restartSameDiff() {
 }
 
 // =============================================================
-// ゲーム開始
+// ゲーム開姁E
 // =============================================================
 function startGame(diff) {
   clearInterval(timerInterval);
@@ -627,7 +635,7 @@ function startGame(diff) {
   }
 
   function handleError(path) {
-    console.error('画像の読み込みに失敗しました:', path);
+    console.error('画像�E読み込みに失敗しました:', path);
     failedCount++;
     loadedCount++;
     if (loadedCount === 2) {
@@ -646,7 +654,7 @@ function startGame(diff) {
 }
 
 // =============================================================
-// Canvas初期化
+// Canvas初期匁E
 // =============================================================
 function initCanvas() {
   W = dirtyImg.naturalWidth || dirtyImg.width || 800;
@@ -705,17 +713,17 @@ function initCanvasFallback() {
   dirtyCtx.fillStyle = '#fff';
   dirtyCtx.font = '36px sans-serif';
   dirtyCtx.textAlign = 'center';
-  dirtyCtx.fillText('🚗 画像なしモード', W / 2, H / 2);
+  dirtyCtx.fillText('🚗 画像なしモーチE, W / 2, H / 2);
 
   cleanImg = null;
 
   setupEvents();
-  document.getElementById('hint-bar').textContent = '⚠️ 画像が見つからないため簡易表示中';
+  document.getElementById('hint-bar').textContent = '⚠�E�E画像が見つからなぁE��め簡易表示中';
   measureCleanRate();
 }
 
 // =============================================================
-// タイマー
+// タイマ�E
 // =============================================================
 function startTimerLoop() {
   startTime = Date.now();
@@ -807,7 +815,7 @@ function setupEvents() {
 }
 
 // =============================================================
-// 洗車処理
+// 洗車�E琁E
 // =============================================================
 function doWash(pos) {
   if (!dirtyCtx || timeLeft <= 0) return;
@@ -845,7 +853,7 @@ function doWash(pos) {
 }
 
 // =============================================================
-// きれい度測定
+// きれぁE��測宁E
 // =============================================================
 function measureCleanRate() {
   if (!dirtyCtx || timeLeft <= 0) return;
@@ -902,18 +910,18 @@ function updateHint() {
   var hint = document.getElementById('hint-bar');
 
   if (lastMeasuredPct >= cfg.goalPct) {
-    hint.textContent = '✨ もうピカピカ！';
+    hint.textContent = '✨ もうピカピカ�E�E;
   } else if (comboCount >= 2.5) {
-    hint.textContent = '💥 いい連打！その調子！';
+    hint.textContent = '💥 ぁE��連打！その調子！E;
   } else if (lastMeasuredPct >= cfg.goalPct * 0.7) {
-    hint.textContent = '🫧 仕上げに入ってきた！';
+    hint.textContent = '🫧 仕上げに入ってきた�E�E;
   } else {
-    hint.textContent = '💧 車をこすって汚れを落とそう！';
+    hint.textContent = '💧 車をこすって汚れを落とそう�E�E;
   }
 }
 
 // =============================================================
-// 水しぶき
+// 水し�EぁE
 // =============================================================
 function spawnWaterDrops(x, y) {
   var wrap = document.getElementById('canvas-wrap');
@@ -941,7 +949,7 @@ function spawnWaterDrops(x, y) {
 }
 
 // =============================================================
-// 終了
+// 終亁E
 // =============================================================
 function finishGame(isClear) {
   isDrawing = false;
@@ -960,33 +968,33 @@ function finishGame(isClear) {
     var clearTime = (Date.now() - startTime) / 1000;
 
     icon.textContent = '🎉';
-    title.textContent = 'クリア！';
-    timeEl.textContent = clearTime.toFixed(1) + '秒';
-    sub.textContent = cfg.label + ' を ' + lastMeasuredPct + '% まで洗い上げたよ！';
+    title.textContent = 'クリア�E�E;
+    timeEl.textContent = clearTime.toFixed(1) + '私E;
+    sub.textContent = cfg.label + ' めE' + lastMeasuredPct + '% まで洗い上げたよ�E�E;
 
     var data = getBestTimes();
     if (!data[currentDiff] || clearTime < data[currentDiff]) {
       data[currentDiff] = clearTime;
       setBestTimes(data);
-      best.textContent = '🏆 ベストタイム更新！';
+      best.textContent = '🏆 ベストタイム更新�E�E;
     } else {
-      best.textContent = 'ベスト: ' + data[currentDiff].toFixed(1) + '秒';
+      best.textContent = 'ベスチE ' + data[currentDiff].toFixed(1) + '私E;
     }
   } else {
     var data2 = getBestTimes();
 
     icon.textContent = '⏰';
-    title.textContent = '時間切れ！';
+    title.textContent = '時間刁E���E�E;
     timeEl.textContent = lastMeasuredPct + '%';
-    sub.textContent = 'あと少しでピカピカだったのに…';
-    best.textContent = data2[currentDiff] ? 'ベスト: ' + data2[currentDiff].toFixed(1) + '秒' : '';
+    sub.textContent = 'あと少しでピカピカだった�Eに…';
+    best.textContent = data2[currentDiff] ? 'ベスチE ' + data2[currentDiff].toFixed(1) + '私E : '';
   }
 
   updateBestTimeDisplay();
 }
 
 // =============================================================
-// 初期化
+// 初期匁E
 // =============================================================
 updateBestTimeDisplay();
 </script>
