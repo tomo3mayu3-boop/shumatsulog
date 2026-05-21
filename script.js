@@ -4,6 +4,19 @@ window.addEventListener('scroll', () => {
   if (btn) btn.classList.toggle('visible', window.scrollY > 300);
 });
 
+// ハンバーガーメニュー
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.querySelector('.nav-toggle');
+  const nav    = document.getElementById('main-nav');
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => {
+      const isOpen = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', isOpen);
+      toggle.textContent = isOpen ? '✕' : '☰';
+    });
+  }
+});
+
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
