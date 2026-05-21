@@ -15,12 +15,18 @@
   <meta name="description" content="作った料理やレシピのメモをまとめています。うまくいった日も崩れた日も記録。">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
+  <link rel="canonical" href="https://tomo3mayu3-boop.github.io/homepage/cooking.html">
+  <meta name="color-scheme" content="light dark">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Article","headline":"料理記録 | 週末ログ","description":"作った料理やレシピのメモをまとめています。うまくいった日も崩れた日も記録。","image":"https://tomo3mayu3-boop.github.io/homepage/cooking.webp","url":"https://tomo3mayu3-boop.github.io/homepage/cooking.html","publisher":{"@type":"Person","name":"週末ログ"}}
+  </script>
 </head>
 <body>
 
   <header>
     <h1>🍳 週末ログ</h1>
-    <nav>
+    <button class="nav-toggle" aria-label="メニューを開く" onclick="document.getElementById('main-nav').classList.toggle('open')">☰</button>
+    <nav id="main-nav">
       <a href="index.html">ホーム</a>
       <a href="carwash.html">洗車</a>
       <a href="cooking.html">料理</a>
@@ -51,6 +57,7 @@
     </p>
   </footer>
 <script src="script.js"></script>
+<button id="back-to-top" aria-label="トップへ戻る" title="トップへ戻る">▲</button>
 </body>
 </html>
 

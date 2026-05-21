@@ -782,3 +782,115 @@ nav span {
 .viewer-photo.bridge-photo {
   object-position: bottom !important;
 }
+
+/* ===== ダークモード ===== */
+@media (prefers-color-scheme: dark) {
+  body { background: #121212; color: #e0e0e0; }
+  header { background: #1a1a1a; }
+  section, .post { background: #1e1e1e; }
+  .sidebar-box { background: #1e1e1e; }
+  .sidebar-box a { color: #ccc; }
+  .sns-list a { color: #ccc; }
+  #detail { background: #1e1e1e; color: #ddd; }
+  .detail-box { background: #161616; }
+  .detail-box strong { color: #999; }
+  .detail-box span { color: #e0e0e0; }
+  .hero { background: linear-gradient(135deg, #1a2535 0%, #251a25 100%); }
+  footer { color: #777; }
+  footer a { color: #666; }
+  .meta { color: #888; }
+  .caption { color: #777; }
+  .travel-location { color: #777; }
+  .key-hint { color: #666; }
+}
+
+/* ===== トップへ戻るボタン ===== */
+#back-to-top {
+  position: fixed;
+  bottom: 28px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 123, 255, 0.4);
+  transition: opacity 0.3s, transform 0.2s;
+  z-index: 999;
+  line-height: 1;
+}
+#back-to-top.visible {
+  display: flex;
+}
+#back-to-top:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 123, 255, 0.45);
+}
+
+/* ===== ハンバーガーメニュー ===== */
+header {
+  position: relative;
+}
+.nav-toggle {
+  display: none;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 6px;
+  color: white;
+  font-size: 1.15rem;
+  padding: 4px 9px;
+  cursor: pointer;
+  line-height: 1.2;
+  z-index: 10;
+}
+@media (max-width: 768px) {
+  .nav-toggle {
+    display: block;
+  }
+  nav {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    text-align: left;
+  }
+  nav.open {
+    max-height: 320px;
+  }
+  nav a,
+  nav span {
+    display: block;
+    margin: 0;
+    padding: 11px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 14px;
+  }
+}
+
+/* ===== X シェアボタン ===== */
+.share-x {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.1s;
+}
+.share-x:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
