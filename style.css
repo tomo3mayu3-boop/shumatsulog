@@ -857,22 +857,24 @@ header {
   .nav-toggle {
     display: block;
   }
-  /* 元の nav スタイルを上書きして折りたたみ動作を実現 */
-  nav {
-    max-height: 0 !important;
-    overflow: hidden !important;
-    transition: max-height 0.35s ease;
-    text-align: left;
-    margin-top: 0;
+  /* デフォルトで非表示 */
+  #main-nav {
+    display: none;
+    margin-top: 4px;
   }
-  nav.open {
-    max-height: 400px !important;
-    padding-bottom: 6px;
+  /* .open クラスがついたら表示 */
+  #main-nav.open {
+    display: block;
+    animation: navSlideDown 0.2s ease;
   }
-  nav a,
-  nav span {
-    display: block !important;
-    margin: 0 !important;
+  @keyframes navSlideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  #main-nav a,
+  #main-nav span {
+    display: block;
+    margin: 0;
     padding: 11px 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 14px;
