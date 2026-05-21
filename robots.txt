@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tomo3mayu3-boop.github.io/homepage/sitemap.xml

@@ -1,8 +1,10 @@
-﻿```html
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>盛加井（ムイカガ）に、少しだけ入ってきた | 週末ログ</title>
@@ -23,7 +25,7 @@
     <a href="index.html">ホーム</a>
     <a href="carwash.html">洗車</a>
     <span class="category disabled">料理</span>
-    <a href="travel.html">旅行</a>
+    <a href="travel.html" aria-current="page">旅行</a>
     <a href="yurulog.html">ゆるログ</a>
   </nav>
 </header>
@@ -44,44 +46,44 @@
 </section>
 
 <section>
-  <img src="images/travel/muikaga/muikaga-3.webp" class="viewer-photo">
+  <img src="images/travel/muikaga/muikaga-3.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>入口は、意外とあっさりしている。<br>
      知らなければ、そのまま通り過ぎると思う。</p>
 </section>
 
 <section>
-  <img src="images/travel/muikaga/muikaga-4.webp" class="viewer-photo">
+  <img src="images/travel/muikaga/muikaga-4.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>ただの観光地ではない空気。<br>
      なんとなく、これ以上入らない方がいい気がした。</p>
 </section>
 
 <section>
-  <img src="images/travel/muikaga/muikaga-5.webp" class="viewer-photo">
+  <img src="images/travel/muikaga/muikaga-5.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>少し進むと、空気が変わる。</p>
 </section>
 
 <section>
-  <img src="images/travel/muikaga/muikaga-6.webp" class="viewer-photo">
+  <img src="images/travel/muikaga/muikaga-6.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>光があるうちは、まだ安心できる。</p>
 </section>
 
 <section>
-  <img src="images/travel/muikaga/muikaga-7.webp" class="viewer-photo">
+  <img src="images/travel/muikaga/muikaga-7.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>足元だけに集中する。</p>
 </section>
 
 <section>
-  <img src="images/travel/muikaga/muikaga-8.webp" class="viewer-photo">
+  <img src="images/travel/muikaga/muikaga-8.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>音が、少し遠くなる。</p>
 </section>
 
 <section>
-  <img src="images/travel/muikaga/muikaga-9.webp" class="viewer-photo">
+  <img src="images/travel/muikaga/muikaga-9.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>ここが、本来の場所なんだと思う。</p>
 </section>
 
 <section>
-  <img src="images/travel/muikaga/muikaga-10.webp" class="viewer-photo">
+  <img src="images/travel/muikaga/muikaga-10.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>戻ると、少しだけ安心する。</p>
 </section>
 
@@ -94,7 +96,7 @@
 </section>
 
 <section>
-  <p><a href="travel.html" class="btn">← 旅行トップに戻る</a></p>
+  <p><a href="travel.html" aria-current="page" class="btn">← 旅行トップに戻る</a></p>
 </section>
     </div>
   </div>
@@ -106,7 +108,6 @@
 <iframe
   src="https://maps.google.com/maps?q=盛加井&output=embed&z=15"
   width="100%"
-  height="180"
   style="border:0; border-radius:8px; margin-bottom:8px;"
   allowfullscreen=""
   loading="lazy">
@@ -118,7 +119,7 @@
       <ul>
         <li><a href="carwash.html">🚗 洗車</a></li>
         <li><span class="category disabled">🍳 料理</span></li>
-        <li><a href="travel.html">✈️ 旅行</a></li>
+        <li><a href="travel.html" aria-current="page">✈️ 旅行</a></li>
         <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
       </ul>
     </div>
@@ -133,26 +134,7 @@
     <a href="https://tomo3mayu3-boop.github.io/homepage/" target="_blank" rel="noopener noreferrer">HP</a>
   </p>
 </footer>
-
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    gtag('event', 'button_click', {
-      'button_text': btn.innerText
-    });
-  });
-});
-</script>
-<script>
-document.querySelectorAll('button, a').forEach(el => {
-  el.addEventListener('click', () => {
-    gtag('event', 'click', {
-      'text': el.innerText,
-      'href': el.href || ''
-    });
-  });
-});
-</script>
+<script src="script.js"></script>
 </body>
 </html>
 ```

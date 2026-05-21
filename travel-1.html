@@ -1,7 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ただの公園だと思ったら、水が異常にキレイだった話 | 週末ログ</title>
   <meta name="description" content="静岡・柿田川と三島大社へ。期待せず行ったら、水がヤバかった。">
@@ -9,6 +11,7 @@
   <meta property="og:description" content="静岡・柿田川と三島大社へ。期待せず行ったら、水がヤバかった。">
   <meta property="og:image" content="https://tomo3mayu3-boop.github.io/homepage/images/travel/travel1.webp">
   <meta property="og:url" content="https://tomo3mayu3-boop.github.io/homepage/travel-1.html">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,7 +22,7 @@
     <a href="index.html">ホーム</a>
     <a href="carwash.html">洗車</a>
     <span class="category disabled">料理</span>
-    <a href="travel.html">旅行</a>
+    <a href="travel.html" aria-current="page">旅行</a>
     <a href="yurulog.html">ゆるログ</a>
   </nav>
 </header>
@@ -40,34 +43,34 @@
       </section>
 
       <section>
-        <img src="images/travel/travel1.webp" alt="柿田川の青い水" class="viewer-photo">
+        <img src="images/travel/travel1.webp" alt="柿田川の青い水" class="viewer-photo" loading="lazy" width="3023" height="3201">
         <p>水って、ここまで青くなるんだなって思った。<br>
 写真じゃ伝わらないけど、<br>
 実際はもっと"発光してる感じ"。</p>
       </section>
 
       <section>
-        <img src="images/travel/travel2.webp" alt="桜" class="viewer-photo">
+        <img src="images/travel/travel2.webp" alt="桜" class="viewer-photo" loading="lazy" width="3024" height="4032">
         <p>ちょうど桜もいいタイミングで、<br>
 散歩としてもかなり気持ちいい。</p>
       </section>
 
       <section>
-        <img src="images/travel/travel3.webp" alt="三島大社" class="viewer-photo">
+        <img src="images/travel/travel3.webp" alt="三島大社" class="viewer-photo" loading="lazy" width="4032" height="3024">
         <p>せっかくなので三島大社にも。<br>
 ちゃんとした場所感があって、<br>
 気持ちも少し引き締まる。</p>
       </section>
 
       <section>
-        <img src="images/travel/travel4.webp" alt="三島大社の装飾" class="viewer-photo">
+        <img src="images/travel/travel4.webp" alt="三島大社の装飾" class="viewer-photo" loading="lazy" width="4032" height="3024">
         <p>細かい装飾も見応えあり。<br>
 こういうところで<br>
 "ちゃんと来てよかった感"が出る。</p>
       </section>
 
       <section>
-        <img src="images/travel/travel5.webp" alt="お守り" class="viewer-photo">
+        <img src="images/travel/travel5.webp" alt="お守り" class="viewer-photo" loading="lazy" width="3024" height="4032">
         <p>なんとなく流れでお守りも。<br>
 こういうの、結局買っちゃうよね。</p>
       </section>
@@ -79,7 +82,7 @@
       </section>
 
       <section>
-        <p><a href="travel.html" class="btn">← 旅行トップに戻る</a></p>
+        <p><a href="travel.html" aria-current="page" class="btn">← 旅行トップに戻る</a></p>
       </section>
 
     </div>
@@ -92,7 +95,6 @@
       <iframe
         src="https://maps.google.com/maps?q=柿田川公園,静岡県清水町&output=embed&z=14"
         width="100%"
-        height="180"
         style="border:0; border-radius:8px; margin-bottom:8px;"
         allowfullscreen=""
         loading="lazy">
@@ -101,7 +103,6 @@
       <iframe
         src="https://maps.google.com/maps?q=三島大社,静岡県三島市&output=embed&z=14"
         width="100%"
-        height="180"
         style="border:0; border-radius:8px;"
         allowfullscreen=""
         loading="lazy">
@@ -112,7 +113,7 @@
       <ul>
         <li><a href="carwash.html">🚗 洗車</a></li>
         <li><span class="category disabled">🍳 料理</span></li>
-        <li><a href="travel.html">✈️ 旅行</a></li>
+        <li><a href="travel.html" aria-current="page">✈️ 旅行</a></li>
         <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
       </ul>
     </div>
@@ -127,26 +128,7 @@
     <a href="https://tomo3mayu3-boop.github.io/homepage/" target="_blank" rel="noopener noreferrer">HP</a>
   </p>
 </footer>
-
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    gtag('event', 'button_click', {
-      'button_text': btn.innerText
-    });
-  });
-});
-</script>
-<script>
-document.querySelectorAll('button, a').forEach(el => {
-  el.addEventListener('click', () => {
-    gtag('event', 'click', {
-      'text': el.innerText,
-      'href': el.href || ''
-    });
-  });
-});
-</script>
+<script src="script.js"></script>
 </body>
 </html>
 

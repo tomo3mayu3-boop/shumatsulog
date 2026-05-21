@@ -1,9 +1,19 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>旅行記録 | 週末ログ</title>
+  <meta property="og:title" content="旅行記録 | 週末ログ">
+  <meta property="og:description" content="行った場所や宿、食べたものの記録。">
+  <meta property="og:image" content="https://tomo3mayu3-boop.github.io/homepage/images/travel/kurimaoohashi/kurimaoohashi-5.webp">
+  <meta property="og:url" content="https://tomo3mayu3-boop.github.io/homepage/travel.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="週末ログ">
+  <meta name="description" content="行った場所や宿、食べたものの記録。気分転換の旅をゆるく残しています。">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,7 +24,7 @@
       <a href="index.html">ホーム</a>
       <a href="carwash.html">洗車</a>
       <span class="category disabled">料理</span>
-      <a href="travel.html">旅行</a>
+      <a href="travel.html" aria-current="page">旅行</a>
       <a href="yurulog.html">ゆるログ</a>
     </nav>
   </header>
@@ -29,7 +39,7 @@
 
 <section>
   <div class="article-row">
-    <img src="images/travel/kurimaoohashi/kurimaoohashi-5.webp" alt="来間大橋" class="photo">
+    <img src="images/travel/kurimaoohashi/kurimaoohashi-5.webp" alt="来間大橋" class="photo" loading="lazy" width="4032" height="3024">
     <div class="article-text">
       <p class="post-date">2026.05.13</p>
       <h3>来間大橋を、ゆるく渡る</h3>
@@ -44,7 +54,7 @@
 
 <section>
   <div class="article-row">
-    <img src="images/travel/painagama/painagama-1.webp" alt="パイナガマと、あんなの家" class="photo">
+    <img src="images/travel/painagama/painagama-1.webp" alt="パイナガマと、あんなの家" class="photo" loading="lazy" width="4032" height="3024">
     <div class="article-text">
       <p class="post-date">2026.05.07</p>
       <h3>パイナガマから、あんなの家へ</h3>
@@ -59,7 +69,7 @@
 
 <section>
   <div class="article-row">
-    <img src="images/travel/muikaga/muikaga-1.webp" alt="盛加井 ムイカガ" class="photo">
+    <img src="images/travel/muikaga/muikaga-1.webp" alt="盛加井 ムイカガ" class="photo" loading="lazy" width="4032" height="3024">
     <div class="article-text">
       <p class="post-date">2026.04.21</p>
       <h3>盛加井（ムイカガ）に、少しだけ入ってきた</h3>
@@ -74,7 +84,7 @@
 
 <section>
   <div class="article-row">
-    <img src="images/travel/miyako/miyakojinja-1.webp" alt="宮古神社と漲水御嶽" class="photo">
+    <img src="images/travel/miyako/miyakojinja-1.webp" alt="宮古神社と漲水御嶽" class="photo" loading="lazy" width="4032" height="3024">
     <div class="article-text">
       <p class="post-date">2026.04.16</p>
       <h3>宮古神社と、漲水御嶽へ</h3>
@@ -89,7 +99,7 @@
 
 <section>
   <div class="article-row">
-    <img src="images/travel/irabuoohashi/irabu-5.webp" alt="伊良部大橋" class="photo">
+    <img src="images/travel/irabuoohashi/irabu-5.webp" alt="伊良部大橋" class="photo" loading="lazy" width="4032" height="3024">
     <div class="article-text">
       <h3>伊良部大橋を、ゆるく歩いてきた</h3>
     <p>
@@ -103,7 +113,7 @@
 
       <section>
         <div class="article-row">
-          <img src="images/travel/travel1.webp" alt="柿田川" class="photo">
+          <img src="images/travel/travel1.webp" alt="柿田川" class="photo" loading="lazy" width="3023" height="3201">
           <div class="article-text">
             <h3>ただの公園だと思ったら、水が異常にキレイだった話</h3>
             <p>静岡・柿田川と三島大社へ。</p>
@@ -131,7 +141,7 @@
         <ul>
           <li><a href="carwash.html">🚗 洗車</a></li>
           <li><span class="category disabled">🍳 料理</span></li>
-          <li><a href="travel.html">✈️ 旅行</a></li>
+          <li><a href="travel.html" aria-current="page">✈️ 旅行</a></li>
           <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
         </ul>
       </div>
@@ -146,26 +156,7 @@
       <a href="https://tomo3mayu3-boop.github.io/homepage/" target="_blank" rel="noopener noreferrer">HP</a>
     </p>
   </footer>
-
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    gtag('event', 'button_click', {
-      'button_text': btn.innerText
-    });
-  });
-});
-</script>
-<script>
-document.querySelectorAll('button, a').forEach(el => {
-  el.addEventListener('click', () => {
-    gtag('event', 'click', {
-      'text': el.innerText,
-      'href': el.href || ''
-    });
-  });
-});
-</script>
+<script src="script.js"></script>
 </body>
 </html>
 

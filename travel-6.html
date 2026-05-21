@@ -1,7 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>来間大橋を、ゆるく渡る | 週末ログ</title>
@@ -23,7 +25,7 @@
     <a href="index.html">ホーム</a>
     <a href="carwash.html">洗車</a>
     <span class="category disabled">料理</span>
-    <a href="travel.html">旅行</a>
+    <a href="travel.html" aria-current="page">旅行</a>
     <a href="yurulog.html">ゆるログ</a>
   </nav>
 </header>
@@ -46,7 +48,7 @@
 </section>
 
 <section>
-  <img src="images/travel/kurimaoohashi/kurimaoohashi-5.webp" class="viewer-photo">
+  <img src="images/travel/kurimaoohashi/kurimaoohashi-5.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>
     朝焼けを見たくて来間大橋へ。<br>
     宮古っぽさが、もう始まってた。
@@ -54,7 +56,7 @@
 </section>
 
 <section>
-  <img src="images/travel/kurimaoohashi/kurimaoohashi-3.webp" class="viewer-photo">
+  <img src="images/travel/kurimaoohashi/kurimaoohashi-3.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>
     ただ真っ直ぐ進むだけなのに、<br>
     なんか気持ちいい橋だった。
@@ -62,28 +64,28 @@
 </section>
 
 <section>
-  <img src="images/travel/kurimaoohashi/kurimaoohashi-2.webp" class="viewer-photo">
+  <img src="images/travel/kurimaoohashi/kurimaoohashi-2.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>
     横を見るたび、海の色が変わる。
   </p>
 </section>
 
 <section>
-  <img src="images/travel/kurimaoohashi/kurimaoohashi-1.webp" class="viewer-photo">
+  <img src="images/travel/kurimaoohashi/kurimaoohashi-1.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>
     空と海が、ゆっくり混ざっていく時間。
   </p>
 </section>
 
 <section>
-  <img src="images/travel/kurimaoohashi/kurimaoohashi-4.webp" class="viewer-photo">
+  <img src="images/travel/kurimaoohashi/kurimaoohashi-4.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>
     景色を眺めると、波の音まで、止まってるみたいだった。
   </p>
 </section>
 
 <section>
-  <img src="images/travel/kurimaoohashi/kurimaoohashi-6.webp" class="viewer-photo">
+  <img src="images/travel/kurimaoohashi/kurimaoohashi-6.webp" class="viewer-photo" loading="lazy" width="4032" height="3024">
   <p>
     最後は、静かな海。<br>
     何もしない時間が、ちょうどよかった。
@@ -100,7 +102,7 @@
 </section>
 
 <section>
-  <p><a href="travel.html" class="btn">← 旅行トップに戻る</a></p>
+  <p><a href="travel.html" aria-current="page" class="btn">← 旅行トップに戻る</a></p>
 </section>
     </div>
   </div>
@@ -116,7 +118,6 @@
 <iframe
   src="https://maps.google.com/maps?q=来間大橋&output=embed&z=15"
   width="100%"
-  height="180"
   style="border:0; border-radius:8px; margin-bottom:8px;"
   allowfullscreen=""
   loading="lazy">
@@ -128,7 +129,7 @@
       <ul>
         <li><a href="carwash.html">🚗 洗車</a></li>
         <li><span class="category disabled">🍳 料理</span></li>
-        <li><a href="travel.html">✈️ 旅行</a></li>
+        <li><a href="travel.html" aria-current="page">✈️ 旅行</a></li>
         <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
       </ul>
     </div>
@@ -143,26 +144,7 @@
     <a href="https://tomo3mayu3-boop.github.io/homepage/" target="_blank" rel="noopener noreferrer">HP</a>
   </p>
 </footer>
-
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    gtag('event', 'button_click', {
-      'button_text': btn.innerText
-    });
-  });
-});
-</script>
-<script>
-document.querySelectorAll('button, a').forEach(el => {
-  el.addEventListener('click', () => {
-    gtag('event', 'click', {
-      'text': el.innerText,
-      'href': el.href || ''
-    });
-  });
-});
-</script>
+<script src="script.js"></script>
 </body>
 </html>
 ```

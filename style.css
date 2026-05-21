@@ -325,6 +325,8 @@ footer a:hover {
   margin-top: 14px;
   font-weight: 600;
   font-size: 18px;
+  display: block;
+  text-align: center;
 }
 
 .info {
@@ -537,14 +539,6 @@ footer a:hover {
 }
 
 /* カウンター表示 */
-#info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 .photo-label {
   font-weight: 600;
   font-size: 18px;
@@ -555,14 +549,6 @@ footer a:hover {
   font-size: 13px;
   color: #999;
   font-weight: 400;
-}
-
-#info {
-  display: block;
-  text-align: center;
-}
-
-.photo-counter {
   display: block;
   margin-top: 4px;
 }

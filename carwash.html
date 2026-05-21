@@ -1,9 +1,19 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>洗車記録 | 週末ログ</title>
+  <meta property="og:title" content="洗車記録 | 週末ログ">
+  <meta property="og:description" content="洗車の記録をゆるくまとめています。">
+  <meta property="og:image" content="https://tomo3mayu3-boop.github.io/homepage/images/IMG_8017-EDIT.webp">
+  <meta property="og:url" content="https://tomo3mayu3-boop.github.io/homepage/carwash.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="週末ログ">
+  <meta name="description" content="洗車の手順や道具をゆるくまとめています。洗い方のコツや使ってるアイテムを記録中。">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,7 +22,7 @@
     <h1>🚗 週末ログ</h1>
     <nav>
       <a href="index.html">ホーム</a>
-      <a href="carwash.html">洗車</a>
+      <a href="carwash.html" aria-current="page">洗車</a>
       <span class="category disabled">料理</span>
       <a href="travel.html">旅行</a>
       <a href="yurulog.html">ゆるログ</a>
@@ -29,7 +39,7 @@
 
  <section>
        <div class="article-row">
-         <img src="images/IMG_8017-EDIT.webp" alt="洗車" class="photo">
+         <img src="images/IMG_8017-EDIT.webp" alt="洗車" class="photo" loading="lazy" width="4032" height="3024">
          <div class="article-text">
            <h3>2026/04 の洗車メモ</h3>
            <p>週末のちょうどいいリセット。<br>
@@ -41,7 +51,7 @@
 
       <section>
         <div class="article-row">
-          <img src="images/car1.webp" alt="洗車" class="photo">
+          <img src="images/car1.webp" alt="洗車" class="photo" loading="lazy" width="3023" height="2845">
           <div class="article-text">
             <h3>ゆるく洗車してきた。</h3>
             <p>フォームガンで泡洗車後、<br>
@@ -68,7 +78,7 @@
       <div class="sidebar-box">
         <h3>📂 カテゴリ</h3>
         <ul>
-          <li><a href="carwash.html">🚗 洗車</a></li>
+          <li><a href="carwash.html" aria-current="page">🚗 洗車</a></li>
           <li><span class="category disabled">🍳 料理</span></li>
           <li><a href="travel.html">✈️ 旅行</a></li>
           <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
@@ -85,26 +95,7 @@
       <a href="https://tomo3mayu3-boop.github.io/homepage/" target="_blank" rel="noopener noreferrer">HP</a>
     </p>
   </footer>
-
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    gtag('event', 'button_click', {
-      'button_text': btn.innerText
-    });
-  });
-});
-</script>
-<script>
-document.querySelectorAll('button, a').forEach(el => {
-  el.addEventListener('click', () => {
-    gtag('event', 'click', {
-      'text': el.innerText,
-      'href': el.href || ''
-    });
-  });
-});
-</script>
+<script src="script.js"></script>
 </body>
 </html>
 

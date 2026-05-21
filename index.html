@@ -1,26 +1,20 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-Q5ZM4M1DXH');
-</script>
-<meta http-equiv="Content-Security-Policy" 
+<meta http-equiv="Content-Security-Policy"
   content="
     default-src 'self';
- connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com;
-    script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;
+    connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com;
+    script-src 'self' https://www.googletagmanager.com;
     style-src 'self' 'unsafe-inline';
-    img-src 'self' data: https:;
+    img-src 'self' https://tomo3mayu3-boop.github.io;
     frame-src https://www.google.com https://maps.google.com;
     object-src 'none';
     base-uri 'self';
     form-action 'self';
+    frame-ancestors 'none';
     upgrade-insecure-requests;
   ">
   
@@ -34,6 +28,7 @@
   <meta name="description" content="洗車・料理・旅行をゆるく楽しむ週末の記録ブログ。日常のちょうどいい時間をのんびり更新中。">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="週末ログ">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -62,7 +57,7 @@
        
 <div class="article-row">
   <div class="mosaic-wrap">
-    <img id="slideshow" src="images/car1.webp" alt="最近のゆる洗車の様子" class="photo">
+    <img id="slideshow" src="images/car1.webp" alt="最近のゆる洗車の様子" class="photo" loading="lazy" width="3023" height="2845">
     <div class="mosaic" id="mosaic"></div>
   </div>
 
@@ -81,8 +76,8 @@
   <h2>🍳 料理 <span class="coming-soon-badge">Coming Soon</span></h2>
 <div class="article-row">
   <div class="mosaic-wrap cooking-split">
-    <img src="cooking.jpg" alt="料理1">
-    <img src="cooking2.jpg" alt="料理2">
+    <img src="cooking.webp" alt="料理1" loading="lazy" width="1200" height="1508">
+    <img src="cooking2.webp" alt="料理2" loading="lazy" width="1200" height="1600">
   </div>
 
   <div class="article-text">
@@ -97,7 +92,7 @@
       <section id="travel">
         <h2>✈️ 旅行</h2>
         <div class="article-row">
-          <img src="angkor.jpg" alt="アンコールワットの朝" class="photo travel-photo">
+          <img src="angkor.webp" alt="アンコールワットの朝" class="photo travel-photo" loading="lazy" width="1200" height="984">
           <div class="article-text">
             <h3>最近の旅行</h3>
             <p>行った場所や宿、食べたものの記録。</p>
@@ -110,7 +105,7 @@
       <section id="yurulog">
         <h2>🗒️ ゆるログ</h2>
         <div class="article-row">
-          <img src="images/rs-ducati.jpg" alt="ゆるログのイメージ" class="photo travel-photo"><!-- ここを変更：rs-ducati.jpg -->
+          <img src="images/rs-ducati.webp" alt="ゆるログのイメージ" class="photo travel-photo" loading="lazy"<!-- ここを変更：rs-ducati.jpg -- width="1200" height="800">
           <div class="article-text">
             <h3>最近のゆるログ</h3>
             <p>日々の感想や気になったことを、</p>
@@ -125,7 +120,7 @@
       <div class="sidebar-box">
      <h3>プロフィール</h3>
 
-  <img src="profile-car.jpg" alt="プロフィール画像" class="profile-img">
+  <img src="profile-car.webp" alt="プロフィール画像" class="profile-img" loading="lazy" width="1200" height="800">
   <p>
   洗車・料理・旅行をゆるく楽しんでいます。<br>
   週末の記録をのんびり更新中です。
@@ -169,25 +164,6 @@
   </footer>
 
   <script src="script.js"></script>
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    gtag('event', 'button_click', {
-      'button_text': btn.innerText
-    });
-  });
-});
-</script>
-<script>
-document.querySelectorAll('button, a').forEach(el => {
-  el.addEventListener('click', () => {
-    gtag('event', 'click', {
-      'text': el.innerText,
-      'href': el.href || ''
-    });
-  });
-});
-</script>
 </body>
 </html>
 

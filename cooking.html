@@ -1,9 +1,19 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>料理記録 | 週末ログ</title>
+  <meta property="og:title" content="料理記録 | 週末ログ">
+  <meta property="og:description" content="作った料理やレシピのメモをまとめています。">
+  <meta property="og:image" content="https://tomo3mayu3-boop.github.io/homepage/cooking.webp">
+  <meta property="og:url" content="https://tomo3mayu3-boop.github.io/homepage/cooking.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="週末ログ">
+  <meta name="description" content="作った料理やレシピのメモをまとめています。うまくいった日も崩れた日も記録。">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,8 +31,7 @@
   <main class="single-page">
     <article class="post">
       <h2>料理メモ</h2>
-      <img src="cooking.jpg" alt="" class="detail-photo">
-
+      <img src="cooking.webp" alt="" class="detail-photo" loading="lazy" width="1200" height="1508">
       <h3>今回の料理</h3>
       <p>作った料理の感想やメモをここに書く。</p>
 
@@ -41,26 +50,7 @@
       <a href="https://tomo3mayu3-boop.github.io/homepage/" target="_blank" rel="noopener noreferrer">HP</a>
     </p>
   </footer>
-
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    gtag('event', 'button_click', {
-      'button_text': btn.innerText
-    });
-  });
-});
-</script>
-<script>
-document.querySelectorAll('button, a').forEach(el => {
-  el.addEventListener('click', () => {
-    gtag('event', 'click', {
-      'text': el.innerText,
-      'href': el.href || ''
-    });
-  });
-});
-</script>
+<script src="script.js"></script>
 </body>
 </html>
 

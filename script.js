@@ -1,3 +1,16 @@
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-Q5ZM4M1DXH');
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('button, a').forEach(el => {
+    el.addEventListener('click', () => {
+      gtag('event', 'click', { text: el.innerText, href: el.href || '' });
+    });
+  });
+});
+
 function showMessage(msg) {
   alert(msg);
 }

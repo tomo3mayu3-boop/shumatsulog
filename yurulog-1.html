@@ -1,9 +1,18 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>健診でまさかの陽性 | ゆるログ</title>
+  <meta property="og:title" content="健診でまさかの陽性 | ゆるログ">
+  <meta property="og:description" content="健診で引っかかって内視鏡へ。まさかの体験記。">
+  <meta property="og:image" content="https://tomo3mayu3-boop.github.io/homepage/images/health.webp">
+  <meta property="og:url" content="https://tomo3mayu3-boop.github.io/homepage/yurulog-1.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="週末ログ">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -30,14 +39,14 @@
       </section>
 
       <section>
-        <img src="images/health.jpg" alt="検診結果" class="viewer-photo">
+        <img src="images/health.webp" alt="検診結果" class="viewer-photo" loading="lazy" width="1200" height="900">
         <p class="caption">健診でまさかの陽性。</p>
         <p>まぁ心当たりはあるけど（笑）<br>
         便潜血で引っかかって、そのまま内視鏡コースへ。</p>
       </section>
 
       <section>
-        <img src="images/medicine.jpg" alt="検査前の薬" class="viewer-photo">
+        <img src="images/medicine.webp" alt="検査前の薬" class="viewer-photo" loading="lazy" width="1200" height="934">
         <p class="caption">朝はこれを飲んで準備。</p>
         <p>9時30分検査だったので、朝は早めに起きてスタート。<br>
         これを30分くらいかけて飲みながら、水分補給。<br>
@@ -45,14 +54,14 @@
       </section>
 
       <section>
-        <img src="images/naishikyo.jpg" alt="内視鏡画像" class="viewer-photo">
+        <img src="images/naishikyo.webp" alt="内視鏡画像" class="viewer-photo" loading="lazy" width="1200" height="853">
         <p class="caption">ポリープ発見。</p>
         <p>検査中にそのままポリープ切除までいきました。<br>
         寝てる間に終わる感じで、思ったより楽。</p>
       </section>
 
       <section>
-        <img src="images/receipt.jpg" alt="領収書" class="viewer-photo">
+        <img src="images/receipt.webp" alt="領収書" class="viewer-photo" loading="lazy" width="1200" height="1087">
         <p class="caption">安心料込みのお値段。</p>
         <p>費用はこんな感じ。<br>
         それなりにするけど、まぁ仕方ない。</p>
@@ -60,7 +69,7 @@
       </section>
 
       <section>
-        <p><a href="yurulog.html" class="btn">← ゆるログに戻る</a></p>
+        <p><a href="yurulog.html" aria-current="page" class="btn">← ゆるログに戻る</a></p>
       </section>
 
     </div>
@@ -80,7 +89,7 @@
         <li><a href="carwash.html">🚗 洗車</a></li>
         <li><span class="category disabled">🍳 料理</span></li>
         <li><a href="travel.html">✈️ 旅行</a></li>
-        <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
+        <li><a href="yurulog.html" aria-current="page">🗒️ ゆるログ</a></li>
       </ul>
     </div>
   </aside>
@@ -92,26 +101,7 @@
     <a href="https://x.com/potato_weekend" target="_blank" rel="noopener noreferrer">X（Twitter）</a>
   </p>
 </footer>
-
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    gtag('event', 'button_click', {
-      'button_text': btn.innerText
-    });
-  });
-});
-</script>
-<script>
-document.querySelectorAll('button, a').forEach(el => {
-  el.addEventListener('click', () => {
-    gtag('event', 'click', {
-      'text': el.innerText,
-      'href': el.href || ''
-    });
-  });
-});
-</script>
+<script src="script.js"></script>
 </body>
 </html>
 

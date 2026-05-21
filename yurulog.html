@@ -1,9 +1,19 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ゆるログ | 週末ログ</title>
+  <meta property="og:title" content="ゆるログ | 週末ログ">
+  <meta property="og:description" content="日々の感想や気になったことをゆるく記録しています。">
+  <meta property="og:image" content="https://tomo3mayu3-boop.github.io/homepage/images/health.webp">
+  <meta property="og:url" content="https://tomo3mayu3-boop.github.io/homepage/yurulog.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="週末ログ">
+  <meta name="description" content="日々の感想や気になったことをゆるく記録しています。週末の小さな出来事まとめ。">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,7 +25,7 @@
       <a href="carwash.html">洗車</a>
       <span class="category disabled">料理</span>
       <a href="travel.html">旅行</a>
-      <a href="yurulog.html">ゆるログ</a>
+      <a href="yurulog.html" aria-current="page">ゆるログ</a>
     </nav>
   </header>
 
@@ -29,7 +39,7 @@
 
       <section>
         <div class="article-row">
-          <img src="images/health.jpg" alt="ゆるログのイメージ" class="photo">
+          <img src="images/health.webp" alt="ゆるログのイメージ" class="photo" loading="lazy" width="1200" height="900">
           <div class="article-text">
             <h3>健診でまさかの陽性</h3>
                <p>
@@ -62,7 +72,7 @@
           <li><a href="carwash.html">🚗 洗車</a></li>
           <li><span class="category disabled">🍳 料理</span></li>
           <li><a href="travel.html">✈️ 旅行</a></li>
-          <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
+          <li><a href="yurulog.html" aria-current="page">🗒️ ゆるログ</a></li>
         </ul>
       </div>
     </aside>
@@ -74,26 +84,7 @@
       <a href="https://x.com/potato_weekend" target="_blank" rel="noopener noreferrer">X（Twitter）</a>
     </p>
   </footer>
-
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    gtag('event', 'button_click', {
-      'button_text': btn.innerText
-    });
-  });
-});
-</script>
-<script>
-document.querySelectorAll('button, a').forEach(el => {
-  el.addEventListener('click', () => {
-    gtag('event', 'click', {
-      'text': el.innerText,
-      'href': el.href || ''
-    });
-  });
-});
-</script>
+<script src="script.js"></script>
 </body>
 </html>
 
