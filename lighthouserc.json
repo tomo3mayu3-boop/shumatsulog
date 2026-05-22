@@ -3,15 +3,16 @@
     "collect": {
       "staticDistDir": ".",
       "url": [
-        "http://localhost/index.html",
-        "http://localhost/travel.html",
-        "http://localhost/travel-7.html",
-        "http://localhost/carwash.html",
-        "http://localhost/yurulog.html"
+        "/index.html",
+        "/travel.html",
+        "/travel-7.html",
+        "/carwash.html",
+        "/yurulog.html"
       ],
       "numberOfRuns": 1,
       "settings": {
         "preset": "desktop",
+        "output": ["html", "json"],
         "chromeFlags": "--no-sandbox --disable-dev-shm-usage"
       }
     },
@@ -25,7 +26,9 @@
       }
     },
     "upload": {
-      "target": "temporary-public-storage"
+      "target": "filesystem",
+      "outputDir": ".lighthouseci",
+      "reportFilenamePattern": "%%PATHNAME%%-%%DATETIME%%-report.%%EXTENSION%%"
     }
   }
 }

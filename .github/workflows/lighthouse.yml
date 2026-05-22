@@ -18,18 +18,26 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Lighthouse CI & static server
-        run: npm install -g @lhci/cli@0.14.x serve
+      # serve は不要（staticDistDir 使用時は LHCI が内部サーバを起動する）
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.14.x
 
-      - name: Run Lighthouse CI
-        run: lhci autorun
-        # warn のみ / CI は失敗させない（レポート生成専用）
+      # collect と assert を分離し、--config を明示することで
+      # config 未読による無音失敗を防ぐ
+      - name: Collect Lighthouse reports
+        run: lhci collect --config=lighthouserc.json
         continue-on-error: true
 
+      - name: Assert Lighthouse scores
+        run: lhci assert --config=lighthouserc.json
+        continue-on-error: true
+
+      # .lighthouseci/ が存在しない場合も warn で止まらないよう設定
       - name: Upload Lighthouse report artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lighthouse-report
+          name: lighthouse-report-${{ github.sha }}
           path: .lighthouseci/
+          if-no-files-found: warn
           retention-days: 30
