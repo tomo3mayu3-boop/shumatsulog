@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-const images = ["car1.jpg", "car2.jpg"];
+const images = ["images/car1.webp", "images/car2.webp"];
 let currentIndex = 0;
 
 const slideshow = document.getElementById("slideshow");
