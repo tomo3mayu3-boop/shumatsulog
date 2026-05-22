@@ -30,10 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-function showMessage(msg) {
-  alert(msg);
-}
-
 const images = ["car1.jpg", "car2.jpg"];
 let currentIndex = 0;
 
