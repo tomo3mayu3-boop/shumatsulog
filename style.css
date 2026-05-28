@@ -783,6 +783,12 @@ nav span {
   object-position: bottom !important;
 }
 
+@media (max-width: 640px) {
+  .viewer-photo.photo-left {
+    object-position: left center;
+  }
+}
+
 /* ===== ダークモード ===== */
 @media (prefers-color-scheme: dark) {
   body { background: #121212; color: #e0e0e0; }
