@@ -789,6 +789,11 @@ nav span {
   }
 }
 
+.travel-article-landscape .viewer-photo {
+  height: auto;
+  object-fit: contain;
+}
+
 /* ===== ダークモード ===== */
 @media (prefers-color-scheme: dark) {
   body { background: #121212; color: #e0e0e0; }
