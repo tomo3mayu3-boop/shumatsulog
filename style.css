@@ -791,7 +791,8 @@ nav span {
 
 .travel-article-landscape .viewer-photo {
   height: auto;
-  object-fit: contain;
+  max-height: 660px;
+  object-fit: cover;
 }
 
 /* ===== ダークモード ===== */
