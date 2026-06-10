@@ -8,6 +8,8 @@ on:
 jobs:
   update-date:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     # GitHub Actions bot のコミットではスキップ（無限ループ防止）
     if: github.actor != 'github-actions[bot]'
