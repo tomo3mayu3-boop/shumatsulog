@@ -1,3 +1,17 @@
 *.HEIC
 .lighthouseci/
 carwash-game-v2.html
+
+# 未使用の公開残骸を除外（2026-06-12・ローカル保持）
+洗車4月/
+2026.３月旅行/
+sounds/
+convert_to_webp.py
+/*.jpg
+/angkor.webp
+images/*.jpg
+images/*.jpeg
+images/IMG_*.webp
+images/rs-ducati.webp
+images/travel/muikaga/muikaga-2*
+images/travel/muikaga/muikaga-11*
