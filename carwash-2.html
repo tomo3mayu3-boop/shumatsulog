@@ -228,26 +228,6 @@
 </footer>
 
 <script src="carwash-detail.js"></script>
-<script>
-  const baSlider = document.querySelector('.ba-slider');
-  const baBeforeWrap = document.querySelector('.ba-before-wrap');
-  const baBeforeImg = document.querySelector('.ba-before');
-  const baHandle = document.querySelector('.ba-handle');
-  const baContainer = document.querySelector('.ba-container');
-
-  if (baSlider && baBeforeWrap && baHandle && baContainer) {
-    const updateBeforeAfter = () => {
-      const value = baSlider.value + '%';
-      baBeforeWrap.style.width = value;
-      baHandle.style.left = value;
-      baBeforeImg.style.width = baContainer.offsetWidth + 'px';
-    };
-
-    baSlider.addEventListener('input', updateBeforeAfter);
-    window.addEventListener('load', updateBeforeAfter);
-    window.addEventListener('resize', updateBeforeAfter);
-  }
-</script>
 <script src="script.js"></script>
 <button id="back-to-top" aria-label="トップへ戻る" title="トップへ戻る">▲</button>
 </body>

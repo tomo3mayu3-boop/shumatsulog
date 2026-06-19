@@ -77,3 +77,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (thumbs.length > 0) goTo(0);
 });
+
+// ===== Before / After 比較スライダー（複数対応・PC/スマホ両対応）=====
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".ba-container").forEach((container) => {
+    const beforeWrap = container.querySelector(".ba-before-wrap");
+    const beforeImg  = container.querySelector(".ba-before");
+    const handle     = container.querySelector(".ba-handle");
+    const slider     = container.querySelector(".ba-slider");
+    if (!beforeWrap || !beforeImg || !handle) return;
+
+    let percent = slider ? Number(slider.value) : 50;
+
+    const apply = (p) => {
+      percent = Math.max(0, Math.min(100, p));
+      beforeWrap.style.width = percent + "%";
+      handle.style.left = percent + "%";
+      // 上画像が縮まないよう、下画像と同じ実寸に固定
+      beforeImg.style.width = container.offsetWidth + "px";
+      if (slider) slider.value = percent;
+    };
+
+    const setFromPointer = (clientX) => {
+      const rect = container.getBoundingClientRect();
+      apply(((clientX - rect.left) / rect.width) * 100);
+    };
+
+    let dragging = false;
+    container.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      container.setPointerCapture(e.pointerId);
+      setFromPointer(e.clientX);
+    });
+    container.addEventListener("pointermove", (e) => {
+      if (dragging) setFromPointer(e.clientX);
+    });
+    const endDrag = () => { dragging = false; };
+    container.addEventListener("pointerup", endDrag);
+    container.addEventListener("pointercancel", endDrag);
+
+    // キーボード（range のフォーカス時の矢印キー）
+    if (slider) slider.addEventListener("input", () => apply(Number(slider.value)));
+
+    window.addEventListener("resize", () => apply(percent));
+    apply(percent);
+  });
+});
