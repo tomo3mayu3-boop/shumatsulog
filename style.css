@@ -604,6 +604,9 @@ footer a:hover {
   object-fit: cover;
   object-position: center;
   display: block;
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .ba-before-wrap {

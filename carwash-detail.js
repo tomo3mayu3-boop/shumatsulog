@@ -83,9 +83,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".ba-container").forEach((container) => {
     const beforeWrap = container.querySelector(".ba-before-wrap");
     const beforeImg  = container.querySelector(".ba-before");
+    const afterImg   = container.querySelector(".ba-after");
     const handle     = container.querySelector(".ba-handle");
     const slider     = container.querySelector(".ba-slider");
     if (!beforeWrap || !beforeImg || !handle) return;
+
+    // 画像のネイティブドラッグ（ゴースト）を無効化 ← これが pointermove を奪っていた
+    [beforeImg, afterImg].forEach((img) => { if (img) img.draggable = false; });
 
     let percent = slider ? Number(slider.value) : 50;
 
@@ -105,8 +109,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let dragging = false;
     container.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
       dragging = true;
-      container.setPointerCapture(e.pointerId);
+      try { container.setPointerCapture(e.pointerId); } catch (err) {}
       setFromPointer(e.clientX);
     });
     container.addEventListener("pointermove", (e) => {
