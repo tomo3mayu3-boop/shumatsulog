@@ -530,24 +530,26 @@ function playGachaEffect(done) {
     }
   });
 
-  var FINALE_MS = 3000; // CSS側 bannerPop の長さ(3s)と合わせること
+  var FINALE_MS = 3000; // 中央バナーの表示時間。CSS側 bannerPop の長さ(3s)と合わせること
 
   var doneCalled = false;
   var finaleShown = false;
+  var banner = null;      // フィナーレバナー（粒レイヤーとは別に body 直下へ付ける）
   var timers = [];
   function callDone() {
     if (doneCalled) return; // 二重呼び出し防止
     doneCalled = true;
     done();
   }
-  function removeLayer() {
+  function cleanupAll() {
     timers.forEach(function (t) { window.clearTimeout(t); });
     if (layer.parentNode) layer.parentNode.removeChild(layer);
+    if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
   }
   function showFinale() {
     if (finaleShown) return; // 二重表示防止
     finaleShown = true;
-    var banner = document.createElement("div");
+    banner = document.createElement("div");
     banner.className = "gacha-fx-banner";
     var icon = document.createElement("span");
     icon.className = "banner-rainbow";
@@ -557,42 +559,46 @@ function playGachaEffect(done) {
     txt.className = "banner-text";
     txt.textContent = spec.finale.text;
     banner.appendChild(txt);
-    layer.appendChild(banner);
-    // フェードアウト完了後に結果表示。
-    // bannerPop の animationend でも同じ処理をするが、
-    // イベントが来ない環境でも必ず進むようタイマーを主経路にする
-    timers.push(window.setTimeout(function () { callDone(); removeLayer(); }, FINALE_MS + 300));
+    // 粒レイヤーの削除タイミングに左右されないよう body 直下に付ける
+    document.body.appendChild(banner);
+    // 実機で発火を確認できるように1行だけログ（0.1%の演出時のみ）
+    if (window.console && console.info) console.info("[gacha] finale banner shown");
+    // 粒レイヤーはもう不要なので先に片付ける（バナーは残す）
+    if (layer.parentNode) layer.parentNode.removeChild(layer);
+    // 表示（約3秒）→フェードアウト完了後に結果表示＆バナー削除
+    timers.push(window.setTimeout(function () {
+      callDone();
+      cleanupAll();
+    }, FINALE_MS + 300));
   }
 
   // animationendはバブリングするのでレイヤーで一括受信。
-  // アニメーション名で区別する（fxSpin / sparklePop は無視）
+  // finale なしの演出では、全粒が流れ終わった時点で結果を出す。
   layer.addEventListener("animationend", function (e) {
-    if (e.animationName === "beanFly") {
-      flightsLeft -= 1;
-      if (flightsLeft > 0 || spec.finale) return; // finale付きはタイマー駆動
-      callDone(); // 結果は即表示。残りの✨が消えた頃にレイヤーを削除
-      timers.push(window.setTimeout(removeLayer, 800));
-    } else if (e.animationName === "bannerPop") {
-      // フェードアウトが終わった（タイマーより先に来たらこちらで進める）
-      callDone();
-      removeLayer();
-    }
+    if (e.animationName !== "beanFly") return; // fxSpin / sparklePop は無視
+    if (spec.finale) return;                   // finale付きはタイマー駆動
+    flightsLeft -= 1;
+    if (flightsLeft > 0) return;
+    callDone(); // 結果は即表示。残りの✨が消えた頃にレイヤーを削除
+    timers.push(window.setTimeout(cleanupAll, 800));
   });
 
   if (spec.finale) {
-    // バナーは「全粒が流れ終わる時刻」にタイマーで出す。
-    // （個々の animationend の受信数に依存させない＝1個でも欠けると
-    //   バナーが出ない、という事故を防ぐ）
+    // バナーは「全粒が流れ終わる頃」にタイマーで必ず出す。
+    // 個々の animationend の受信数には一切依存させない
+    // （1個でも欠けるとバナーが出ない、という事故を根本から防ぐ）。
     var flightsEndMs = 0;
     spec.particles.forEach(function (p) {
       flightsEndMs = Math.max(flightsEndMs, (p.delay + p.duration) * 1000);
     });
-    timers.push(window.setTimeout(showFinale, flightsEndMs + 100));
+    // 上限を設けて、粒の計算が異常でも必ず出るようにする
+    var showAt = Math.min(flightsEndMs + 100, 2200);
+    timers.push(window.setTimeout(showFinale, showAt));
   }
 
   // 何かの理由でタイマー/イベントが動かなくても必ず結果を出す最終保険
-  var safetyMs = maxEndMs + (spec.finale ? FINALE_MS + 700 : 0) + 800;
-  timers.push(window.setTimeout(function () { callDone(); removeLayer(); }, safetyMs));
+  var safetyMs = maxEndMs + (spec.finale ? FINALE_MS + 900 : 0) + 800;
+  timers.push(window.setTimeout(function () { callDone(); cleanupAll(); }, safetyMs));
 
   document.body.appendChild(layer);
 }
