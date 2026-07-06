@@ -170,12 +170,19 @@
     position: absolute;
     top: 0;
     right: 0;
-    /* サイズはJSが --fx-size(px) で指定。スマホでは vw 上限で大きくなりすぎない */
-    font-size: min(var(--fx-size, 40px), clamp(24px, 8vw, 56px));
+    /* サイズはJSが --fx-size(px) で指定（深度×基準サイズ）。スマホでは vw 上限あり */
+    font-size: min(var(--fx-size, 40px), clamp(20px, 10vw, 72px));
     line-height: 1;
     white-space: nowrap;
+    opacity: var(--fx-opacity, 1); /* 奥を飛ぶ粒ほど薄い（遠近感） */
     will-change: transform;
     animation: beanFly var(--fx-duration, 0.9s) cubic-bezier(0.35, 0, 0.75, 0.5) both;
+    animation-delay: var(--fx-delay, 0s);
+  }
+  /* 絵文字だけ回転させる（ﾋﾞｭｰﾝの文字は回さない） */
+  .gacha-fx .fx-emoji {
+    display: inline-block;
+    animation: fxSpin var(--fx-duration, 0.9s) linear both;
     animation-delay: var(--fx-delay, 0s);
   }
   .gacha-fx .fx-text {
@@ -188,12 +195,55 @@
   @keyframes beanFly {
     from {
       transform: translate(calc(100% + var(--fx-shift-x, 0vw)),
-                           calc(-100% + var(--fx-shift-y, 0vh))) rotate(-20deg);
+                           calc(-100% + var(--fx-shift-y, 0vh)));
     }
     to {
       transform: translate(calc(-100vw - 100% + var(--fx-shift-x, 0vw)),
-                           calc(100vh + var(--fx-shift-y, 0vh))) rotate(-20deg);
+                           calc(100vh + var(--fx-shift-y, 0vh)));
     }
+  }
+  @keyframes fxSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(var(--fx-rot, -360deg)); }
+  }
+  /* ✨: ビートが通過したあとに一瞬だけ残る余韻 */
+  .gacha-sparkle {
+    position: absolute;
+    left: var(--sp-x, 50vw);
+    top: var(--sp-y, 50vh);
+    font-size: var(--sp-size, 14px);
+    line-height: 1;
+    opacity: 0;
+    animation: sparklePop 0.6s ease-out both;
+    animation-delay: var(--sp-delay, 0s);
+  }
+  @keyframes sparklePop {
+    0%   { opacity: 0; transform: scale(0.4); }
+    30%  { opacity: 0.9; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.2); }
+  }
+  /* 黄金ビート嵐のフィナーレバナー（約1秒表示して消える） */
+  .gacha-fx-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(1.1rem, 5vw, 2rem);
+    font-weight: bold;
+    white-space: nowrap;
+    color: var(--accent-dark);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 22px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    animation: bannerPop 1.05s ease both;
+  }
+  @keyframes bannerPop {
+    0%        { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+    15%       { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+    25%, 80%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100%      { opacity: 0; transform: translate(-50%, -50%) scale(1); }
   }
   @media (prefers-reduced-motion: reduce) {
     .gacha-fx-layer { display: none; }

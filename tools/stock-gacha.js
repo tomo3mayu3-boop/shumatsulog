@@ -373,8 +373,9 @@ function populateSectorFilter() {
    prefers-reduced-motion: reduce の場合は演出せず即結果を表示する。 */
 
 var FX = {
-  STORM_CHANCE: 0.01,  // ビート嵐（超レア演出・約30個）の出現率
-  GROUP_CHANCE: 0.15,  // ビート群（レア演出）の出現率
+  GOLDEN_CHANCE: 0.001, // 黄金ビート嵐（超々レア・フィナーレバナー付き）の出現率
+  STORM_CHANCE: 0.01,   // ビート嵐（超レア演出・約30個）の出現率
+  GROUP_CHANCE: 0.15,   // ビート群（レア演出）の出現率
   EMOJI: "🫜",
   SOUND_TEXT: " ﾋﾞｭｰﾝ"
 };
@@ -385,27 +386,35 @@ function fxRand(min, max) {
   return min + Math.random() * (max - min);
 }
 
-/* 1粒分の仕様を作る（開始位置・速度・サイズをランダム化）
-   開始位置は「上端のどこか」or「右端のどこか」。どちらも画面外から入る */
+/* 1粒分の仕様を作る。
+   開始位置は「上端のどこか」or「右端のどこか」。どちらも画面外から入る。
+   深度 depth（0=奥 〜 1=手前）を1つ引き、そこから
+   大きさ(scale 0.6〜1.6)・濃さ(opacity)・速度（手前ほど速い）を
+   連動して決めることで、自然な流星群の遠近感を出す */
 function buildParticle(opts) {
   var fromTop = Math.random() < 0.5;
+  var depth = Math.random();
+  var scale = 0.6 + depth; // 0.6〜1.6
   return {
     emoji: opts.emoji,
     text: opts.text || "",
     shiftX: fromTop ? -fxRand(0, opts.spread) : 0,       // vw（左へずらす＝上端の途中から）
     shiftY: fromTop ? 0 : fxRand(0, opts.spread * 0.6),  // vh（下へずらす＝右端の途中から）
     delay: fxRand(0, opts.maxDelay || 0),                // 秒
-    duration: fxRand(opts.minDur, opts.maxDur),          // 秒
-    size: Math.round(fxRand(opts.minSize, opts.maxSize)) // px（CSS側でスマホ上限あり）
+    duration: opts.maxDur - depth * (opts.maxDur - opts.minDur), // 手前(大)ほど速い
+    size: Math.round(opts.baseSize * scale),             // px（CSS側でスマホ上限あり）
+    opacity: +(0.55 + depth * 0.45).toFixed(2),          // 奥ほど薄い
+    rot: Math.round(fxRand(-720, 720)),                  // 飛行中の総回転量（速度もランダムになる）
+    sparkles: opts.sparkles || 0                         // 通過あとに残す✨の数
   };
 }
 
 var EFFECT_BUILDERS = {
   normal: function () {
-    return [buildParticle({
+    return { particles: [buildParticle({
       emoji: FX.EMOJI, text: FX.SOUND_TEXT,
-      spread: 15, minDur: 0.8, maxDur: 1.2, minSize: 32, maxSize: 48
-    })];
+      spread: 15, minDur: 0.8, maxDur: 1.2, baseSize: 40, sparkles: 3
+    })] };
   },
   beet_group: function () {
     var n = 5 + Math.floor(Math.random() * 6); // 5〜10個
@@ -413,10 +422,10 @@ var EFFECT_BUILDERS = {
     for (var i = 0; i < n; i++) {
       list.push(buildParticle({
         emoji: FX.EMOJI,
-        spread: 40, maxDelay: 0.35, minDur: 0.7, maxDur: 1.1, minSize: 24, maxSize: 56
+        spread: 40, maxDelay: 0.35, minDur: 0.7, maxDur: 1.1, baseSize: 40, sparkles: 2
       }));
     }
-    return list;
+    return { particles: list };
   },
   beet_storm: function () {
     var n = 28 + Math.floor(Math.random() * 5); // 28〜32個
@@ -424,27 +433,42 @@ var EFFECT_BUILDERS = {
     for (var i = 0; i < n; i++) {
       list.push(buildParticle({
         emoji: FX.EMOJI,
-        spread: 60, maxDelay: 0.7, minDur: 0.8, maxDur: 1.3, minSize: 24, maxSize: 56
+        spread: 60, maxDelay: 0.7, minDur: 0.8, maxDur: 1.3, baseSize: 40, sparkles: 1
       }));
     }
-    return list;
+    return { particles: list };
+  },
+  golden_storm: function () {
+    var n = 28 + Math.floor(Math.random() * 5); // 28〜32個
+    var list = [];
+    for (var i = 0; i < n; i++) {
+      list.push(buildParticle({
+        emoji: "✨🫜✨",
+        spread: 60, maxDelay: 0.7, minDur: 0.8, maxDur: 1.3, baseSize: 40, sparkles: 2
+      }));
+    }
+    // finale: 全粒が流れ終わったあと中央に約1秒表示してから結果を出す
+    return { particles: list, finale: { text: "🌈 SUPER BEET STORM!!" } };
   }
-  /* 季節イベントを追加する場合の例：
+  /* 季節イベントを追加する場合の例（finaleは省略可）：
      event: function () {
        var n = 6, list = [];
        for (var i = 0; i < n; i++) {
          list.push(buildParticle({ emoji: "🎃", spread: 40, maxDelay: 0.3,
-                                   minDur: 0.8, maxDur: 1.2, minSize: 28, maxSize: 48 }));
+                                   minDur: 0.8, maxDur: 1.2, baseSize: 38, sparkles: 2 }));
        }
-       return list;
+       return { particles: list };
      }  */
 };
 
-/* どの演出を出すか決める。イベント期間中はここで "event" を返すよう拡張する */
+/* どの演出を出すか決める（レアな順に判定）。
+   イベント期間中はここで "event" を返すよう拡張する。
+   ※演出の抽選であって、銘柄の抽選には一切影響しない */
 function chooseEffectType() {
   var r = Math.random();
-  if (r < FX.STORM_CHANCE) return "beet_storm";
-  if (r < FX.STORM_CHANCE + FX.GROUP_CHANCE) return "beet_group";
+  if (r < FX.GOLDEN_CHANCE) return "golden_storm";
+  if (r < FX.GOLDEN_CHANCE + FX.STORM_CHANCE) return "beet_storm";
+  if (r < FX.GOLDEN_CHANCE + FX.STORM_CHANCE + FX.GROUP_CHANCE) return "beet_group";
   return "normal";
 }
 
@@ -457,18 +481,24 @@ function playGachaEffect(done) {
   }
 
   var builder = EFFECT_BUILDERS[chooseEffectType()] || EFFECT_BUILDERS.normal;
-  var particles = builder();
+  var spec = builder();
+  if (Array.isArray(spec)) spec = { particles: spec }; // 配列を返すビルダーも許容
 
-  // 粒はすべて専用レイヤーに入れ、終了時にレイヤーごと削除する（残留DOMなし）
+  // 粒・✨・バナーはすべて専用レイヤーに入れ、終了時にレイヤーごと削除する（残留DOMなし）
   var layer = document.createElement("div");
   layer.className = "gacha-fx-layer";
   layer.setAttribute("aria-hidden", "true"); // 装飾なのでスクリーンリーダーには読ませない
 
-  var maxEndMs = 0;
-  particles.forEach(function (p) {
+  var flightsLeft = spec.particles.length;
+  var maxEndMs = 0; // 粒と✨すべての終了時刻（保険タイマー用）
+
+  spec.particles.forEach(function (p) {
     var el = document.createElement("span");
     el.className = "gacha-fx";
-    el.textContent = p.emoji;
+    var emoji = document.createElement("span");
+    emoji.className = "fx-emoji";
+    emoji.textContent = p.emoji;
+    el.appendChild(emoji);
     if (p.text) {
       var t = document.createElement("span");
       t.className = "fx-text";
@@ -480,27 +510,66 @@ function playGachaEffect(done) {
     el.style.setProperty("--fx-delay", p.delay + "s");
     el.style.setProperty("--fx-duration", p.duration + "s");
     el.style.setProperty("--fx-size", p.size + "px");
+    el.style.setProperty("--fx-opacity", p.opacity);
+    el.style.setProperty("--fx-rot", p.rot + "deg");
     layer.appendChild(el);
     maxEndMs = Math.max(maxEndMs, (p.delay + p.duration) * 1000);
+
+    // ✨: 飛行経路上の点に、粒が通過するタイミングで一瞬だけ出す
+    for (var i = 0; i < p.sparkles; i++) {
+      var f = fxRand(0.2, 0.75); // 経路上の位置（0=開始側）
+      var sp = document.createElement("span");
+      sp.className = "gacha-sparkle";
+      sp.textContent = "✨";
+      sp.style.setProperty("--sp-x", (100 + p.shiftX - f * 105).toFixed(1) + "vw");
+      sp.style.setProperty("--sp-y", (-5 + p.shiftY + f * 105).toFixed(1) + "vh");
+      sp.style.setProperty("--sp-delay", (p.delay + f * p.duration).toFixed(2) + "s");
+      sp.style.setProperty("--sp-size", Math.round(p.size * 0.35 + 6) + "px");
+      layer.appendChild(sp);
+      maxEndMs = Math.max(maxEndMs, (p.delay + f * p.duration + 0.6) * 1000);
+    }
   });
 
-  var remaining = particles.length;
-  var finished = false;
-  var safetyTimer = 0;
-  function finish() {
-    if (finished) return; // animationendとタイマーの二重呼び出しを防ぐ
-    finished = true;
-    window.clearTimeout(safetyTimer);
-    if (layer.parentNode) layer.parentNode.removeChild(layer);
+  var doneCalled = false;
+  var timers = [];
+  function callDone() {
+    if (doneCalled) return; // 二重呼び出し防止
+    doneCalled = true;
     done();
   }
-  // animationendはバブリングするのでレイヤーで一括受信（全粒終了で片付け）
-  layer.addEventListener("animationend", function () {
-    remaining -= 1;
-    if (remaining <= 0) finish();
+  function removeLayer() {
+    timers.forEach(function (t) { window.clearTimeout(t); });
+    if (layer.parentNode) layer.parentNode.removeChild(layer);
+  }
+  function showFinale() {
+    var banner = document.createElement("div");
+    banner.className = "gacha-fx-banner";
+    banner.textContent = spec.finale.text;
+    layer.appendChild(banner); // bannerPop（約1秒）の終了で結果表示へ
+  }
+
+  // animationendはバブリングするのでレイヤーで一括受信。
+  // アニメーション名で区別する（fxSpin / sparklePop は無視）
+  layer.addEventListener("animationend", function (e) {
+    if (e.animationName === "beanFly") {
+      flightsLeft -= 1;
+      if (flightsLeft > 0) return;
+      // 全粒が流れ終わった
+      if (spec.finale) {
+        showFinale();
+      } else {
+        callDone(); // 結果は即表示。残りの✨が消えた頃にレイヤーを削除
+        timers.push(window.setTimeout(removeLayer, 800));
+      }
+    } else if (e.animationName === "bannerPop") {
+      callDone();
+      removeLayer();
+    }
   });
-  // animationendが発火しない環境（CSS未適用等）でも必ず結果を出す保険
-  safetyTimer = window.setTimeout(finish, maxEndMs + 400);
+
+  // 何かの理由でアニメーションイベントが発火しなくても必ず結果を出す保険
+  var safetyMs = maxEndMs + (spec.finale ? 1500 : 0) + 800;
+  timers.push(window.setTimeout(function () { callDone(); removeLayer(); }, safetyMs));
 
   document.body.appendChild(layer);
 }
