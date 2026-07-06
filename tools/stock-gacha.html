@@ -225,6 +225,9 @@
   /* 黄金ビート嵐のフィナーレバナー
      画面中央に約3秒（ポップイン→表示→最後の0.6秒でフェードアウト）。
      長さを変えるときはJS側の FINALE_MS も合わせて変更すること */
+  /* フィナーレバナーは共通コンポーネント。
+     色・背景・発光は CSS変数(--banner-color/-bg/-glow)で差し替えるので、
+     イベント演出を足すときは JS の finale データを変えるだけでよい */
   .gacha-fx-banner {
     position: fixed;         /* 画面中央に固定（親レイヤーに依存しない） */
     top: 50%;
@@ -234,31 +237,73 @@
     text-align: center;
     font-weight: bold;
     white-space: nowrap;
-    color: var(--accent-dark);
-    /* 文字が背景に埋もれないよう、淡い下地パネル＋にじむ光 */
-    padding: 20px 30px;
+    color: var(--banner-color, var(--accent-dark));
+    padding: 22px 34px;
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.78);
-    box-shadow: 0 6px 26px rgba(0, 0, 0, 0.14);
-    /* かなり大きく、少し光る程度 */
-    text-shadow: 0 0 10px rgba(255, 205, 60, 0.8), 0 0 26px rgba(255, 205, 60, 0.45);
+    background: var(--banner-bg, rgba(255, 255, 255, 0.82));
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.16);
+    text-shadow: var(--banner-glow, 0 0 10px rgba(255, 205, 60, 0.85), 0 0 26px rgba(255, 205, 60, 0.5));
     animation: bannerPop 3s ease both;
   }
-  .gacha-fx-banner .banner-rainbow {
+  /* 🌈などのアイコン */
+  .gacha-fx-banner .banner-icon {
     display: block;
     font-size: clamp(2.6rem, 13vw, 5rem);
-    line-height: 1.15;
+    line-height: 1.1;
+    margin-bottom: 2px;
   }
-  .gacha-fx-banner .banner-text {
+  /* 小さめの前置き（SUPER 等） */
+  .gacha-fx-banner .banner-lead {
     display: block;
-    font-size: clamp(1.6rem, 7.5vw, 3.2rem);
-    letter-spacing: 0.04em;
+    font-size: clamp(1rem, 4.2vw, 1.5rem);
+    letter-spacing: 0.24em;
+    opacity: 0.82;
   }
+  /* 主役の大きな文字（BEET STORM!! 等） */
+  .gacha-fx-banner .banner-main {
+    display: block;
+    font-size: clamp(1.9rem, 9vw, 3.6rem);
+    letter-spacing: 0.03em;
+    line-height: 1.1;
+  }
+  /* ゲーム風ポップイン: 95% → 105% → 100% で出て、最後にフェードアウト */
   @keyframes bannerPop {
-    0%        { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
-    12%       { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-    18%, 80%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100%      { opacity: 0; transform: translate(-50%, -50%) scale(1.02); }
+    0%       { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+    10%      { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    20%, 82% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100%     { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  }
+  /* バナーの後に一瞬だけ出る「召喚中…」テキスト */
+  .gacha-fx-loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 1000;
+    transform: translate(-50%, -50%);
+    font-size: clamp(0.95rem, 4vw, 1.2rem);
+    color: var(--text-sub);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 9px 18px;
+    border-radius: 999px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    animation: loadingIn 0.2s ease both;
+  }
+  @keyframes loadingIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  /* 超レア時にほんのり効く背景光（派手すぎない範囲） */
+  .gacha-fx-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 45%,
+                rgba(255, 214, 90, 0.30), rgba(255, 214, 90, 0) 62%);
+    animation: bgGlow 2.6s ease both;
+  }
+  @keyframes bgGlow {
+    0%   { opacity: 0; }
+    35%  { opacity: 1; }
+    100% { opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
     .gacha-fx-layer { display: none; }

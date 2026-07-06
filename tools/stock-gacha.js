@@ -444,22 +444,58 @@ var EFFECT_BUILDERS = {
     for (var i = 0; i < n; i++) {
       list.push(buildParticle({
         emoji: "✨🫜✨",
-        spread: 60, maxDelay: 0.7, minDur: 0.8, maxDur: 1.3, baseSize: 40, sparkles: 2
+        // 超レアなのでキラキラをほんの少し増やす（2→3）
+        spread: 60, maxDelay: 0.7, minDur: 0.8, maxDur: 1.3, baseSize: 40, sparkles: 3
       }));
     }
-    // finale: 全粒が流れ終わったあと中央に約3秒表示→フェードアウト→結果表示
-    return { particles: list, finale: { icon: "🌈", text: "SUPER BEET STORM!!" } };
+    // 全粒が流れ終わったあと中央にバナー→召喚中テキスト→結果表示。
+    // bgGlow: true で背景の光をほんのり強める（超レアの特別感）
+    return {
+      particles: list,
+      bgGlow: true,
+      finale: makeFinale({
+        icon: "🌈",
+        lead: "SUPER",
+        main: "BEET STORM!!",
+        loading: "調査対象を選定中...",
+        // 少しだけ強い金色の光
+        glow: "0 0 12px rgba(255,205,60,0.95), 0 0 34px rgba(255,205,60,0.6)"
+      })
+    };
   }
-  /* 季節イベントを追加する場合の例（finaleは省略可）：
-     event: function () {
-       var n = 6, list = [];
+  /* 季節イベントを追加する例：finale の見た目は makeFinale に
+     アイコン・タイトル・色・背景・光を渡すだけで差し替えられる。
+     particles の絵文字と合わせれば新イベントが1関数で完成する。
+     halloween: function () {
+       var n = 28 + Math.floor(Math.random() * 5), list = [];
        for (var i = 0; i < n; i++) {
-         list.push(buildParticle({ emoji: "🎃", spread: 40, maxDelay: 0.3,
-                                   minDur: 0.8, maxDur: 1.2, baseSize: 38, sparkles: 2 }));
+         list.push(buildParticle({ emoji: "🎃", spread: 60, maxDelay: 0.7,
+                                   minDur: 0.8, maxDur: 1.3, baseSize: 40, sparkles: 2 }));
        }
-       return { particles: list };
+       return { particles: list, bgGlow: true, finale: makeFinale({
+         icon: "🎃", lead: "HAPPY", main: "HALLOWEEN!!",
+         loading: "お菓子を選定中...",
+         color: "#7a3b00", bg: "rgba(255,244,230,0.9)",
+         glow: "0 0 12px rgba(255,140,0,0.8), 0 0 30px rgba(120,40,160,0.5)"
+       })};
      }  */
 };
+
+/* フィナーレバナーの共通データを作る。
+   指定しなかった項目は既定値になるので、イベント演出は
+   icon / lead / main / loading / color / bg / glow を渡すだけで作れる。 */
+function makeFinale(opts) {
+  opts = opts || {};
+  return {
+    icon: opts.icon || "🌈",
+    lead: opts.lead || "",                         // 小さめの前置き（無くてよい）
+    main: opts.main || opts.text || "",            // 主役の大きな文字
+    loading: (opts.loading != null) ? opts.loading : "調査対象を選定中...",
+    color: opts.color || null,                     // 文字色（未指定なら既定）
+    bg: opts.bg || null,                           // 下地パネル色
+    glow: opts.glow || null                        // text-shadow（発光）
+  };
+}
 
 /* どの演出を出すか決める（レアな順に判定）。
    イベント期間中はここで "event" を返すよう拡張する。
@@ -530,46 +566,73 @@ function playGachaEffect(done) {
     }
   });
 
-  var FINALE_MS = 3000; // 中央バナーの表示時間。CSS側 bannerPop の長さ(3s)と合わせること
+  var FINALE_MS = 3000;  // 中央バナーの表示時間。CSS側 bannerPop の長さ(3s)と合わせること
+  var LOADING_MS = 450;  // 「調査対象を選定中...」の表示時間（0.3〜0.5秒）
 
   var doneCalled = false;
   var finaleShown = false;
   var banner = null;      // フィナーレバナー（粒レイヤーとは別に body 直下へ付ける）
+  var loadingEl = null;   // 「召喚中…」テキスト
   var timers = [];
   function callDone() {
     if (doneCalled) return; // 二重呼び出し防止
     doneCalled = true;
     done();
   }
+  function removeNode(n) { if (n && n.parentNode) n.parentNode.removeChild(n); }
   function cleanupAll() {
     timers.forEach(function (t) { window.clearTimeout(t); });
-    if (layer.parentNode) layer.parentNode.removeChild(layer);
-    if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
+    removeNode(layer);
+    removeNode(banner);
+    removeNode(loadingEl);
+  }
+  // バナーが消えたあと、短い「召喚中…」を挟んでから結果を出す
+  function showLoadingThenDone(text) {
+    removeNode(banner);
+    if (!text) { callDone(); cleanupAll(); return; }
+    loadingEl = document.createElement("div");
+    loadingEl.className = "gacha-fx-loading";
+    loadingEl.textContent = text;
+    document.body.appendChild(loadingEl);
+    timers.push(window.setTimeout(function () {
+      callDone();
+      cleanupAll();
+    }, LOADING_MS));
   }
   function showFinale() {
     if (finaleShown) return; // 二重表示防止
     finaleShown = true;
+    var f = spec.finale;
     banner = document.createElement("div");
     banner.className = "gacha-fx-banner";
+    // 色・背景・発光はデータから差し替え（イベント演出の拡張点）
+    if (f.color) banner.style.setProperty("--banner-color", f.color);
+    if (f.bg)    banner.style.setProperty("--banner-bg", f.bg);
+    if (f.glow)  banner.style.setProperty("--banner-glow", f.glow);
     var icon = document.createElement("span");
-    icon.className = "banner-rainbow";
-    icon.textContent = spec.finale.icon || "🌈";
+    icon.className = "banner-icon";
+    icon.textContent = f.icon;
     banner.appendChild(icon);
-    var txt = document.createElement("span");
-    txt.className = "banner-text";
-    txt.textContent = spec.finale.text;
-    banner.appendChild(txt);
+    if (f.lead) {
+      var lead = document.createElement("span");
+      lead.className = "banner-lead";
+      lead.textContent = f.lead;
+      banner.appendChild(lead);
+    }
+    var main = document.createElement("span");
+    main.className = "banner-main";
+    main.textContent = f.main;
+    banner.appendChild(main);
     // 粒レイヤーの削除タイミングに左右されないよう body 直下に付ける
     document.body.appendChild(banner);
-    // 実機で発火を確認できるように1行だけログ（0.1%の演出時のみ）
+    // 実機で発火を確認できるように1行だけログ（超レア演出時のみ）
     if (window.console && console.info) console.info("[gacha] finale banner shown");
     // 粒レイヤーはもう不要なので先に片付ける（バナーは残す）
-    if (layer.parentNode) layer.parentNode.removeChild(layer);
-    // 表示（約3秒）→フェードアウト完了後に結果表示＆バナー削除
+    removeNode(layer);
+    // 表示（約3秒でフェードアウト）→「召喚中…」→結果表示
     timers.push(window.setTimeout(function () {
-      callDone();
-      cleanupAll();
-    }, FINALE_MS + 300));
+      showLoadingThenDone(f.loading);
+    }, FINALE_MS));
   }
 
   // animationendはバブリングするのでレイヤーで一括受信。
@@ -597,8 +660,15 @@ function playGachaEffect(done) {
   }
 
   // 何かの理由でタイマー/イベントが動かなくても必ず結果を出す最終保険
-  var safetyMs = maxEndMs + (spec.finale ? FINALE_MS + 900 : 0) + 800;
+  var safetyMs = maxEndMs + (spec.finale ? FINALE_MS + LOADING_MS + 900 : 0) + 800;
   timers.push(window.setTimeout(function () { callDone(); cleanupAll(); }, safetyMs));
+
+  // 超レア時のほんのりした背景光（粒より奥に敷く）
+  if (spec.bgGlow) {
+    var bg = document.createElement("div");
+    bg.className = "gacha-fx-bg";
+    layer.insertBefore(bg, layer.firstChild);
+  }
 
   document.body.appendChild(layer);
 }
