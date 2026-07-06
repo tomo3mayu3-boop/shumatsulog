@@ -373,6 +373,7 @@ function populateSectorFilter() {
    prefers-reduced-motion: reduce の場合は演出せず即結果を表示する。 */
 
 var FX = {
+  STORM_CHANCE: 0.01,  // ビート嵐（超レア演出・約30個）の出現率
   GROUP_CHANCE: 0.15,  // ビート群（レア演出）の出現率
   EMOJI: "🫜",
   SOUND_TEXT: " ﾋﾞｭｰﾝ"
@@ -416,6 +417,17 @@ var EFFECT_BUILDERS = {
       }));
     }
     return list;
+  },
+  beet_storm: function () {
+    var n = 28 + Math.floor(Math.random() * 5); // 28〜32個
+    var list = [];
+    for (var i = 0; i < n; i++) {
+      list.push(buildParticle({
+        emoji: FX.EMOJI,
+        spread: 60, maxDelay: 0.7, minDur: 0.8, maxDur: 1.3, minSize: 24, maxSize: 56
+      }));
+    }
+    return list;
   }
   /* 季節イベントを追加する場合の例：
      event: function () {
@@ -430,7 +442,10 @@ var EFFECT_BUILDERS = {
 
 /* どの演出を出すか決める。イベント期間中はここで "event" を返すよう拡張する */
 function chooseEffectType() {
-  return Math.random() < FX.GROUP_CHANCE ? "beet_group" : "normal";
+  var r = Math.random();
+  if (r < FX.STORM_CHANCE) return "beet_storm";
+  if (r < FX.STORM_CHANCE + FX.GROUP_CHANCE) return "beet_group";
+  return "normal";
 }
 
 function playGachaEffect(done) {
