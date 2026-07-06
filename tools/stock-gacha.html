@@ -156,6 +156,32 @@
     outline-offset: 2px;
   }
 
+  /* ---- ガチャ演出（🫜が右上から左下へ流れる） ---- */
+  .gacha-fx {
+    position: fixed;   /* fixedなのでレイアウト・スクロール量に影響しない */
+    top: 0;
+    right: 0;
+    z-index: 999;
+    font-size: 2rem;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    will-change: transform;
+    animation: beanFly 0.9s cubic-bezier(0.35, 0, 0.75, 0.5) forwards;
+  }
+  .gacha-fx .fx-text {
+    font-size: 0.85rem;
+    color: var(--accent-dark);
+    vertical-align: middle;
+  }
+  @keyframes beanFly {
+    from { transform: translate(100%, -100%) rotate(-20deg); }
+    to   { transform: translate(calc(-100vw - 100%), 100vh) rotate(-20deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gacha-fx { display: none; }
+  }
+
   /* ---- ランダムコメント ---- */
   .gacha-comment {
     text-align: center;

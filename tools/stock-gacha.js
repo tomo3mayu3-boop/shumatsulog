@@ -363,8 +363,46 @@ function populateSectorFilter() {
   });
 }
 
+/* ---------------- ガチャ演出 ----------------
+   🫜 が右上から左下へ流れたあとに done() を呼ぶ。
+   prefers-reduced-motion: reduce の場合は演出せず即 done()。 */
+var fxRunning = false; // 演出中フラグ（連打による重複起動を防ぐ）
+
+function playGachaEffect(done) {
+  var reduceMotion = window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion) {
+    done();
+    return;
+  }
+
+  var el = document.createElement("span");
+  el.className = "gacha-fx";
+  el.setAttribute("aria-hidden", "true"); // 装飾なのでスクリーンリーダーには読ませない
+  el.textContent = "🫜";
+  var text = document.createElement("span");
+  text.className = "fx-text";
+  text.textContent = " ﾋﾞｭｰﾝ";
+  el.appendChild(text);
+  document.body.appendChild(el);
+
+  var finished = false;
+  function finish() {
+    if (finished) return; // animationendとタイマーの二重呼び出しを防ぐ
+    finished = true;
+    if (el.parentNode) el.parentNode.removeChild(el);
+    done();
+  }
+  el.addEventListener("animationend", finish);
+  // animationendが発火しない環境（CSS未適用等）でも必ず結果を出す保険
+  window.setTimeout(finish, 1200);
+}
+
 /* ---------------- ガチャ実行 ---------------- */
 function runGacha() {
+  if (fxRunning) return; // 演出中の連打は無視
+  fxRunning = true;
+
   var filters = {
     market: document.getElementById("market-select").value,
     sector: document.getElementById("sector-select").value,
@@ -376,12 +414,16 @@ function runGacha() {
   var candidates = applyFilters(getStockData(), filters);
   var picked = pickRandom(candidates, count);
 
-  renderComment();
-  renderResults(picked);
-  if (picked.length > 0) {
-    saveHistory(picked);
-    renderHistory();
-  }
+  // 演出が終わってから結果を描画する
+  playGachaEffect(function () {
+    renderComment();
+    renderResults(picked);
+    if (picked.length > 0) {
+      saveHistory(picked);
+      renderHistory();
+    }
+    fxRunning = false;
+  });
 }
 
 /* ---------------- 初期化 ---------------- */
