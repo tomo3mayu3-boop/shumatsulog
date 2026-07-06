@@ -13,6 +13,7 @@
 var CONFIG = {
   HISTORY_KEY: "stockGachaHistory",   // 履歴の保存キー
   MEMO_KEY: "stockGachaMemos",        // メモの保存キー
+  DEX_KEY: "stockGachaDex",           // 見た演出の記録（将来の「演出図鑑」用）
   HISTORY_MAX: 100,                   // 履歴の最大保持件数
   // 外部リンクのURLテンプレート（{code} を銘柄コードに置換）
   LINKS: [
@@ -449,15 +450,16 @@ var EFFECT_BUILDERS = {
       }));
     }
     // 全粒が流れ終わったあと中央にバナー→召喚中テキスト→結果表示。
-    // bgGlow: true で背景の光をほんのり強める（超レアの特別感）
+    // warmBg: true で演出中だけ画面全体をほんのり暖色にする（超レアの特別感）
     return {
       particles: list,
-      bgGlow: true,
+      warmBg: true,
       finale: makeFinale({
         icon: "🌈",
         lead: "SUPER",
         main: "BEET STORM!!",
-        loading: "調査対象を選定中...",
+        // 世界観に合う待機メッセージを毎回ランダムに選ぶ
+        loading: ["未知の銘柄を探索中...", "市場をスキャン中...", "銘柄を抽選中..."],
         // 少しだけ強い金色の光
         glow: "0 0 12px rgba(255,205,60,0.95), 0 0 34px rgba(255,205,60,0.6)"
       })
@@ -472,9 +474,9 @@ var EFFECT_BUILDERS = {
          list.push(buildParticle({ emoji: "🎃", spread: 60, maxDelay: 0.7,
                                    minDur: 0.8, maxDur: 1.3, baseSize: 40, sparkles: 2 }));
        }
-       return { particles: list, bgGlow: true, finale: makeFinale({
+       return { particles: list, warmBg: true, finale: makeFinale({
          icon: "🎃", lead: "HAPPY", main: "HALLOWEEN!!",
-         loading: "お菓子を選定中...",
+         loading: ["お菓子を選定中...", "夜の市場を探索中..."],
          color: "#7a3b00", bg: "rgba(255,244,230,0.9)",
          glow: "0 0 12px rgba(255,140,0,0.8), 0 0 30px rgba(120,40,160,0.5)"
        })};
@@ -486,15 +488,47 @@ var EFFECT_BUILDERS = {
    icon / lead / main / loading / color / bg / glow を渡すだけで作れる。 */
 function makeFinale(opts) {
   opts = opts || {};
+  // loading は文字列でも配列でもよい。配列なら毎回ランダムに1つ選ぶ
+  // （何度回しても少し新鮮＝「もう一回」に効く）。
+  var loading = (opts.loading != null) ? opts.loading : "未知の銘柄を探索中...";
+  if (Array.isArray(loading)) {
+    loading = loading[Math.floor(Math.random() * loading.length)];
+  }
   return {
     icon: opts.icon || "🌈",
     lead: opts.lead || "",                         // 小さめの前置き（無くてよい）
     main: opts.main || opts.text || "",            // 主役の大きな文字
-    loading: (opts.loading != null) ? opts.loading : "調査対象を選定中...",
+    loading: loading,                              // バナー後の待機メッセージ
     color: opts.color || null,                     // 文字色（未指定なら既定）
     bg: opts.bg || null,                           // 下地パネル色
     glow: opts.glow || null                        // text-shadow（発光）
   };
+}
+
+/* 演出の表示名（将来の「演出図鑑」で使う）。
+   イベント演出を追加したら、その id と名前をここに足すだけでよい。 */
+var EFFECT_INFO = {
+  normal:       { name: "通常ビート" },
+  beet_group:   { name: "ビート群" },
+  beet_storm:   { name: "ビート嵐" },
+  golden_storm: { name: "黄金ビート嵐" }
+};
+
+/* 見た演出を localStorage に記録しておく（UIは未実装だが、
+   今から集めておけば後から「演出図鑑」を作れる）。
+   記録に失敗してもガチャ自体は止めない。 */
+function recordEffectSeen(typeId) {
+  try {
+    var dex = storageLoad(CONFIG.DEX_KEY, {});
+    if (typeof dex !== "object" || dex === null) dex = {};
+    var now = Date.now();
+    var entry = dex[typeId] || { count: 0, firstSeen: now };
+    entry.count = (typeof entry.count === "number" ? entry.count : 0) + 1;
+    entry.lastSeen = now;
+    if (!entry.firstSeen) entry.firstSeen = now;
+    dex[typeId] = entry;
+    storageSave(CONFIG.DEX_KEY, dex);
+  } catch (e) { /* 図鑑記録は必須ではないので無視 */ }
 }
 
 /* どの演出を出すか決める（レアな順に判定）。
@@ -509,6 +543,9 @@ function chooseEffectType() {
 }
 
 function playGachaEffect(done) {
+  var type = chooseEffectType();
+  recordEffectSeen(type); // 演出図鑑（将来）用に記録
+
   var reduceMotion = window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduceMotion) {
@@ -516,7 +553,7 @@ function playGachaEffect(done) {
     return;
   }
 
-  var builder = EFFECT_BUILDERS[chooseEffectType()] || EFFECT_BUILDERS.normal;
+  var builder = EFFECT_BUILDERS[type] || EFFECT_BUILDERS.normal;
   var spec = builder();
   if (Array.isArray(spec)) spec = { particles: spec }; // 配列を返すビルダーも許容
 
@@ -573,18 +610,35 @@ function playGachaEffect(done) {
   var finaleShown = false;
   var banner = null;      // フィナーレバナー（粒レイヤーとは別に body 直下へ付ける）
   var loadingEl = null;   // 「召喚中…」テキスト
+  var warmEl = null;      // 画面全体の暖色オーバーレイ（超レア時のみ）
   var timers = [];
+  function removeNode(n) { if (n && n.parentNode) n.parentNode.removeChild(n); }
+  // 暖色オーバーレイ: 開始でふわっと点け、結果表示に合わせて白へ戻す。
+  // 点灯/消灯ともCSSアニメーションなので、背景タブでも確実に動く。
+  function startWarm() {
+    warmEl = document.createElement("div");
+    warmEl.className = "gacha-warm"; // warmIn が自動再生され opacity 1 で保持
+    document.body.appendChild(warmEl);
+  }
+  function endWarm() {
+    if (!warmEl) return;
+    var w = warmEl; warmEl = null;
+    w.classList.add("is-off"); // warmOut で0.3秒かけて白へ戻す
+    // 独立タイマーで削除（cleanupAllのclearTimeoutの影響を受けない）
+    window.setTimeout(function () { removeNode(w); }, 350);
+  }
   function callDone() {
     if (doneCalled) return; // 二重呼び出し防止
     doneCalled = true;
+    endWarm();  // 結果カード召喚に合わせて暖色を白へ戻す
     done();
   }
-  function removeNode(n) { if (n && n.parentNode) n.parentNode.removeChild(n); }
   function cleanupAll() {
     timers.forEach(function (t) { window.clearTimeout(t); });
     removeNode(layer);
     removeNode(banner);
     removeNode(loadingEl);
+    endWarm(); // 念のため（通常は callDone で戻し済み）
   }
   // バナーが消えたあと、短い「召喚中…」を挟んでから結果を出す
   function showLoadingThenDone(text) {
@@ -663,12 +717,8 @@ function playGachaEffect(done) {
   var safetyMs = maxEndMs + (spec.finale ? FINALE_MS + LOADING_MS + 900 : 0) + 800;
   timers.push(window.setTimeout(function () { callDone(); cleanupAll(); }, safetyMs));
 
-  // 超レア時のほんのりした背景光（粒より奥に敷く）
-  if (spec.bgGlow) {
-    var bg = document.createElement("div");
-    bg.className = "gacha-fx-bg";
-    layer.insertBefore(bg, layer.firstChild);
-  }
+  // 超レア時のみ、画面全体をほんのり暖色に（粒レイヤーより先に敷く）
+  if (spec.warmBg) startWarm();
 
   document.body.appendChild(layer);
 }

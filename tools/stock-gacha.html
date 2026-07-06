@@ -292,19 +292,22 @@
     from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
     to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
-  /* 超レア時にほんのり効く背景光（派手すぎない範囲） */
-  .gacha-fx-bg {
-    position: absolute;
+  /* 超レア演出中だけ、画面全体を白→ほんのり暖色に（0.3秒でふわっと）。
+     終了時に .is-on を外すと同じ0.3秒で白へ戻る。派手すぎない範囲。 */
+  .gacha-warm {
+    position: fixed;
     inset: 0;
+    z-index: 998;            /* 粒レイヤー(999)より奥・ページ内容の手前 */
+    pointer-events: none;
     background: radial-gradient(circle at 50% 45%,
-                rgba(255, 214, 90, 0.30), rgba(255, 214, 90, 0) 62%);
-    animation: bgGlow 2.6s ease both;
+                rgba(255, 216, 130, 0.42), rgba(255, 232, 180, 0.26));
+    opacity: 0;
+    /* rAFやtransitionに頼らずアニメーションで点灯（背景タブでも確実に効く） */
+    animation: warmIn 0.3s ease forwards;
   }
-  @keyframes bgGlow {
-    0%   { opacity: 0; }
-    35%  { opacity: 1; }
-    100% { opacity: 0; }
-  }
+  .gacha-warm.is-off { animation: warmOut 0.3s ease forwards; }
+  @keyframes warmIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes warmOut { from { opacity: 1; } to { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) {
     .gacha-fx-layer { display: none; }
   }
@@ -331,10 +334,11 @@
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 16px;
-    animation: cardIn 0.35s ease both;
+    /* 結果カードは「召喚された」ように、下からふわっと立ち上げる */
+    animation: cardIn 0.25s ease both;
   }
   @keyframes cardIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   @media (prefers-reduced-motion: reduce) {
