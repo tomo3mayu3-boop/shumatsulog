@@ -222,28 +222,38 @@
     30%  { opacity: 0.9; transform: scale(1); }
     100% { opacity: 0; transform: scale(1.2); }
   }
-  /* 黄金ビート嵐のフィナーレバナー（約1秒表示して消える） */
+  /* 黄金ビート嵐のフィナーレバナー
+     画面中央に約3秒（ポップイン→表示→最後の0.6秒でフェードアウト）。
+     長さを変えるときはJS側の FINALE_MS も合わせて変更すること */
   .gacha-fx-banner {
     position: absolute;
     top: 50%;
     left: 50%;
+    z-index: 10; /* 同じレイヤー内の粒・✨より前面 */
     transform: translate(-50%, -50%);
-    font-size: clamp(1.1rem, 5vw, 2rem);
+    text-align: center;
     font-weight: bold;
     white-space: nowrap;
     color: var(--accent-dark);
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 22px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    animation: bannerPop 1.05s ease both;
+    /* かなり大きく、少し光る程度 */
+    text-shadow: 0 0 12px rgba(255, 216, 90, 0.85), 0 0 30px rgba(255, 216, 90, 0.5);
+    animation: bannerPop 3s ease both;
+  }
+  .gacha-fx-banner .banner-rainbow {
+    display: block;
+    font-size: clamp(2.4rem, 12vw, 4.5rem);
+    line-height: 1.15;
+  }
+  .gacha-fx-banner .banner-text {
+    display: block;
+    font-size: clamp(1.5rem, 7vw, 3rem);
+    letter-spacing: 0.04em;
   }
   @keyframes bannerPop {
-    0%        { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
-    15%       { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
-    25%, 80%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100%      { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+    0%        { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+    12%       { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+    18%, 80%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100%      { opacity: 0; transform: translate(-50%, -50%) scale(1.02); }
   }
   @media (prefers-reduced-motion: reduce) {
     .gacha-fx-layer { display: none; }
