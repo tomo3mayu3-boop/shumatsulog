@@ -156,30 +156,47 @@
     outline-offset: 2px;
   }
 
-  /* ---- ガチャ演出（🫜が右上から左下へ流れる） ---- */
-  .gacha-fx {
+  /* ---- ガチャ演出（🫜が右上から左下へ流れる） ----
+     個々の粒の開始位置・速度・サイズはJSがCSS変数で注入する。
+     アニメーション本体はCSSのみ（メインスレッドに負荷をかけない）。 */
+  .gacha-fx-layer {
     position: fixed;   /* fixedなのでレイアウト・スクロール量に影響しない */
+    inset: 0;
+    z-index: 999;
+    pointer-events: none;
+    overflow: clip;    /* 画面外の粒がスクロールバーを出さないように */
+  }
+  .gacha-fx {
+    position: absolute;
     top: 0;
     right: 0;
-    z-index: 999;
-    font-size: 2rem;
+    /* サイズはJSが --fx-size(px) で指定。スマホでは vw 上限で大きくなりすぎない */
+    font-size: min(var(--fx-size, 40px), clamp(24px, 8vw, 56px));
     line-height: 1;
     white-space: nowrap;
-    pointer-events: none;
     will-change: transform;
-    animation: beanFly 0.9s cubic-bezier(0.35, 0, 0.75, 0.5) forwards;
+    animation: beanFly var(--fx-duration, 0.9s) cubic-bezier(0.35, 0, 0.75, 0.5) both;
+    animation-delay: var(--fx-delay, 0s);
   }
   .gacha-fx .fx-text {
     font-size: 0.85rem;
     color: var(--accent-dark);
     vertical-align: middle;
   }
+  /* --fx-shift-x(vw)/--fx-shift-y(vh) で開始位置をずらしても、
+     from は常に画面外（上 or 右）、to は常に画面外（左下）になる */
   @keyframes beanFly {
-    from { transform: translate(100%, -100%) rotate(-20deg); }
-    to   { transform: translate(calc(-100vw - 100%), 100vh) rotate(-20deg); }
+    from {
+      transform: translate(calc(100% + var(--fx-shift-x, 0vw)),
+                           calc(-100% + var(--fx-shift-y, 0vh))) rotate(-20deg);
+    }
+    to {
+      transform: translate(calc(-100vw - 100% + var(--fx-shift-x, 0vw)),
+                           calc(100vh + var(--fx-shift-y, 0vh))) rotate(-20deg);
+    }
   }
   @media (prefers-reduced-motion: reduce) {
-    .gacha-fx { display: none; }
+    .gacha-fx-layer { display: none; }
   }
 
   /* ---- ランダムコメント ---- */

@@ -364,9 +364,74 @@ function populateSectorFilter() {
 }
 
 /* ---------------- ガチャ演出 ----------------
-   🫜 が右上から左下へ流れたあとに done() を呼ぶ。
-   prefers-reduced-motion: reduce の場合は演出せず即 done()。 */
+   演出は「種類」ごとにパーティクル仕様の配列を返すビルダー関数で定義する。
+     normal     … 🫜が1個流れる（毎回ランダムな開始位置・速度・サイズ）
+     beet_group … レア演出。🫜が5〜10個一斉に流れる
+     event      … 季節イベント用（EFFECT_BUILDERS に追加し、
+                   chooseEffectType() に期間判定を書くだけで有効になる）
+   ※演出は見た目だけのもので、銘柄の抽選結果には一切影響しない。
+   prefers-reduced-motion: reduce の場合は演出せず即結果を表示する。 */
+
+var FX = {
+  GROUP_CHANCE: 0.15,  // ビート群（レア演出）の出現率
+  EMOJI: "🫜",
+  SOUND_TEXT: " ﾋﾞｭｰﾝ"
+};
+
 var fxRunning = false; // 演出中フラグ（連打による重複起動を防ぐ）
+
+function fxRand(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+/* 1粒分の仕様を作る（開始位置・速度・サイズをランダム化）
+   開始位置は「上端のどこか」or「右端のどこか」。どちらも画面外から入る */
+function buildParticle(opts) {
+  var fromTop = Math.random() < 0.5;
+  return {
+    emoji: opts.emoji,
+    text: opts.text || "",
+    shiftX: fromTop ? -fxRand(0, opts.spread) : 0,       // vw（左へずらす＝上端の途中から）
+    shiftY: fromTop ? 0 : fxRand(0, opts.spread * 0.6),  // vh（下へずらす＝右端の途中から）
+    delay: fxRand(0, opts.maxDelay || 0),                // 秒
+    duration: fxRand(opts.minDur, opts.maxDur),          // 秒
+    size: Math.round(fxRand(opts.minSize, opts.maxSize)) // px（CSS側でスマホ上限あり）
+  };
+}
+
+var EFFECT_BUILDERS = {
+  normal: function () {
+    return [buildParticle({
+      emoji: FX.EMOJI, text: FX.SOUND_TEXT,
+      spread: 15, minDur: 0.8, maxDur: 1.2, minSize: 32, maxSize: 48
+    })];
+  },
+  beet_group: function () {
+    var n = 5 + Math.floor(Math.random() * 6); // 5〜10個
+    var list = [];
+    for (var i = 0; i < n; i++) {
+      list.push(buildParticle({
+        emoji: FX.EMOJI,
+        spread: 40, maxDelay: 0.35, minDur: 0.7, maxDur: 1.1, minSize: 24, maxSize: 56
+      }));
+    }
+    return list;
+  }
+  /* 季節イベントを追加する場合の例：
+     event: function () {
+       var n = 6, list = [];
+       for (var i = 0; i < n; i++) {
+         list.push(buildParticle({ emoji: "🎃", spread: 40, maxDelay: 0.3,
+                                   minDur: 0.8, maxDur: 1.2, minSize: 28, maxSize: 48 }));
+       }
+       return list;
+     }  */
+};
+
+/* どの演出を出すか決める。イベント期間中はここで "event" を返すよう拡張する */
+function chooseEffectType() {
+  return Math.random() < FX.GROUP_CHANCE ? "beet_group" : "normal";
+}
 
 function playGachaEffect(done) {
   var reduceMotion = window.matchMedia &&
@@ -376,26 +441,53 @@ function playGachaEffect(done) {
     return;
   }
 
-  var el = document.createElement("span");
-  el.className = "gacha-fx";
-  el.setAttribute("aria-hidden", "true"); // 装飾なのでスクリーンリーダーには読ませない
-  el.textContent = "🫜";
-  var text = document.createElement("span");
-  text.className = "fx-text";
-  text.textContent = " ﾋﾞｭｰﾝ";
-  el.appendChild(text);
-  document.body.appendChild(el);
+  var builder = EFFECT_BUILDERS[chooseEffectType()] || EFFECT_BUILDERS.normal;
+  var particles = builder();
 
+  // 粒はすべて専用レイヤーに入れ、終了時にレイヤーごと削除する（残留DOMなし）
+  var layer = document.createElement("div");
+  layer.className = "gacha-fx-layer";
+  layer.setAttribute("aria-hidden", "true"); // 装飾なのでスクリーンリーダーには読ませない
+
+  var maxEndMs = 0;
+  particles.forEach(function (p) {
+    var el = document.createElement("span");
+    el.className = "gacha-fx";
+    el.textContent = p.emoji;
+    if (p.text) {
+      var t = document.createElement("span");
+      t.className = "fx-text";
+      t.textContent = p.text;
+      el.appendChild(t);
+    }
+    el.style.setProperty("--fx-shift-x", p.shiftX + "vw");
+    el.style.setProperty("--fx-shift-y", p.shiftY + "vh");
+    el.style.setProperty("--fx-delay", p.delay + "s");
+    el.style.setProperty("--fx-duration", p.duration + "s");
+    el.style.setProperty("--fx-size", p.size + "px");
+    layer.appendChild(el);
+    maxEndMs = Math.max(maxEndMs, (p.delay + p.duration) * 1000);
+  });
+
+  var remaining = particles.length;
   var finished = false;
+  var safetyTimer = 0;
   function finish() {
     if (finished) return; // animationendとタイマーの二重呼び出しを防ぐ
     finished = true;
-    if (el.parentNode) el.parentNode.removeChild(el);
+    window.clearTimeout(safetyTimer);
+    if (layer.parentNode) layer.parentNode.removeChild(layer);
     done();
   }
-  el.addEventListener("animationend", finish);
+  // animationendはバブリングするのでレイヤーで一括受信（全粒終了で片付け）
+  layer.addEventListener("animationend", function () {
+    remaining -= 1;
+    if (remaining <= 0) finish();
+  });
   // animationendが発火しない環境（CSS未適用等）でも必ず結果を出す保険
-  window.setTimeout(finish, 1200);
+  safetyTimer = window.setTimeout(finish, maxEndMs + 400);
+
+  document.body.appendChild(layer);
 }
 
 /* ---------------- ガチャ実行 ---------------- */
