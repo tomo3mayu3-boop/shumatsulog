@@ -422,6 +422,82 @@
     padding: 30px 0;
   }
 
+  /* ---- 今日の1社（日替わり・通常ガチャとは別枠） ---- */
+  .daily-section { margin-bottom: 24px; }
+  .daily-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+  }
+  .daily-label {
+    color: var(--accent-dark);
+    font-weight: bold;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .daily-name { font-weight: bold; }
+  .daily-card .stock-links { margin-bottom: 0; }
+  .daily-note {
+    width: 100%;
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    margin: 2px 0 0;
+  }
+
+  /* ---- NEWバッジ（初発見の銘柄カードだけに付く） ---- */
+  .new-badge {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #fff;
+    background: var(--accent);
+    border-radius: 999px;
+    padding: 1px 8px;
+    letter-spacing: 0.08em;
+    animation: newPop 0.3s ease both;
+  }
+  @keyframes newPop {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  /* ---- 実績解除トースト（画面下に控えめに出て消える） ---- */
+  .gacha-toast-area {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+    max-width: 92vw;
+  }
+  .gacha-toast {
+    background: rgba(51, 50, 46, 0.92);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 9px 16px;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    white-space: nowrap;
+    animation: toastIn 2.6s ease both;
+  }
+  @keyframes toastIn {
+    0%       { opacity: 0; transform: translateY(8px); }
+    8%, 88%  { opacity: 1; transform: translateY(0); }
+    100%     { opacity: 0; transform: translateY(4px); }
+  }
+
   /* ---- 図鑑・実績（最小版） ---- */
   .meta-section {
     margin-bottom: 24px;
@@ -562,6 +638,14 @@
     <div class="button-row">
       <button type="button" id="gacha-button" class="btn-gacha">ガチャを回す</button>
       <button type="button" id="clear-history-button" class="btn-sub">履歴を消す</button>
+    </div>
+  </section>
+
+  <!-- ============ 今日の1社（日替わり・通常ガチャとは別枠） ============ -->
+  <section class="daily-section" aria-label="今日の1社">
+    <div class="daily-card" id="daily-card">
+      <span class="daily-label">🗓 今日の1社</span>
+      <!-- 中身はJSが日付シードで生成 -->
     </div>
   </section>
 

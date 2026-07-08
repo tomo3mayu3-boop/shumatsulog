@@ -303,7 +303,10 @@ var GachaDex = (function () {
      形式: { "7203": { firstSeen: エポックms, count: 出現回数 }, ... }
      将来「図鑑一覧」を作るときは getCollection() をUIから読むだけでよい */
 
+  /* 記録して、今回「初めて発見した」銘柄コードの配列を返す
+     （NEWバッジの表示判定に使う） */
   function recordStocks(stocks) {
+    var newlyFound = [];
     try {
       var col = getCollection();
       var now = Date.now();
@@ -313,10 +316,12 @@ var GachaDex = (function () {
           entry.count = (typeof entry.count === "number" ? entry.count : 0) + 1;
         } else {
           col[s.code] = { firstSeen: now, count: 1 };
+          newlyFound.push(s.code);
         }
       });
       GachaStore.save(GachaStore.KEYS.COLLECTION, col);
     } catch (e) { /* 図鑑記録は必須ではないので無視 */ }
+    return newlyFound;
   }
 
   function getCollection() {
@@ -916,6 +921,15 @@ var GachaUI = (function () {
       .replace(/"/g, "&quot;");
   }
 
+  /* 外部リンク一式のHTMLを銘柄コードから生成（結果カード・今日の1社で共用） */
+  function linksHtml(code) {
+    return LINKS.map(function (l) {
+      var url = l.url.replace("{code}", encodeURIComponent(code));
+      return '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
+             escapeHtml(l.label) + "</a>";
+    }).join("");
+  }
+
   function renderComment() {
     var el = document.getElementById("gacha-comment");
     var idx = Math.floor(Math.random() * GACHA_COMMENTS.length);
@@ -954,13 +968,6 @@ var GachaUI = (function () {
       // カードを1枚ずつ順に「召喚」する（CSS側 cardIn と組み合わせ）
       card.style.animationDelay = (index * 0.06) + "s";
 
-      // 外部リンクを銘柄コードから自動生成
-      var linksHtml = LINKS.map(function (l) {
-        var url = l.url.replace("{code}", encodeURIComponent(s.code));
-        return '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
-               escapeHtml(l.label) + "</a>";
-      }).join("");
-
       var memoId = "memo-" + escapeHtml(s.code);
 
       card.innerHTML =
@@ -973,7 +980,7 @@ var GachaUI = (function () {
           '<span class="tag">' + escapeHtml(s.sector) + "</span>" +
           '<span class="tag tag-type-' + escapeHtml(s.type) + '">' + escapeHtml(s.type) + "</span>" +
         "</div>" +
-        '<div class="stock-links">' + linksHtml + "</div>" +
+        '<div class="stock-links">' + linksHtml(s.code) + "</div>" +
         '<label class="memo-label" for="' + memoId + '">一言メモ（この端末にのみ保存）</label>' +
         '<textarea class="memo" id="' + memoId + '" data-code="' + escapeHtml(s.code) + '" ' +
           'placeholder="気づいたこと、調べたいことなど"></textarea>';
@@ -1010,6 +1017,7 @@ var GachaUI = (function () {
 
   return {
     escapeHtml: escapeHtml,
+    linksHtml: linksHtml,
     renderComment: renderComment,
     renderResults: renderResults,
     saveMemo: saveMemo,
@@ -1106,19 +1114,132 @@ var GachaMeta = (function () {
     el("dex-achievements-total").textContent = GachaDex.ACHIEVEMENTS.length;
   }
 
+  /* 初発見の銘柄カードに NEW バッジを付ける（2回目以降は付かない） */
+  function markNewCards(newCodes) {
+    newCodes.forEach(function (code) {
+      var memo = document.querySelector('#results .memo[data-code="' + code + '"]');
+      if (!memo) return;
+      var card = memo.closest(".stock-card");
+      var head = card ? card.querySelector(".stock-head") : null;
+      if (!head) return;
+      var badge = document.createElement("span");
+      badge.className = "new-badge";
+      badge.textContent = "NEW";
+      head.appendChild(badge);
+    });
+  }
+
+  /* 実績解除トースト（画面下に控えめに出て自動で消える） */
+  function showToast(text) {
+    var area = document.querySelector(".gacha-toast-area");
+    if (!area) {
+      area = document.createElement("div");
+      area.className = "gacha-toast-area";
+      area.setAttribute("aria-live", "polite");
+      document.body.appendChild(area);
+    }
+    var toast = document.createElement("div");
+    toast.className = "gacha-toast";
+    toast.textContent = text;
+    area.appendChild(toast);
+    // CSSアニメ（2.6秒）終了後にDOMごと片付ける
+    window.setTimeout(function () {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+      if (area.parentNode && area.children.length === 0) area.parentNode.removeChild(area);
+    }, 2800);
+  }
+
   /* 毎回のガチャで記録→実績判定→表示更新 */
   GachaApp.hooks.afterRoll.push(function (info) {
-    if (info.picked.length > 0) GachaDex.recordStocks(info.picked);
+    var newCodes = (info.picked.length > 0) ? GachaDex.recordStocks(info.picked) : [];
     GachaDex.recordRoll(); // 0件でも「回した」ことは数える
-    GachaDex.checkAchievements();
+    var newAchievements = GachaDex.checkAchievements();
     render();
+    markNewCards(newCodes);
+    newAchievements.forEach(function (a) {
+      showToast("🏅 実績解除：" + a.name);
+    });
   });
 
   // 初期表示（GachaApp.init のリスナーが先に登録されているので、
   // ここが実行される時点で他の初期化は完了している）
   document.addEventListener("DOMContentLoaded", render);
 
-  return { render: render };
+  return { render: render, showToast: showToast };
+})();
+
+/* ============================================================
+   今日の1社（日替わりガチャ）
+   日付シードの乱数で選ぶので、同じ日は誰が何回開いても同じ1社。
+   通常ガチャとは別枠で、ページを開くだけで表示される。
+   表示した銘柄は1日1回だけ図鑑に記録される（回数は増やさない）。
+   ============================================================ */
+var GachaDaily = (function () {
+
+  /* 日付から決まる擬似乱数（mulberry32）。
+     「今日のガチャ」を拡張するときもこの rng を使い回せる */
+  function seededRng(seed) {
+    return function () {
+      seed |= 0;
+      seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function dateKey(d) {
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  }
+
+  /* 今日の1社を返す（now はテスト用） */
+  function pickToday(now) {
+    var rng = seededRng(dateKey(now || new Date()));
+    return GachaLottery.pickRandom(GachaData.getAll(), 1, rng)[0];
+  }
+
+  function render() {
+    var card = document.getElementById("daily-card");
+    if (!card) return;
+    var s = pickToday();
+    var esc = GachaUI.escapeHtml;
+
+    // ラベル以外を作り直す（再描画しても増殖しないように）
+    card.querySelectorAll(".daily-generated").forEach(function (n) { n.remove(); });
+    var body = document.createElement("span");
+    body.className = "daily-generated";
+    body.innerHTML =
+      '<span class="stock-code">' + esc(s.code) + '</span> ' +
+      '<span class="daily-name">' + esc(s.name) + '</span> ' +
+      '<span class="tag">' + esc(s.market) + '</span>' +
+      '<span class="tag">' + esc(s.sector) + '</span>';
+    card.appendChild(body);
+    var links = document.createElement("div");
+    links.className = "stock-links daily-generated";
+    links.innerHTML = GachaUI.linksHtml(s.code);
+    card.appendChild(links);
+    var note = document.createElement("p");
+    note.className = "daily-note daily-generated";
+    note.textContent = "日替わりで1社を表示しています。調査の入口としてどうぞ。";
+    card.appendChild(note);
+
+    // 図鑑への記録は1日1回だけ
+    try {
+      var stats = GachaDex.getStats();
+      var key = dateKey(new Date());
+      if (stats.dailyLast !== key) {
+        stats.dailyLast = key;
+        GachaStore.save(GachaStore.KEYS.STATS, stats);
+        GachaDex.recordStocks([s]);
+        GachaDex.checkAchievements();
+        GachaMeta.render();
+      }
+    } catch (e) { /* 記録できなくても表示は続ける */ }
+  }
+
+  document.addEventListener("DOMContentLoaded", render);
+
+  return { render: render, pickToday: pickToday, seededRng: seededRng };
 })();
 
 /* ============================================================
