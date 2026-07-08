@@ -422,6 +422,27 @@
     padding: 30px 0;
   }
 
+  /* ---- 図鑑・実績（最小版） ---- */
+  .meta-section {
+    margin-bottom: 24px;
+  }
+  .meta-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    color: var(--text-sub);
+  }
+  .meta-stats strong {
+    color: var(--accent-dark);
+    font-size: 1rem;
+  }
+
   /* ---- 履歴 ---- */
   .history-section h2 {
     font-size: 1.1rem;
@@ -549,6 +570,15 @@
     <p class="gacha-comment" id="gacha-comment" aria-live="polite"></p>
     <div class="results" id="results" aria-live="polite">
       <p class="empty-message">「ガチャを回す」を押すと、ここに銘柄が表示されます。</p>
+    </div>
+  </section>
+
+  <!-- ============ 図鑑・実績（最小版） ============ -->
+  <section class="meta-section" aria-label="発見の記録">
+    <div class="meta-stats">
+      <span class="meta-item">発見した銘柄：<strong id="dex-stocks">0</strong> / <span id="dex-stocks-total">-</span></span>
+      <span class="meta-item">発見した業種：<strong id="dex-sectors">0</strong> / <span id="dex-sectors-total">-</span></span>
+      <span class="meta-item">解除済み実績：<strong id="dex-achievements">0</strong> / <span id="dex-achievements-total">-</span></span>
     </div>
   </section>
 

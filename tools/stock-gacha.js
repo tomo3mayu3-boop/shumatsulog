@@ -37,9 +37,12 @@
 var GachaStore = (function () {
   // 保存キーは変更しない（既存ユーザーのデータを引き継ぐため）
   var KEYS = {
-    HISTORY: "stockGachaHistory", // 出現履歴
-    MEMO: "stockGachaMemos",      // 銘柄ごとの一言メモ
-    DEX: "stockGachaDex"          // 見た演出の記録（将来の「演出図鑑」用）
+    HISTORY: "stockGachaHistory",          // 出現履歴
+    MEMO: "stockGachaMemos",               // 銘柄ごとの一言メモ
+    DEX: "stockGachaDex",                  // 見た演出の記録（将来の「演出図鑑」用）
+    COLLECTION: "stockGachaCollection",    // 発見した銘柄（図鑑）
+    STATS: "stockGachaStats",              // 回数などの累計（実績の判定材料）
+    ACHIEVEMENTS: "stockGachaAchievements" // 解除済み実績（id→解除日時）
   };
 
   function available() {
@@ -290,13 +293,141 @@ var GachaDex = (function () {
     } catch (e) { /* 図鑑記録は必須ではないので無視 */ }
   }
 
-  /* 図鑑UIを作るときはこれを呼ぶ */
+  /* 演出図鑑UIを作るときはこれを呼ぶ */
   function get() {
     var dex = GachaStore.load(GachaStore.KEYS.DEX, {});
     return (typeof dex === "object" && dex !== null) ? dex : {};
   }
 
-  return { EFFECT_INFO: EFFECT_INFO, recordEffectSeen: recordEffectSeen, get: get };
+  /* ---------- 銘柄図鑑（発見した銘柄の記録） ----------
+     形式: { "7203": { firstSeen: エポックms, count: 出現回数 }, ... }
+     将来「図鑑一覧」を作るときは getCollection() をUIから読むだけでよい */
+
+  function recordStocks(stocks) {
+    try {
+      var col = getCollection();
+      var now = Date.now();
+      stocks.forEach(function (s) {
+        var entry = col[s.code];
+        if (entry) {
+          entry.count = (typeof entry.count === "number" ? entry.count : 0) + 1;
+        } else {
+          col[s.code] = { firstSeen: now, count: 1 };
+        }
+      });
+      GachaStore.save(GachaStore.KEYS.COLLECTION, col);
+    } catch (e) { /* 図鑑記録は必須ではないので無視 */ }
+  }
+
+  function getCollection() {
+    var col = GachaStore.load(GachaStore.KEYS.COLLECTION, {});
+    return (typeof col === "object" && col !== null) ? col : {};
+  }
+
+  /* 発見した銘柄数（現在のデータに存在するものだけ数える。
+     データ入替でコードが消えても「n / 総数」が矛盾しないように） */
+  function countDiscoveredStocks() {
+    var col = getCollection();
+    var n = 0;
+    GachaData.getAll().forEach(function (s) {
+      if (col[s.code]) n++;
+    });
+    return n;
+  }
+
+  /* 発見した業種数（発見済み銘柄の業種を現在のデータから逆引き） */
+  function countDiscoveredSectors() {
+    var col = getCollection();
+    var seen = {};
+    var n = 0;
+    GachaData.getAll().forEach(function (s) {
+      if (col[s.code] && !seen[s.sector]) {
+        seen[s.sector] = true;
+        n++;
+      }
+    });
+    return n;
+  }
+
+  /* ---------- 累計（実績の判定材料） ----------
+     形式: { rolls: ガチャを回した累計回数 } */
+
+  function recordRoll() {
+    try {
+      var stats = getStats();
+      stats.rolls = (typeof stats.rolls === "number" ? stats.rolls : 0) + 1;
+      GachaStore.save(GachaStore.KEYS.STATS, stats);
+    } catch (e) { /* 同上 */ }
+  }
+
+  function getStats() {
+    var stats = GachaStore.load(GachaStore.KEYS.STATS, {});
+    return (typeof stats === "object" && stats !== null) ? stats : {};
+  }
+
+  /* ---------- 実績 ----------
+     定義を1行足せば新しい実績になる。check は
+     { stats, effects, collection } を受け取って true/false を返す。
+     解除済みは { id: 解除日時 } で保存（将来「実績一覧」で使う） */
+  var ACHIEVEMENTS = [
+    { id: "first_roll", name: "初ガチャ",
+      check: function (c) { return (c.stats.rolls || 0) >= 1; } },
+    { id: "rolls_10", name: "10回ガチャ",
+      check: function (c) { return (c.stats.rolls || 0) >= 10; } },
+    { id: "rolls_50", name: "50回ガチャ",
+      check: function (c) { return (c.stats.rolls || 0) >= 50; } },
+    { id: "rolls_100", name: "100回ガチャ",
+      check: function (c) { return (c.stats.rolls || 0) >= 100; } },
+    { id: "saw_group", name: "ビート群を見た",
+      check: function (c) { return !!c.effects.beet_group; } },
+    { id: "saw_golden", name: "黄金ビート嵐を見た",
+      check: function (c) { return !!c.effects.golden_storm; } }
+  ];
+
+  /* 未解除の実績を判定し、新たに解除されたものを返す */
+  function checkAchievements() {
+    var newly = [];
+    try {
+      var unlocked = getAchievements();
+      var ctx = { stats: getStats(), effects: get(), collection: getCollection() };
+      ACHIEVEMENTS.forEach(function (a) {
+        if (!unlocked[a.id] && a.check(ctx)) {
+          unlocked[a.id] = Date.now();
+          newly.push(a);
+        }
+      });
+      if (newly.length > 0) GachaStore.save(GachaStore.KEYS.ACHIEVEMENTS, unlocked);
+    } catch (e) { /* 同上 */ }
+    return newly;
+  }
+
+  function getAchievements() {
+    var a = GachaStore.load(GachaStore.KEYS.ACHIEVEMENTS, {});
+    return (typeof a === "object" && a !== null) ? a : {};
+  }
+
+  function countAchievements() {
+    var unlocked = getAchievements();
+    var n = 0;
+    ACHIEVEMENTS.forEach(function (a) { if (unlocked[a.id]) n++; });
+    return n;
+  }
+
+  return {
+    EFFECT_INFO: EFFECT_INFO,
+    recordEffectSeen: recordEffectSeen,
+    get: get,
+    recordStocks: recordStocks,
+    getCollection: getCollection,
+    countDiscoveredStocks: countDiscoveredStocks,
+    countDiscoveredSectors: countDiscoveredSectors,
+    recordRoll: recordRoll,
+    getStats: getStats,
+    ACHIEVEMENTS: ACHIEVEMENTS,
+    checkAchievements: checkAchievements,
+    getAchievements: getAchievements,
+    countAchievements: countAchievements
+  };
 })();
 
 /* ============================================================
@@ -951,6 +1082,43 @@ var GachaApp = (function () {
   }
 
   return { init: init, roll: roll, hooks: hooks, runHooks: runHooks };
+})();
+
+/* ============================================================
+   図鑑・実績（最小版）
+   afterRoll フックで動く最初の拡張機能。本体（GachaApp.roll）には
+   一切手を入れていない。将来「図鑑一覧」「実績一覧」を作るときは、
+   GachaDex.getCollection() / getAchievements() / ACHIEVEMENTS を
+   読むUIをここに足すだけでよい。
+   ============================================================ */
+var GachaMeta = (function () {
+
+  /* 画面上部の「発見した銘柄／業種・解除済み実績」カウンタを更新 */
+  function render() {
+    var el = function (id) { return document.getElementById(id); };
+    // 表示要素がないページ構成でも動くように黙って抜ける
+    if (!el("dex-stocks")) return;
+    el("dex-stocks").textContent = GachaDex.countDiscoveredStocks();
+    el("dex-stocks-total").textContent = GachaData.getAll().length;
+    el("dex-sectors").textContent = GachaDex.countDiscoveredSectors();
+    el("dex-sectors-total").textContent = GachaData.sectors().length;
+    el("dex-achievements").textContent = GachaDex.countAchievements();
+    el("dex-achievements-total").textContent = GachaDex.ACHIEVEMENTS.length;
+  }
+
+  /* 毎回のガチャで記録→実績判定→表示更新 */
+  GachaApp.hooks.afterRoll.push(function (info) {
+    if (info.picked.length > 0) GachaDex.recordStocks(info.picked);
+    GachaDex.recordRoll(); // 0件でも「回した」ことは数える
+    GachaDex.checkAchievements();
+    render();
+  });
+
+  // 初期表示（GachaApp.init のリスナーが先に登録されているので、
+  // ここが実行される時点で他の初期化は完了している）
+  document.addEventListener("DOMContentLoaded", render);
+
+  return { render: render };
 })();
 
 /* ============================================================
