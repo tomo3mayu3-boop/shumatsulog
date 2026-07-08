@@ -188,7 +188,19 @@ var GachaData = (function () {
     return list;
   }
 
-  return { getAll: getAll, sectors: sectors };
+  /* 図鑑ナンバー（データ内の通し番号・1始まり）。"No.007" 形式で返す */
+  var numberMap = null;
+  function numberOf(code) {
+    if (!numberMap) {
+      numberMap = {};
+      getAll().forEach(function (s, i) { numberMap[s.code] = i + 1; });
+    }
+    var n = numberMap[code];
+    if (!n) return "";
+    return "No." + (n < 10 ? "00" : (n < 100 ? "0" : "")) + n;
+  }
+
+  return { getAll: getAll, sectors: sectors, numberOf: numberOf };
 })();
 
 /* ============================================================
@@ -234,13 +246,15 @@ var GachaLottery = (function () {
    年またぎ（12-26〜01-05 等）にも対応。
    ============================================================ */
 var GachaEvents = (function () {
-  /* イベント定義の例（有効化するときはコメントを外し、
-     GachaFX.builders に同じ id の演出を追加する）:
-     { id: "tanabata",  start: "07-01", end: "07-07", effect: "tanabata",  chance: 0.15 },
-     { id: "halloween", start: "10-15", end: "10-31", effect: "halloween", chance: 0.15 },
-     { id: "christmas", start: "12-18", end: "12-25", effect: "christmas", chance: 0.15 },
-     { id: "newyear",   start: "12-31", end: "01-03", effect: "newyear",   chance: 0.15 }  */
-  var SCHEDULE = [];
+  /* 季節イベントの期間表。期間中は chance の確率でイベント演出が出る
+     （通常のビート群の枠と置き換わる。銘柄の抽選には影響しない）。
+     バナー付き演出なので、頻度は控えめの6%にしてある */
+  var SCHEDULE = [
+    { id: "tanabata",  start: "07-01", end: "07-07", effect: "tanabata",  chance: 0.06 },
+    { id: "halloween", start: "10-25", end: "10-31", effect: "halloween", chance: 0.06 },
+    { id: "christmas", start: "12-20", end: "12-25", effect: "christmas", chance: 0.06 },
+    { id: "newyear",   start: "12-31", end: "01-03", effect: "newyear",   chance: 0.06 }
+  ];
 
   /* 今日が期間内のイベントを返す（なければ null）。now はテスト用 */
   function getActiveEvent(now) {
@@ -275,7 +289,11 @@ var GachaDex = (function () {
     normal:       { name: "通常ビート" },
     beet_group:   { name: "ビート群" },
     beet_storm:   { name: "ビート嵐" },
-    golden_storm: { name: "黄金ビート嵐" }
+    golden_storm: { name: "黄金ビート嵐" },
+    tanabata:     { name: "七夕ビート" },
+    halloween:    { name: "ハロウィンビート" },
+    christmas:    { name: "クリスマスビート" },
+    newyear:      { name: "新春ビート" }
   };
 
   /* 記録に失敗してもガチャ自体は止めない */
@@ -386,7 +404,12 @@ var GachaDex = (function () {
     { id: "saw_group", name: "ビート群を見た",
       check: function (c) { return !!c.effects.beet_group; } },
     { id: "saw_golden", name: "黄金ビート嵐を見た",
-      check: function (c) { return !!c.effects.golden_storm; } }
+      check: function (c) { return !!c.effects.golden_storm; } },
+    { id: "saw_event", name: "季節の演出を見た",
+      check: function (c) {
+        return !!(c.effects.tanabata || c.effects.halloween ||
+                  c.effects.christmas || c.effects.newyear);
+      } }
   ];
 
   /* 未解除の実績を判定し、新たに解除されたものを返す */
@@ -557,22 +580,56 @@ var GachaFX = (function () {
           glow: "0 0 12px rgba(255,205,60,0.95), 0 0 34px rgba(255,205,60,0.6)"
         })
       };
+    },
+
+    /* ---- 季節イベント演出（GachaEvents.SCHEDULE の期間中だけ出る） ---- */
+    tanabata: function () {
+      return eventStorm("🎋", {
+        icon: "🎋", lead: "HAPPY", main: "TANABATA!!",
+        loading: ["星に願いを記入中...", "天の川をスキャン中..."],
+        color: "#3a5a7a", bg: "rgba(235,242,250,0.9)",
+        glow: "0 0 12px rgba(120,180,255,0.8), 0 0 30px rgba(255,230,120,0.5)"
+      });
+    },
+    halloween: function () {
+      return eventStorm("🎃", {
+        icon: "🎃", lead: "HAPPY", main: "HALLOWEEN!!",
+        loading: ["お菓子を選定中...", "夜の市場を探索中..."],
+        color: "#7a3b00", bg: "rgba(255,244,230,0.9)",
+        glow: "0 0 12px rgba(255,140,0,0.8), 0 0 30px rgba(120,40,160,0.5)"
+      });
+    },
+    christmas: function () {
+      return eventStorm("🎄", {
+        icon: "🎄", lead: "MERRY", main: "CHRISTMAS!!",
+        loading: ["プレゼントを包装中...", "聖夜の市場を探索中..."],
+        color: "#1f5c3d", bg: "rgba(240,248,242,0.92)",
+        glow: "0 0 12px rgba(220,60,60,0.7), 0 0 30px rgba(80,180,120,0.5)"
+      });
+    },
+    newyear: function () {
+      return eventStorm("🎍", {
+        icon: "🎍", lead: "HAPPY", main: "NEW YEAR!!",
+        loading: ["初夢を集計中...", "新春の市場を探索中..."],
+        color: "#8a3a3a", bg: "rgba(252,244,238,0.92)",
+        glow: "0 0 12px rgba(230,180,80,0.85), 0 0 30px rgba(220,80,80,0.45)"
+      });
     }
-    /* 季節イベント演出を追加する例（GachaEvents.SCHEDULE とセットで）:
-       halloween: function () {
-         var n = 28 + Math.floor(Math.random() * 5), list = [];
-         for (var i = 0; i < n; i++) {
-           list.push(buildParticle({ emoji: "🎃", spread: 60, maxDelay: 0.7,
-                                     minDur: 0.8, maxDur: 1.3, baseSize: 40, sparkles: 2 }));
-         }
-         return { particles: list, warmBg: true, finale: makeFinale({
-           icon: "🎃", lead: "HAPPY", main: "HALLOWEEN!!",
-           loading: ["お菓子を選定中...", "夜の市場を探索中..."],
-           color: "#7a3b00", bg: "rgba(255,244,230,0.9)",
-           glow: "0 0 12px rgba(255,140,0,0.8), 0 0 30px rgba(120,40,160,0.5)"
-         })};
-       }  */
   };
+
+  /* イベント演出の共通形: テーマ絵文字が10〜16個流れて、
+     バナー→待機→結果になる（黄金ビート嵐より少し控えめ） */
+  function eventStorm(emoji, finaleOpts) {
+    var n = 10 + Math.floor(Math.random() * 7); // 10〜16個
+    var list = [];
+    for (var i = 0; i < n; i++) {
+      list.push(buildParticle({
+        emoji: emoji,
+        spread: 50, maxDelay: 0.5, minDur: 0.8, maxDur: 1.2, baseSize: 40, sparkles: 2
+      }));
+    }
+    return { particles: list, warmBg: true, finale: makeFinale(finaleOpts) };
+  }
 
   /* どの演出を出すか決める（レアな順に判定）。
      季節イベント期間中は、ビート群の枠がイベント演出に置き換わる。
@@ -965,6 +1022,8 @@ var GachaUI = (function () {
     stocks.forEach(function (s, index) {
       var card = document.createElement("article");
       card.className = "stock-card";
+      // 上辺の色分け用（市場区分＝属性の色。優劣ではない）
+      card.setAttribute("data-market", s.market);
       // カードを1枚ずつ順に「召喚」する（CSS側 cardIn と組み合わせ）
       card.style.animationDelay = (index * 0.06) + "s";
 
@@ -972,6 +1031,7 @@ var GachaUI = (function () {
 
       card.innerHTML =
         '<div class="stock-head">' +
+          '<span class="dex-no">' + escapeHtml(GachaData.numberOf(s.code)) + "</span>" +
           '<span class="stock-code">' + escapeHtml(s.code) + "</span>" +
           '<h3 class="stock-name">' + escapeHtml(s.name) + "</h3>" +
         "</div>" +
@@ -1136,8 +1196,9 @@ var GachaMeta = (function () {
       html += "</p>";
       list.forEach(function (s) {
         var entry = col[s.code];
+        var no = '<span class="dex-no">' + esc(GachaData.numberOf(s.code)) + "</span>";
         if (entry) {
-          html += '<div class="dex-row">' +
+          html += '<div class="dex-row">' + no +
             '<span class="stock-code">' + esc(s.code) + "</span>" +
             "<span>" + esc(s.name) + "</span>" +
             '<span class="tag">' + esc(s.market) + "</span>" +
@@ -1145,7 +1206,9 @@ var GachaMeta = (function () {
             "・出現" + esc(entry.count) + "回</span>" +
             "</div>";
         } else {
-          html += '<div class="dex-row"><span class="dex-undiscovered">？？？？</span></div>';
+          // 未発見でも番号だけは見える（空きスロット感を出す）
+          html += '<div class="dex-row">' + no +
+            '<span class="dex-undiscovered">？？？？</span></div>';
         }
       });
     });
@@ -1316,6 +1379,70 @@ var GachaDaily = (function () {
   document.addEventListener("DOMContentLoaded", render);
 
   return { render: render, pickToday: pickToday, seededRng: seededRng };
+})();
+
+/* ============================================================
+   今週の探索テーマ
+   週替わりで「今週はこの業種を見てみよう」という視点だけを提示する。
+   排出率・抽選内容には一切影響しない（ボタンは業種フィルターを
+   セットするだけで、回すかどうかはユーザー次第）。
+   ============================================================ */
+var GachaTheme = (function () {
+
+  /* テーマは実在の業種のみ（優劣や有望さの示唆はしない）。
+     コピーは「知る・見る」の視点に限定する */
+  var THEMES = [
+    { sector: "海運業",       copy: "船の会社、いくつ知ってる？" },
+    { sector: "食料品",       copy: "毎日食べてるあの味も上場企業" },
+    { sector: "機械",         copy: "世界を組み立てる裏方たち" },
+    { sector: "医薬品",       copy: "研究開発の世界をのぞいてみる" },
+    { sector: "小売業",       copy: "いつもの店の裏側を見てみる" },
+    { sector: "銀行業",       copy: "お金の流れの土台を知る" },
+    { sector: "化学",         copy: "素材から世界を見てみる" },
+    { sector: "陸運業",       copy: "運ぶ会社たちの世界" },
+    { sector: "情報・通信業", copy: "つながりを支える会社を知る" },
+    { sector: "電気機器",     copy: "ものづくりの最前線を見る" },
+    { sector: "不動産業",     copy: "街をつくる会社を見てみる" },
+    { sector: "精密機器",     copy: "小さな部品の大きな世界" }
+  ];
+
+  /* 週番号（月曜起点）からテーマを決める。now はテスト用 */
+  function themeOfWeek(now) {
+    var d = now || new Date();
+    var days = Math.floor(d.getTime() / 86400000); // エポックからの日数
+    var week = Math.floor((days + 3) / 7);         // 1970-01-01は木曜なので月曜起点に+3
+    return THEMES[week % THEMES.length];
+  }
+
+  function render() {
+    var card = document.getElementById("theme-card");
+    if (!card) return;
+    var t = themeOfWeek();
+    card.innerHTML = "";
+    var label = document.createElement("span");
+    label.className = "theme-label";
+    label.textContent = "🧭 今週の探索テーマ：" + t.sector;
+    card.appendChild(label);
+    var copy = document.createElement("span");
+    copy.className = "theme-copy";
+    copy.textContent = t.copy;
+    card.appendChild(copy);
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "theme-btn";
+    btn.textContent = "この業種に絞って回してみる";
+    btn.addEventListener("click", function () {
+      var select = document.getElementById("sector-select");
+      if (select) select.value = t.sector;
+      var gachaBtn = document.getElementById("gacha-button");
+      if (gachaBtn) gachaBtn.focus(); // 回すかどうかはユーザーに委ねる
+    });
+    card.appendChild(btn);
+  }
+
+  document.addEventListener("DOMContentLoaded", render);
+
+  return { render: render, themeOfWeek: themeOfWeek, THEMES: THEMES };
 })();
 
 /* ============================================================

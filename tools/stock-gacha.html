@@ -59,6 +59,18 @@
     font-size: 0.95rem;
     margin: 0 0 12px;
   }
+  .labs-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    color: var(--accent-dark);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    padding: 0 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.06em;
+    background: var(--tag-stock);
+  }
   .intro {
     font-size: 0.9rem;
     color: var(--text-sub);
@@ -331,11 +343,25 @@
   .stock-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
+    /* 発見カード風: 上辺の色は市場区分を表す（優劣ではなく属性の色分け） */
+    border-top: 3px solid var(--accent);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 16px;
     /* 結果カードは「召喚された」ように、下からふわっと立ち上げる */
     animation: cardIn 0.25s ease both;
+  }
+  .stock-card[data-market="スタンダード"] { border-top-color: #5b7a9d; }
+  .stock-card[data-market="グロース"]     { border-top-color: #b0813f; }
+  .stock-card[data-market="東証"]         { border-top-color: #97927f; }
+  /* 図鑑ナンバー（データ内の通し番号。コレクション感を出す） */
+  .dex-no {
+    font-family: "Consolas", "Menlo", monospace;
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    background: #f2f1ec;
+    border-radius: 6px;
+    padding: 1px 6px;
   }
   @keyframes cardIn {
     from { opacity: 0; transform: translateY(12px); }
@@ -450,6 +476,37 @@
     color: var(--text-sub);
     margin: 2px 0 0;
   }
+
+  /* ---- 今週の探索テーマ（視点の提示だけ。排出率には影響しない） ---- */
+  .theme-card {
+    margin-top: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+  }
+  .theme-label {
+    color: var(--accent-dark);
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .theme-copy { color: var(--text-sub); }
+  .theme-btn {
+    font-size: 0.78rem;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fbfaf7;
+    color: var(--accent-dark);
+    cursor: pointer;
+  }
+  .theme-btn:hover, .theme-btn:focus-visible { background: #f0f3ef; }
 
   /* ---- NEWバッジ（初発見の銘柄カードだけに付く） ---- */
   .new-badge {
@@ -626,7 +683,7 @@
   <!-- ============ タイトルエリア ============ -->
   <header>
     <h1>株ガチャ<span class="psi">ψ</span></h1>
-    <p class="subtitle">ランダムに知らない銘柄と出会う装置</p>
+    <p class="subtitle">ランダムに知らない銘柄と出会う装置 <span class="labs-badge">週末ログ Labs β</span></p>
     <p class="intro">
       自分の好みや思い込みを外して、日本株の銘柄をランダムに表示します。<br>
       表示された銘柄は、調査の入口として使うためのものです。
@@ -695,6 +752,9 @@
     <div class="daily-card" id="daily-card">
       <span class="daily-label">🗓 今日の1社</span>
       <!-- 中身はJSが日付シードで生成 -->
+    </div>
+    <div class="theme-card" id="theme-card">
+      <!-- 今週の探索テーマ（JSが週替わりで生成。排出率には影響しない） -->
     </div>
   </section>
 
