@@ -938,3 +938,42 @@ header {
 @media (prefers-color-scheme: dark) {
   .post-date { color: #666; }
 }
+/* ===== Labs β（実験ツール置き場） ===== */
+.beta-badge {
+  display: inline-block;
+  font-size: 11px;
+  border: 1px solid currentColor;
+  padding: 1px 9px;
+  border-radius: 20px;
+  vertical-align: middle;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+.labs-icon {
+  width: 100%;
+  max-width: 500px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  background: rgba(127, 127, 127, 0.08); /* ライト/ダーク両対応の控えめな下地 */
+  border-radius: 10px;
+}
+.labs-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+.labs-list li {
+  margin: 8px 0;
+}
+.labs-soon {
+  opacity: 0.55;
+}
+.labs-note {
+  font-size: 0.8rem;
+  opacity: 0.65;
+  margin-top: 28px;
+}
