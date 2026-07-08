@@ -518,6 +518,55 @@
     color: var(--accent-dark);
     font-size: 1rem;
   }
+  /* 図鑑の折りたたみ（detailsなのでJS不要・キーボード操作も標準対応） */
+  .dex-details { margin-top: 10px; }
+  .dex-details summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--accent-dark);
+    padding: 9px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+  .dex-details[open] summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .dex-list {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 8px 14px 12px;
+    font-size: 0.85rem;
+  }
+  .dex-group-title {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+    font-weight: bold;
+    margin: 10px 0 2px;
+  }
+  .dex-remain { font-weight: normal; }
+  .dex-complete { color: var(--accent); font-weight: normal; }
+  .dex-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 10px;
+    padding: 3px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .dex-row:last-child { border-bottom: none; }
+  .dex-undiscovered {
+    color: #b8b5ab;
+    letter-spacing: 0.12em;
+  }
+  .dex-meta {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+  }
 
   /* ---- 履歴 ---- */
   .history-section h2 {
@@ -657,13 +706,21 @@
     </div>
   </section>
 
-  <!-- ============ 図鑑・実績（最小版） ============ -->
+  <!-- ============ 図鑑・実績 ============ -->
   <section class="meta-section" aria-label="発見の記録">
     <div class="meta-stats">
       <span class="meta-item">発見した銘柄：<strong id="dex-stocks">0</strong> / <span id="dex-stocks-total">-</span></span>
       <span class="meta-item">発見した業種：<strong id="dex-sectors">0</strong> / <span id="dex-sectors-total">-</span></span>
       <span class="meta-item">解除済み実績：<strong id="dex-achievements">0</strong> / <span id="dex-achievements-total">-</span></span>
     </div>
+    <details class="dex-details">
+      <summary>📖 銘柄図鑑を見る（業種ごとの進捗つき）</summary>
+      <div class="dex-list" id="dex-list"><!-- JSが生成 --></div>
+    </details>
+    <details class="dex-details">
+      <summary>🎞 演出図鑑を見る</summary>
+      <div class="dex-list" id="effect-dex-list"><!-- JSが生成 --></div>
+    </details>
   </section>
 
   <!-- ============ 履歴エリア ============ -->

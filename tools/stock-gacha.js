@@ -1101,7 +1101,81 @@ var GachaApp = (function () {
    ============================================================ */
 var GachaMeta = (function () {
 
-  /* 画面上部の「発見した銘柄／業種・解除済み実績」カウンタを更新 */
+  function fmtDate(epochMs) {
+    var d = new Date(epochMs);
+    if (isNaN(d.getTime())) return "-";
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+    return d.getFullYear() + "/" + pad(d.getMonth() + 1) + "/" + pad(d.getDate());
+  }
+
+  /* 銘柄図鑑一覧: 業種ごとにグループ化し、
+     見出しに進捗（n/m・あと◯社）、行に発見済み情報 or ???? を出す */
+  function renderStockDex() {
+    var box = document.getElementById("dex-list");
+    if (!box) return;
+    var esc = GachaUI.escapeHtml;
+    var col = GachaDex.getCollection();
+
+    // 業種 → 銘柄リスト（データの登場順を保つ）
+    var groups = {};
+    var order = [];
+    GachaData.getAll().forEach(function (s) {
+      if (!groups[s.sector]) { groups[s.sector] = []; order.push(s.sector); }
+      groups[s.sector].push(s);
+    });
+
+    var html = "";
+    order.forEach(function (sector) {
+      var list = groups[sector];
+      var found = list.filter(function (s) { return col[s.code]; }).length;
+      var remain = list.length - found;
+      html += '<p class="dex-group-title">' + esc(sector) + "　" + found + " / " + list.length;
+      html += (remain === 0)
+        ? '　<span class="dex-complete">✔ コンプリート</span>'
+        : '　<span class="dex-remain">（あと' + remain + '社）</span>';
+      html += "</p>";
+      list.forEach(function (s) {
+        var entry = col[s.code];
+        if (entry) {
+          html += '<div class="dex-row">' +
+            '<span class="stock-code">' + esc(s.code) + "</span>" +
+            "<span>" + esc(s.name) + "</span>" +
+            '<span class="tag">' + esc(s.market) + "</span>" +
+            '<span class="dex-meta">発見 ' + esc(fmtDate(entry.firstSeen)) +
+            "・出現" + esc(entry.count) + "回</span>" +
+            "</div>";
+        } else {
+          html += '<div class="dex-row"><span class="dex-undiscovered">？？？？</span></div>';
+        }
+      });
+    });
+    box.innerHTML = html;
+  }
+
+  /* 演出図鑑: 見たことのある演出は名前と記録、未見は ????? */
+  function renderEffectDex() {
+    var box = document.getElementById("effect-dex-list");
+    if (!box) return;
+    var esc = GachaUI.escapeHtml;
+    var seen = GachaDex.get();
+    var html = "";
+    Object.keys(GachaDex.EFFECT_INFO).forEach(function (id) {
+      var info = GachaDex.EFFECT_INFO[id];
+      var entry = seen[id];
+      if (entry) {
+        html += '<div class="dex-row">' +
+          "<span>" + esc(info.name) + "</span>" +
+          '<span class="dex-meta">初回 ' + esc(fmtDate(entry.firstSeen)) +
+          "・" + esc(entry.count) + "回</span>" +
+          "</div>";
+      } else {
+        html += '<div class="dex-row"><span class="dex-undiscovered">？？？？？</span></div>';
+      }
+    });
+    box.innerHTML = html;
+  }
+
+  /* 画面上部の「発見した銘柄／業種・解除済み実績」カウンタと図鑑を更新 */
   function render() {
     var el = function (id) { return document.getElementById(id); };
     // 表示要素がないページ構成でも動くように黙って抜ける
@@ -1112,6 +1186,8 @@ var GachaMeta = (function () {
     el("dex-sectors-total").textContent = GachaData.sectors().length;
     el("dex-achievements").textContent = GachaDex.countAchievements();
     el("dex-achievements-total").textContent = GachaDex.ACHIEVEMENTS.length;
+    renderStockDex();
+    renderEffectDex();
   }
 
   /* 初発見の銘柄カードに NEW バッジを付ける（2回目以降は付かない） */
