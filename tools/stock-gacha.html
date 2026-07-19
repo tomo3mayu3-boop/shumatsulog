@@ -555,6 +555,59 @@
     100%     { opacity: 0; transform: translateY(4px); }
   }
 
+  /* ---- 今回の探索結果（ガチャ完了時のみ表示・平常時は非表示） ---- */
+  .roll-summary {
+    display: none;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    color: var(--text-sub);
+    margin: 0 0 14px;
+  }
+  .roll-summary.is-visible { display: flex; }
+  .roll-summary strong { color: var(--accent-dark); }
+  .roll-summary .exp-gain {
+    color: var(--accent-dark);
+    font-weight: bold;
+  }
+  .roll-summary .combo-label {
+    background: var(--tag-reit);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 1px 9px;
+    font-size: 0.75rem;
+  }
+
+  /* ---- 初発見カードの淡い金色シマー（0.6秒・視差軽減時は無効）
+         疑似要素に独立したアニメを持たせるので、カード本体の
+         召喚アニメ（cardIn＋段差ディレイ）とは干渉しない ---- */
+  .stock-card.first-found { position: relative; }
+  .stock-card.first-found::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: var(--radius);
+    border: 2px solid rgba(230, 190, 90, 0.6);
+    box-shadow: 0 0 12px rgba(230, 190, 90, 0.4);
+    pointer-events: none;
+    opacity: 0;
+    animation: firstFoundGlow 0.6s ease both;
+  }
+  @keyframes firstFoundGlow {
+    0%   { opacity: 0; }
+    35%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stock-card.first-found::after { animation: none; opacity: 0; }
+  }
+
   /* ---- 図鑑・実績（最小版） ---- */
   .meta-section {
     margin-bottom: 24px;
@@ -574,6 +627,10 @@
   .meta-stats strong {
     color: var(--accent-dark);
     font-size: 1rem;
+  }
+  .meta-sub {
+    font-size: 0.75rem;
+    margin-left: 2px;
   }
   /* 図鑑の折りたたみ（detailsなのでJS不要・キーボード操作も標準対応） */
   .dex-details { margin-top: 10px; }
@@ -761,6 +818,8 @@
   <!-- ============ 結果表示エリア ============ -->
   <section aria-label="ガチャの結果">
     <p class="gacha-comment" id="gacha-comment" aria-live="polite"></p>
+    <!-- 今回の探索結果（ガチャ完了時のみ表示。平常時は非表示） -->
+    <div class="roll-summary" id="roll-summary" aria-live="polite"></div>
     <div class="results" id="results" aria-live="polite">
       <p class="empty-message">「ガチャを回す」を押すと、ここに銘柄が表示されます。</p>
     </div>
@@ -772,6 +831,8 @@
       <span class="meta-item">発見した銘柄：<strong id="dex-stocks">0</strong> / <span id="dex-stocks-total">-</span></span>
       <span class="meta-item">発見した業種：<strong id="dex-sectors">0</strong> / <span id="dex-sectors-total">-</span></span>
       <span class="meta-item">解除済み実績：<strong id="dex-achievements">0</strong> / <span id="dex-achievements-total">-</span></span>
+      <span class="meta-item">探索Lv：<strong id="dex-level">1</strong><span class="meta-sub" id="dex-level-next"></span></span>
+      <span class="meta-item">称号：<strong id="dex-title">銘柄見習い</strong></span>
     </div>
     <details class="dex-details">
       <summary>📖 銘柄図鑑を見る（業種ごとの進捗つき）</summary>

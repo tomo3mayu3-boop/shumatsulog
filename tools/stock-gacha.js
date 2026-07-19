@@ -1153,6 +1153,195 @@ var GachaApp = (function () {
 })();
 
 /* ============================================================
+   GachaProgress — 探索EXP・レベル・称号
+   「発見体験」だけを評価する。銘柄そのものにレアリティや優劣は
+   一切付けない（EXPの対象は初発見・新業種・コンプ・実績・
+   演出初見・その回の引きの偶然だけ）。
+   レベルと称号は保存せず、EXPと図鑑から毎回導出する
+   （保存値との不整合を作らないため）。
+   ============================================================ */
+var GachaProgress = (function () {
+
+  /* EXP付与量（発見体験のみ。周回だけでは育たない設計） */
+  var RATES = {
+    FIRST_ROLL_OF_DAY: 1, // 1日最初のガチャだけ（同日2回目以降は付かない）
+    NEW_STOCK: 10,        // 初発見の銘柄
+    NEW_SECTOR: 25,       // 初めて見る業種
+    SECTOR_COMPLETE: 50,  // 業種コンプリート
+    ACHIEVEMENT: 30,      // 実績解除
+    NEW_EFFECT: 20,       // 演出の初見
+    COMBO: 15             // その回の引きの偶然（下のコンボ判定）
+  };
+
+  function dayKey(d) {
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  }
+
+  function getExp() {
+    var s = GachaDex.getStats();
+    return (typeof s.exp === "number" && isFinite(s.exp)) ? s.exp : 0;
+  }
+
+  /* Lv = floor(sqrt(exp/50)) + 1（Lv2=50, Lv3=200, Lv4=450, Lv5=800…） */
+  function levelOf(exp) {
+    if (!(exp > 0)) return 1;
+    return Math.floor(Math.sqrt(exp / 50)) + 1;
+  }
+
+  /* 次のレベルに必要な累計EXP */
+  function nextLevelExp(exp) {
+    var lv = levelOf(exp);
+    return 50 * lv * lv;
+  }
+
+  /* コンプリート済み業種の数 */
+  function countCompletedSectors() {
+    var col = GachaDex.getCollection();
+    var groups = {};
+    GachaData.getAll().forEach(function (s) {
+      if (!groups[s.sector]) groups[s.sector] = { total: 0, found: 0 };
+      groups[s.sector].total++;
+      if (col[s.code]) groups[s.sector].found++;
+    });
+    var n = 0;
+    Object.keys(groups).forEach(function (k) {
+      if (groups[k].found >= groups[k].total) n++;
+    });
+    return n;
+  }
+
+  /* 称号（上から順に判定して最上位1つを返す）。
+     しきい値は固定件数ではなく現在のデータ総数に自動追従する */
+  function titleOf() {
+    var stocks = GachaDex.countDiscoveredStocks();
+    var sectors = GachaDex.countDiscoveredSectors();
+    var totalStocks = GachaData.getAll().length;
+    var totalSectors = GachaData.sectors().length;
+    var lv = levelOf(getExp());
+    if (totalStocks > 0 && stocks >= totalStocks) return "図鑑の主";
+    if (totalSectors > 0 && sectors >= totalSectors) return "全業種踏破";
+    if (stocks >= 40 && lv >= 4) return "未知の探索者";
+    if (sectors >= 10) return "業種探検家";
+    if (stocks >= 10) return "銘柄散歩人";
+    return "銘柄見習い";
+  }
+
+  /* 既存ユーザーへの1回きりの遡及換算（通常付与の約50%）。
+     exp が既に存在する場合は何もしない（再計算しない） */
+  function migrateIfNeeded() {
+    try {
+      var s = GachaDex.getStats();
+      if (typeof s.exp === "number") return;
+      var exp = 0;
+      exp += GachaDex.countDiscoveredStocks() * 5;     // NEW_STOCK 10 の50%
+      exp += GachaDex.countDiscoveredSectors() * 12;   // NEW_SECTOR 25 の約50%
+      exp += countCompletedSectors() * 25;             // SECTOR_COMPLETE 50 の50%
+      exp += GachaDex.countAchievements() * 15;        // ACHIEVEMENT 30 の50%
+      exp += Object.keys(GachaDex.get()).length * 10;  // NEW_EFFECT 20 の50%
+      s.exp = exp;
+      GachaStore.save(GachaStore.KEYS.STATS, s);
+    } catch (e) { /* 換算できなくてもガチャ本体は止めない */ }
+  }
+
+  /* ロール前のスナップショット（差分計算・称号変化検出用）。
+     「今日の1社」の記録はロールの合間に入るが、直前スナップとの
+     差分で計算するのでEXP対象に混ざらない */
+  function snapshot() {
+    return {
+      stocks: GachaDex.countDiscoveredStocks(),
+      sectors: GachaDex.countDiscoveredSectors(),
+      completedSectors: countCompletedSectors(),
+      exp: getExp(),
+      level: levelOf(getExp()),
+      title: titleOf()
+    };
+  }
+
+  /* その回の引きの偶然を判定（銘柄の優劣ではなく組み合わせだけを見る） */
+  function detectCombos(picked, newCodes) {
+    var labels = [];
+    var bySector = {};
+    var types = {};
+    picked.forEach(function (s) {
+      bySector[s.sector] = (bySector[s.sector] || 0) + 1;
+      types[s.type] = true;
+    });
+    var sameSector = Object.keys(bySector).some(function (k) { return bySector[k] >= 3; });
+    if (sameSector) labels.push("業種そろい踏み");
+    if (types["個別株"] && types["ETF"] && types["REIT"]) labels.push("フルライン");
+    if (picked.length >= 5 && newCodes.length === picked.length) labels.push("パーフェクト発見");
+    return labels;
+  }
+
+  /* ロール1回分のEXPを集計・付与して、サマリー表示用の結果を返す。
+     afterRoll フックからのみ呼ばれる（今日の1社はEXP対象外） */
+  function applyRoll(ctx) {
+    var before = ctx.before;
+    var result = {
+      newStocks: ctx.newCodes.length,
+      newSectors: 0,
+      completedSectors: 0,
+      comboLabels: [],
+      expGained: 0,
+      stocksBefore: before.stocks,
+      stocksAfter: before.stocks,
+      stocksTotal: GachaData.getAll().length,
+      levelBefore: before.level,
+      levelAfter: before.level,
+      titleBefore: before.title,
+      titleAfter: before.title
+    };
+    try {
+      result.stocksAfter = GachaDex.countDiscoveredStocks();
+      result.newSectors = Math.max(0, GachaDex.countDiscoveredSectors() - before.sectors);
+      result.completedSectors = Math.max(0, countCompletedSectors() - before.completedSectors);
+      result.comboLabels = detectCombos(ctx.picked, ctx.newCodes);
+
+      var exp = 0;
+      exp += result.newStocks * RATES.NEW_STOCK;
+      exp += result.newSectors * RATES.NEW_SECTOR;
+      exp += result.completedSectors * RATES.SECTOR_COMPLETE;
+      exp += ctx.newAchievements.length * RATES.ACHIEVEMENT;
+      // 演出の初見（GachaFX.play が記録済みなので count===1 が初回）
+      var fxEntry = GachaDex.get()[ctx.effectType];
+      if (fxEntry && fxEntry.count === 1) exp += RATES.NEW_EFFECT;
+      exp += result.comboLabels.length * RATES.COMBO;
+
+      // 1日最初のガチャだけ +1（同日は何度回しても追加しない）
+      var s = GachaDex.getStats();
+      var today = dayKey(new Date());
+      var firstOfDay = (s.firstRollDay !== today);
+      if (firstOfDay) exp += RATES.FIRST_ROLL_OF_DAY;
+
+      // stats への書き込みは1回にまとめる
+      s.firstRollDay = today;
+      s.exp = ((typeof s.exp === "number" && isFinite(s.exp)) ? s.exp : 0) + exp;
+      GachaStore.save(GachaStore.KEYS.STATS, s);
+
+      result.expGained = exp;
+      result.levelAfter = levelOf(s.exp);
+      result.titleAfter = titleOf();
+    } catch (e) { /* EXPが付かなくてもガチャ本体は止めない */ }
+    return result;
+  }
+
+  // 遡及換算はページ読み込み時に1回だけ試みる
+  document.addEventListener("DOMContentLoaded", migrateIfNeeded);
+
+  return {
+    RATES: RATES,
+    getExp: getExp,
+    levelOf: levelOf,
+    nextLevelExp: nextLevelExp,
+    titleOf: titleOf,
+    snapshot: snapshot,
+    applyRoll: applyRoll,
+    migrateIfNeeded: migrateIfNeeded,
+    countCompletedSectors: countCompletedSectors
+  };
+})();
+
+/* ============================================================
    図鑑・実績（最小版）
    afterRoll フックで動く最初の拡張機能。本体（GachaApp.roll）には
    一切手を入れていない。将来「図鑑一覧」「実績一覧」を作るときは、
@@ -1249,8 +1438,36 @@ var GachaMeta = (function () {
     el("dex-sectors-total").textContent = GachaData.sectors().length;
     el("dex-achievements").textContent = GachaDex.countAchievements();
     el("dex-achievements-total").textContent = GachaDex.ACHIEVEMENTS.length;
+    // 探索Lv・称号（EXPと図鑑から毎回導出）
+    if (el("dex-level")) {
+      var exp = GachaProgress.getExp();
+      el("dex-level").textContent = GachaProgress.levelOf(exp);
+      el("dex-level-next").textContent =
+        "（あと" + (GachaProgress.nextLevelExp(exp) - exp) + " EXP）";
+      el("dex-title").textContent = GachaProgress.titleOf();
+    }
     renderStockDex();
     renderEffectDex();
+  }
+
+  /* 今回の探索結果ストリップ（ガチャ完了時のみ表示） */
+  function renderRollSummary(r) {
+    var el = document.getElementById("roll-summary");
+    if (!el) return;
+    var esc = GachaUI.escapeHtml;
+    var parts = ['<span>🔍 今回の探索：</span>'];
+    if (r.newStocks > 0) parts.push("<span>初発見 <strong>" + r.newStocks + "</strong>件</span>");
+    if (r.newSectors > 0) parts.push("<span>新業種 <strong>" + r.newSectors + "</strong>件</span>");
+    if (r.completedSectors > 0) parts.push("<span>業種コンプ <strong>" + r.completedSectors + "</strong>業種</span>");
+    if (r.newStocks === 0 && r.newSectors === 0) parts.push("<span>新しい発見はなし</span>");
+    parts.push("<span>図鑑 " + r.stocksBefore + "→<strong>" + r.stocksAfter + "</strong> / " + r.stocksTotal + "</span>");
+    r.comboLabels.forEach(function (c) {
+      parts.push('<span class="combo-label">' + esc(c) + "</span>");
+    });
+    if (r.expGained > 0) parts.push('<span class="exp-gain">+' + r.expGained + " EXP</span>");
+    if (r.levelAfter > r.levelBefore) parts.push('<span class="exp-gain">⤴ Lv.' + r.levelAfter + "</span>");
+    el.innerHTML = parts.join("");
+    el.classList.add("is-visible");
   }
 
   /* 初発見の銘柄カードに NEW バッジを付ける（2回目以降は付かない） */
@@ -1265,6 +1482,8 @@ var GachaMeta = (function () {
       badge.className = "new-badge";
       badge.textContent = "NEW";
       head.appendChild(badge);
+      // 初発見カードだけ淡い金色シマー（0.6秒・CSS側でreduce時無効）
+      card.classList.add("first-found");
     });
   }
 
@@ -1288,16 +1507,30 @@ var GachaMeta = (function () {
     }, 2800);
   }
 
-  /* 毎回のガチャで記録→実績判定→表示更新 */
+  /* 毎回のガチャで記録→実績判定→EXP集計→表示更新
+     （afterRoll は GachaFX.play 側の doneCalled ガードにより
+       保険タイマーと animationend が競合しても必ず1回だけ呼ばれる） */
   GachaApp.hooks.afterRoll.push(function (info) {
+    var before = GachaProgress.snapshot(); // 発見前の状態（差分計算用）
     var newCodes = (info.picked.length > 0) ? GachaDex.recordStocks(info.picked) : [];
     GachaDex.recordRoll(); // 0件でも「回した」ことは数える
     var newAchievements = GachaDex.checkAchievements();
+    var result = GachaProgress.applyRoll({
+      picked: info.picked,
+      effectType: info.effectType,
+      newCodes: newCodes,
+      newAchievements: newAchievements,
+      before: before
+    });
     render();
+    renderRollSummary(result);
     markNewCards(newCodes);
     newAchievements.forEach(function (a) {
       showToast("🏅 実績解除：" + a.name);
     });
+    if (result.titleAfter !== result.titleBefore) {
+      showToast("👑 称号が「" + result.titleAfter + "」になりました");
+    }
   });
 
   // 初期表示（GachaApp.init のリスナーが先に登録されているので、
