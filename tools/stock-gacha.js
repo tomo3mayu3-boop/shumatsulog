@@ -1210,20 +1210,63 @@ var GachaProgress = (function () {
     return n;
   }
 
-  /* 称号（上から順に判定して最上位1つを返す）。
-     しきい値は固定件数ではなく現在のデータ総数に自動追従する */
+  /* 称号の定義（下＝base 〜 上＝最上位の順）。
+     check は判定材料の context を受け取る。しきい値の「全業種/全銘柄」は
+     固定件数ではなく現在のデータ総数に自動追従する。
+     条件はすべて単調（発見数・レベルは減らない）なので、
+     「今満たしている＝一度解除した」とみなせる（保存不要）。 */
+  var TITLES = [
+    { id: "novice", name: "銘柄見習い", desc: "はじめの一歩",
+      check: function () { return true; } },
+    { id: "walker", name: "銘柄散歩人", desc: "銘柄を10種発見",
+      check: function (c) { return c.stocks >= 10; } },
+    { id: "sector", name: "業種探検家", desc: "業種を10種発見",
+      check: function (c) { return c.sectors >= 10; } },
+    { id: "seeker", name: "未知の探索者", desc: "40銘柄発見＋探索Lv4",
+      check: function (c) { return c.stocks >= 40 && c.level >= 4; } },
+    { id: "allsectors", name: "全業種踏破", desc: "すべての業種を発見",
+      check: function (c) { return c.totalSectors > 0 && c.sectors >= c.totalSectors; } },
+    { id: "master", name: "図鑑の主", desc: "すべての銘柄を発見",
+      check: function (c) { return c.totalStocks > 0 && c.stocks >= c.totalStocks; } }
+  ];
+
+  function titleContext() {
+    return {
+      stocks: GachaDex.countDiscoveredStocks(),
+      sectors: GachaDex.countDiscoveredSectors(),
+      level: levelOf(getExp()),
+      totalStocks: GachaData.getAll().length,
+      totalSectors: GachaData.sectors().length
+    };
+  }
+
+  /* 現在満たしている最上位の称号名を返す（配列で最後に通ったもの＝最上位） */
   function titleOf() {
-    var stocks = GachaDex.countDiscoveredStocks();
-    var sectors = GachaDex.countDiscoveredSectors();
-    var totalStocks = GachaData.getAll().length;
-    var totalSectors = GachaData.sectors().length;
-    var lv = levelOf(getExp());
-    if (totalStocks > 0 && stocks >= totalStocks) return "図鑑の主";
-    if (totalSectors > 0 && sectors >= totalSectors) return "全業種踏破";
-    if (stocks >= 40 && lv >= 4) return "未知の探索者";
-    if (sectors >= 10) return "業種探検家";
-    if (stocks >= 10) return "銘柄散歩人";
-    return "銘柄見習い";
+    var c = titleContext();
+    var name = TITLES[0].name;
+    TITLES.forEach(function (t) { if (t.check(c)) name = t.name; });
+    return name;
+  }
+
+  /* 称号図鑑用: 各称号の {name, desc, unlocked} を配列で返す */
+  function getTitles() {
+    var c = titleContext();
+    return TITLES.map(function (t) {
+      return { name: t.name, desc: t.desc, unlocked: !!t.check(c) };
+    });
+  }
+
+  /* 探索ランク（今回の発見成果だけで判定。銘柄の投資価値とは無関係。
+     EXPは付与しない＝二重計算しない。純粋に表示用の導出）。
+     score = 初発見×1 + 新業種×2 + 業種コンプ×3 + コンボ×2 */
+  function rankOf(result) {
+    var score = result.newStocks * 1 + result.newSectors * 2 +
+                result.completedSectors * 3 + result.comboLabels.length * 2;
+    if (score <= 0) return null; // 新発見なしの回はランク非表示
+    if (score >= 12) return { key: "legend", label: "LEGEND DISCOVERY" };
+    if (score >= 7)  return { key: "super",  label: "SUPER DISCOVERY" };
+    if (score >= 3)  return { key: "great",  label: "GREAT DISCOVERY" };
+    return { key: "normal", label: "DISCOVERY" };
   }
 
   /* 既存ユーザーへの1回きりの遡及換算（通常付与の約50%）。
@@ -1321,6 +1364,7 @@ var GachaProgress = (function () {
       result.expGained = exp;
       result.levelAfter = levelOf(s.exp);
       result.titleAfter = titleOf();
+      result.rank = rankOf(result); // 表示用の探索ランク（EXPには影響しない）
     } catch (e) { /* EXPが付かなくてもガチャ本体は止めない */ }
     return result;
   }
@@ -1337,7 +1381,9 @@ var GachaProgress = (function () {
     snapshot: snapshot,
     applyRoll: applyRoll,
     migrateIfNeeded: migrateIfNeeded,
-    countCompletedSectors: countCompletedSectors
+    countCompletedSectors: countCompletedSectors,
+    getTitles: getTitles,
+    rankOf: rankOf
   };
 })();
 
@@ -1427,6 +1473,28 @@ var GachaMeta = (function () {
     box.innerHTML = html;
   }
 
+  /* 称号図鑑: 解除済みは名称＋条件、未解除は？？？＋条件だけ表示。
+     現在の自動称号（meta-statsの「称号」）はそのまま維持する */
+  function renderTitleDex() {
+    var box = document.getElementById("title-dex-list");
+    if (!box) return;
+    var esc = GachaUI.escapeHtml;
+    var current = GachaProgress.titleOf();
+    var html = "";
+    GachaProgress.getTitles().forEach(function (t) {
+      if (t.unlocked) {
+        var badge = (t.name === current)
+          ? ' <span class="title-current">現在の称号</span>' : "";
+        html += '<div class="dex-row"><span>🏆 ' + esc(t.name) + "</span>" +
+          '<span class="dex-meta">' + esc(t.desc) + "</span>" + badge + "</div>";
+      } else {
+        html += '<div class="dex-row"><span class="dex-undiscovered">？？？</span>' +
+          '<span class="dex-meta">条件：' + esc(t.desc) + "</span></div>";
+      }
+    });
+    box.innerHTML = html;
+  }
+
   /* 画面上部の「発見した銘柄／業種・解除済み実績」カウンタと図鑑を更新 */
   function render() {
     var el = function (id) { return document.getElementById(id); };
@@ -1448,6 +1516,7 @@ var GachaMeta = (function () {
     }
     renderStockDex();
     renderEffectDex();
+    renderTitleDex();
   }
 
   /* 今回の探索結果ストリップ（ガチャ完了時のみ表示） */
@@ -1456,13 +1525,19 @@ var GachaMeta = (function () {
     if (!el) return;
     var esc = GachaUI.escapeHtml;
     var parts = ['<span>🔍 今回の探索：</span>'];
+    // 探索ランク（新発見があった回のみ・小さく表示）
+    if (r.rank) {
+      parts.push('<span class="roll-rank rank-' + r.rank.key + '">' +
+        esc(r.rank.label) + "</span>");
+    }
     if (r.newStocks > 0) parts.push("<span>初発見 <strong>" + r.newStocks + "</strong>件</span>");
     if (r.newSectors > 0) parts.push("<span>新業種 <strong>" + r.newSectors + "</strong>件</span>");
     if (r.completedSectors > 0) parts.push("<span>業種コンプ <strong>" + r.completedSectors + "</strong>業種</span>");
     if (r.newStocks === 0 && r.newSectors === 0) parts.push("<span>新しい発見はなし</span>");
     parts.push("<span>図鑑 " + r.stocksBefore + "→<strong>" + r.stocksAfter + "</strong> / " + r.stocksTotal + "</span>");
-    r.comboLabels.forEach(function (c) {
-      parts.push('<span class="combo-label">' + esc(c) + "</span>");
+    // コンボ成立表示（最大2件まで。EXPは applyRoll 側で確定済みなので二重計算しない）
+    (r.comboLabels || []).slice(0, 2).forEach(function (c) {
+      parts.push('<span class="combo-label">コンボ成立：' + esc(c) + "</span>");
     });
     if (r.expGained > 0) parts.push('<span class="exp-gain">+' + r.expGained + " EXP</span>");
     if (r.levelAfter > r.levelBefore) parts.push('<span class="exp-gain">⤴ Lv.' + r.levelAfter + "</span>");

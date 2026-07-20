@@ -583,6 +583,19 @@
     padding: 1px 9px;
     font-size: 0.75rem;
   }
+  /* 探索ランク（今回の発見成果。銘柄の投資価値ではない）。派手にしない */
+  .roll-rank {
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    padding: 1px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+  }
+  .rank-normal { color: var(--text-sub); background: #f2f1ec; }
+  .rank-great  { color: var(--accent-dark); background: var(--tag-stock); border-color: var(--accent); }
+  .rank-super  { color: #8a6a1f; background: #fbf3df; border-color: #d9b25a; }
+  .rank-legend { color: #7a5a12; background: linear-gradient(135deg, #fcefc4, #f3d488); border-color: #d9b25a; }
 
   /* ---- 初発見カードの淡い金色シマー（0.6秒・視差軽減時は無効）
          疑似要素に独立したアニメを持たせるので、カード本体の
@@ -680,6 +693,13 @@
   .dex-meta {
     font-size: 0.75rem;
     color: var(--text-sub);
+  }
+  .title-current {
+    font-size: 0.72rem;
+    color: var(--accent-dark);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    padding: 0 8px;
   }
 
   /* ---- 履歴 ---- */
@@ -841,6 +861,10 @@
     <details class="dex-details">
       <summary>🎞 演出図鑑を見る</summary>
       <div class="dex-list" id="effect-dex-list"><!-- JSが生成 --></div>
+    </details>
+    <details class="dex-details">
+      <summary>🏆 称号図鑑を見る</summary>
+      <div class="dex-list" id="title-dex-list"><!-- JSが生成 --></div>
     </details>
   </section>
 
