@@ -293,7 +293,8 @@ var GachaDex = (function () {
     tanabata:     { name: "七夕ビート" },
     halloween:    { name: "ハロウィンビート" },
     christmas:    { name: "クリスマスビート" },
-    newyear:      { name: "新春ビート" }
+    newyear:      { name: "新春ビート" },
+    giga_beet:    { name: "GIGA BEET" } // シークレット（100万分の1）
   };
 
   /* 記録に失敗してもガチャ自体は止めない */
@@ -409,7 +410,9 @@ var GachaDex = (function () {
       check: function (c) {
         return !!(c.effects.tanabata || c.effects.halloween ||
                   c.effects.christmas || c.effects.newyear);
-      } }
+      } },
+    { id: "saw_giga", name: "巨大ビートの目撃者",
+      check: function (c) { return !!c.effects.giga_beet; } } // シークレット
   ];
 
   /* 未解除の実績を判定し、新たに解除されたものを返す */
@@ -476,7 +479,19 @@ var GachaFX = (function () {
     STORM_CHANCE: 0.01,   // ビート嵐（超レア・約30個）
     GROUP_CHANCE: 0.15,   // ビート群（レア）
     EMOJI: "🫜",
-    SOUND_TEXT: " ﾋﾞｭｰﾝ"
+    SOUND_TEXT: " ﾋﾞｭｰﾝ",
+
+    // GIGA BEET（シークレット・ジョーク演出。銘柄評価とは完全に無関係）
+    GIGA: {
+      CHANCE: 1 / 1000000,   // 100万分の1
+      DURATION_MS: 2500,     // 自動消去までの時間（2〜3秒）
+      TEXT: "GIGA BEET!!",   // 表示文言
+      EMOJI: "🫜",           // 巨大ビート
+      SIZE_VMIN: 68,         // 通常時の大きさ（画面を覆うほど）
+      SIZE_REDUCED_PX: 96    // reduced-motion時の控えめな静的サイズ
+    },
+    // 開発・検証用の強制発動フラグ（本番では必ずOFF）
+    DEBUG_FORCE_GIGA: false
   };
 
   function rand(min, max) {
@@ -633,9 +648,14 @@ var GachaFX = (function () {
 
   /* どの演出を出すか決める（レアな順に判定）。
      季節イベント期間中は、ビート群の枠がイベント演出に置き換わる。
-     ※演出の抽選であって、銘柄の抽選には一切影響しない */
+     ※演出の抽選であって、銘柄の抽選には一切影響しない。
+       抽選は1ロールにつき1回だけ呼ばれる（play の冒頭で1回）＝二重抽選しない。 */
   function chooseType() {
+    // 開発・検証用の強制発動（本番は DEBUG_FORCE_GIGA=false）
+    if (config.DEBUG_FORCE_GIGA) return "giga_beet";
     var r = Math.random();
+    // シークレット GIGA BEET（100万分の1）。範囲が極小なので他確率への影響は無視できる
+    if (r < config.GIGA.CHANCE) return "giga_beet";
     if (r < config.GOLDEN_CHANCE) return "golden_storm";
     if (r < config.GOLDEN_CHANCE + config.STORM_CHANCE) return "beet_storm";
     var ev = GachaEvents.getActiveEvent();
@@ -648,16 +668,70 @@ var GachaFX = (function () {
     return "normal";
   }
 
+  /* GIGA BEET（シークレット・ジョーク演出）
+     画面中央に巨大なビートと「GIGA BEET!!」を出し、2.5秒で自動消去。
+     クリック／閉じるボタンでも消せる。消えたら done() を呼んで結果へ。
+     reduced-motion時は大型移動をせず、小さめのビートと文言を静的表示する。
+     ※演出のみ。銘柄評価・投資価値とは完全に無関係。 */
+  function showGigaBeet(reduceMotion, done) {
+    var g = config.GIGA;
+    var overlay = document.createElement("div");
+    overlay.className = "giga-overlay" + (reduceMotion ? " is-reduced" : "");
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-label", g.TEXT);
+
+    var beet = document.createElement("div");
+    beet.className = "giga-beet";
+    beet.textContent = g.EMOJI;
+    beet.style.fontSize = (reduceMotion ? (g.SIZE_REDUCED_PX + "px") : (g.SIZE_VMIN + "vmin"));
+
+    var text = document.createElement("div");
+    text.className = "giga-text";
+    text.textContent = g.TEXT;
+
+    var closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "giga-close";
+    closeBtn.textContent = "×";
+    closeBtn.setAttribute("aria-label", "閉じる");
+
+    overlay.appendChild(beet);
+    overlay.appendChild(text);
+    overlay.appendChild(closeBtn);
+    document.body.appendChild(overlay);
+
+    var finished = false;
+    var timer = 0;
+    function dismiss() {
+      if (finished) return; // タイマーとクリックの二重発火を防ぐ
+      finished = true;
+      window.clearTimeout(timer);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      done();
+    }
+    overlay.addEventListener("click", dismiss);
+    closeBtn.addEventListener("click", function (e) { e.stopPropagation(); dismiss(); });
+    timer = window.setTimeout(dismiss, g.DURATION_MS);
+  }
+
   /* 演出を再生し、終わったら done(演出id) を呼ぶ。戻り値も同じid。
      （doneが同期で呼ばれる環境でも演出idを確実に受け取れるよう、
        戻り値ではなくコールバック引数で渡す）
      prefers-reduced-motion: reduce の場合は演出せず即 done()。 */
   function play(done) {
     var type = chooseType();
-    GachaDex.recordEffectSeen(type); // 演出図鑑（将来）用に記録
+    GachaDex.recordEffectSeen(type); // 演出図鑑用に記録（初回遭遇もここで登録される）
 
     var reduceMotion = window.matchMedia &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // GIGA BEET は粒演出とは別系統の全画面オーバーレイ。
+    // reduced-motion でも（大型移動なしで）静的表示する
+    if (type === "giga_beet") {
+      showGigaBeet(reduceMotion, function () { done(type); });
+      return type;
+    }
+
     if (reduceMotion) {
       done(type);
       return type;
@@ -839,13 +913,23 @@ var GachaFX = (function () {
     return type;
   }
 
+  /* 開発・検証用: GIGA BEET を今すぐ1回だけ強制表示する。
+     抽選や結果表示には影響しない単体プレビュー（コンソールから呼ぶ）。
+     例) GachaFX.forceGiga()  /  GachaFX.forceGiga(true) で reduced-motion 版 */
+  function forceGiga(reduced) {
+    var rm = (typeof reduced === "boolean") ? reduced :
+      (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    showGigaBeet(rm, function () {});
+  }
+
   return {
     config: config,
     builders: builders,
     makeFinale: makeFinale,
     buildParticle: buildParticle,
     chooseType: chooseType,
-    play: play
+    play: play,
+    forceGiga: forceGiga
   };
 })();
 

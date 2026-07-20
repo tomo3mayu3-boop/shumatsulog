@@ -334,6 +334,71 @@
     letter-spacing: 0.05em;
   }
 
+  /* ---- GIGA BEET（シークレット・ジョーク演出） ----
+     画面中央に巨大なビートと文言。クリック/×/自動で消える。
+     サイズはJS側の定数（--giga-size等）で指定する。 */
+  .giga-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;           /* 最前面（バナー1000より上） */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(20, 20, 18, 0.55);
+    cursor: pointer;
+    overflow: hidden;         /* 巨大ビートが画面外へはみ出してもスクロールを出さない */
+    animation: gigaFadeIn 0.25s ease both;
+  }
+  .giga-overlay .giga-beet {
+    line-height: 1;
+    /* fontSizeはJSが設定。通常時だけ拡大＋わずかな鼓動 */
+    animation: gigaPop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both,
+               gigaPulse 1.4s ease-in-out 0.5s infinite;
+    filter: drop-shadow(0 6px 24px rgba(0, 0, 0, 0.4));
+  }
+  .giga-overlay .giga-text {
+    color: #fff;
+    font-weight: bold;
+    font-size: clamp(1.6rem, 8vw, 3.4rem);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 14px rgba(255, 205, 60, 0.9), 0 2px 10px rgba(0, 0, 0, 0.5);
+    animation: gigaPop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.08s both;
+  }
+  .giga-overlay .giga-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+    line-height: 1;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  @keyframes gigaFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes gigaPop {
+    0%   { transform: scale(0.3); opacity: 0; }
+    60%  { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes gigaPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.05); }
+  }
+  /* reduced-motion: 大型移動・拡大・鼓動をやめ、小さめのビートと文言を静的表示 */
+  @media (prefers-reduced-motion: reduce) {
+    .giga-overlay,
+    .giga-overlay .giga-beet,
+    .giga-overlay .giga-text { animation: none; }
+  }
+  .giga-overlay.is-reduced .giga-beet,
+  .giga-overlay.is-reduced .giga-text { animation: none; }
+
   /* ---- 結果カード ---- */
   .results {
     display: grid;
