@@ -484,7 +484,8 @@ var GachaFX = (function () {
     // GIGA BEET（シークレット・ジョーク演出。銘柄評価とは完全に無関係）
     GIGA: {
       CHANCE: 1 / 1000000,   // 100万分の1
-      DURATION_MS: 2500,     // 自動消去までの時間（2〜3秒）
+      DURATION_MS: 4300,     // 通常演出（出現→静止→回転縮小→左下へ流れて消滅）の全体尺
+      REDUCED_MS: 2000,      // reduced-motion時の静的表示時間
       TEXT: "GIGA BEET!!",   // 表示文言
       EMOJI: "🫜",           // 巨大ビート
       SIZE_VMIN: 68,         // 通常時の大きさ（画面を覆うほど）
@@ -679,6 +680,12 @@ var GachaFX = (function () {
     overlay.className = "giga-overlay" + (reduceMotion ? " is-reduced" : "");
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-label", g.TEXT);
+    // 演出尺を定数から注入（背景・ビート・文言のkeyframeが同じ尺で走る）
+    overlay.style.setProperty("--giga-dur", (g.DURATION_MS / 1000) + "s");
+
+    // 暗転レイヤー（演出後半でopacityフェードして自然に明るく戻す）
+    var backdrop = document.createElement("div");
+    backdrop.className = "giga-backdrop";
 
     var beet = document.createElement("div");
     beet.className = "giga-beet";
@@ -695,6 +702,7 @@ var GachaFX = (function () {
     closeBtn.textContent = "×";
     closeBtn.setAttribute("aria-label", "閉じる");
 
+    overlay.appendChild(backdrop);
     overlay.appendChild(beet);
     overlay.appendChild(text);
     overlay.appendChild(closeBtn);
@@ -703,15 +711,17 @@ var GachaFX = (function () {
     var finished = false;
     var timer = 0;
     function dismiss() {
-      if (finished) return; // タイマーとクリックの二重発火を防ぐ
+      if (finished) return; // タイマーとクリック（スキップ）の二重発火を防ぐ
       finished = true;
       window.clearTimeout(timer);
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
       done();
     }
-    overlay.addEventListener("click", dismiss);
+    overlay.addEventListener("click", dismiss);      // 画面クリックでスキップ
     closeBtn.addEventListener("click", function (e) { e.stopPropagation(); dismiss(); });
-    timer = window.setTimeout(dismiss, g.DURATION_MS);
+    // 通常は演出終了（+わずかな余韻）、reduced時は短めの静的表示後に自動消去
+    var totalMs = reduceMotion ? g.REDUCED_MS : (g.DURATION_MS + 150);
+    timer = window.setTimeout(dismiss, totalMs);
   }
 
   /* 演出を再生し、終わったら done(演出id) を呼ぶ。戻り値も同じid。

@@ -346,17 +346,26 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: rgba(20, 20, 18, 0.55);
     cursor: pointer;
-    overflow: hidden;         /* 巨大ビートが画面外へはみ出してもスクロールを出さない */
-    animation: gigaFadeIn 0.25s ease both;
+    overflow: hidden;         /* 巨大ビートが画面外へ流れてもスクロールを出さない */
+    /* 暗転は子要素 .giga-backdrop が担当（opacityで合成＝軽量） */
   }
+  /* 暗転レイヤー。演出後半でフェードして自然に明るく戻る */
+  .giga-overlay .giga-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgba(20, 20, 18, 0.55);
+    animation: gigaBackdrop var(--giga-dur, 4.3s) ease both;
+  }
+  .giga-overlay .giga-beet,
+  .giga-overlay .giga-text { position: relative; z-index: 1; }
   .giga-overlay .giga-beet {
-    line-height: 1;
-    /* fontSizeはJSが設定。通常時だけ拡大＋わずかな鼓動 */
-    animation: gigaPop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both,
-               gigaPulse 1.4s ease-in-out 0.5s infinite;
+    line-height: 1;                 /* fontSizeはJSが設定 */
+    will-change: transform, opacity;
     filter: drop-shadow(0 6px 24px rgba(0, 0, 0, 0.4));
+    /* 出現→静止→回転しながら縮小して戻る→左下へ流れてフェード（transform/opacityのみ） */
+    animation: gigaSaga var(--giga-dur, 4.3s) ease-in-out both;
   }
   .giga-overlay .giga-text {
     color: #fff;
@@ -364,12 +373,14 @@
     font-size: clamp(1.6rem, 8vw, 3.4rem);
     letter-spacing: 0.1em;
     text-shadow: 0 0 14px rgba(255, 205, 60, 0.9), 0 2px 10px rgba(0, 0, 0, 0.5);
-    animation: gigaPop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.08s both;
+    will-change: transform, opacity;
+    animation: gigaTextSaga var(--giga-dur, 4.3s) ease both;
   }
   .giga-overlay .giga-close {
     position: absolute;
     top: 14px;
     right: 16px;
+    z-index: 2;
     width: 40px;
     height: 40px;
     font-size: 22px;
@@ -380,24 +391,40 @@
     border-radius: 50%;
     cursor: pointer;
   }
-  @keyframes gigaFadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes gigaPop {
-    0%   { transform: scale(0.3); opacity: 0; }
-    60%  { transform: scale(1.08); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+  @keyframes gigaBackdrop {
+    0%   { opacity: 0; }
+    6%   { opacity: 1; }
+    58%  { opacity: 1; }
+    100% { opacity: 0; }
   }
-  @keyframes gigaPulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.05); }
+  /* 各%は --giga-dur(既定4.3s)基準。
+     0-16%: 出現ポップ / 16-26%: 静止(約1s) /
+     26-50%: 回転しながら縮小→原寸に戻る / 50-100%: 左下へ流れてフェード */
+  @keyframes gigaSaga {
+    0%   { transform: translate(0, 0) scale(0.3) rotate(0deg);      opacity: 0; }
+    10%  { transform: translate(0, 0) scale(1.06) rotate(0deg);     opacity: 1; }
+    16%  { transform: translate(0, 0) scale(1) rotate(0deg);        opacity: 1; }
+    26%  { transform: translate(0, 0) scale(1) rotate(0deg);        opacity: 1; }
+    38%  { transform: translate(0, 0) scale(0.82) rotate(360deg);   opacity: 1; }
+    50%  { transform: translate(0, 0) scale(1) rotate(720deg);      opacity: 1; }
+    100% { transform: translate(-58vw, 62vh) scale(0.5) rotate(1080deg); opacity: 0; }
   }
-  /* reduced-motion: 大型移動・拡大・鼓動をやめ、小さめのビートと文言を静的表示 */
+  @keyframes gigaTextSaga {
+    0%   { opacity: 0; transform: scale(0.6); }
+    10%  { opacity: 1; transform: scale(1); }
+    45%  { opacity: 1; transform: scale(1); }
+    60%  { opacity: 0; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+  /* reduced-motion: 移動・回転・拡大をやめ、静的表示のみ */
   @media (prefers-reduced-motion: reduce) {
-    .giga-overlay,
+    .giga-overlay .giga-backdrop,
     .giga-overlay .giga-beet,
-    .giga-overlay .giga-text { animation: none; }
+    .giga-overlay .giga-text { animation: none; opacity: 1; }
   }
+  .giga-overlay.is-reduced .giga-backdrop,
   .giga-overlay.is-reduced .giga-beet,
-  .giga-overlay.is-reduced .giga-text { animation: none; }
+  .giga-overlay.is-reduced .giga-text { animation: none; opacity: 1; }
 
   /* ---- 結果カード ---- */
   .results {
