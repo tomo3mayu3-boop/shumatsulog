@@ -9,12 +9,17 @@ tools/travel/
 ├── schema.json          # ドラフト JSON の JSON Schema
 ├── parse-body.js        # 本文パーサー（Node / ブラウザ両対応）
 ├── validate.js          # バリデーション（Node / ブラウザ両対応）
+├── validate-ready.js    # ready 専用バリデーション（Sprint 2a）
+├── generate.js          # ready JSON → staging HTML（Sprint 2c）
 ├── next-id.json         # 次に使う記事 ID
+├── fixtures/
+│   └── mock-travel-16.json  # E2E 確認用 ready JSON フィクスチャ
 ├── form/
 │   ├── index.html       # 入力フォーム
 │   ├── app.js           # フォームロジック
 │   └── style.css        # フォーム専用スタイル
-└── templates/           # Sprint 2 以降で使用
+└── templates/
+    └── article.html     # travel-15 ベースの HTML 骨格
 
 drafts/                  # 生成した JSON の保存先（手動）
 staging/                 # ビルド前のステージング（Sprint 2 以降）
@@ -286,3 +291,225 @@ node tools/travel/generate.js drafts/travel-16.json --out staging/
 | `staging/travel-{id}.html` | ステージング用 HTML（本番反映前の確認用） |
 
 > **Note:** Sprint 2c では `staging/` への出力のみです。本番ルートへのコピーは別スプリントで行います。
+
+## Sprint 2d — E2E 確認
+
+Sprint 2c の `generate.js` パイプラインを、フィクスチャ JSON から end-to-end で検証する手順です。出力は `staging/` のみで、本番ファイル（`travel-*.html` ルート、`travel.html`、`sitemap.xml` 等）は触りません。
+
+### 1. E2E 生成手順
+
+#### フロー概要
+
+```
+mock-travel-16.json  →  validateReady  →  generate.js  →  staging/travel-16.html
+```
+
+| 段階 | 内容 |
+|------|------|
+| 入力 | `tools/travel/fixtures/mock-travel-16.json`（`status: "ready"`、`build` 付き） |
+| 検証 | `validateReady()` で ready JSON を検証 |
+| 生成 | `generate.js` がテンプレート + レンダラーで HTML を組み立て |
+| 出力 | `staging/travel-16.html` |
+
+#### コマンド（リポジトリルート `homepage/` で実行）
+
+**Step 1 — validateReady 確認**
+
+```powershell
+node -e "const v=require('./tools/travel/validate-ready'); const d=require('./tools/travel/fixtures/mock-travel-16.json'); console.log(JSON.stringify(v.validateReady(d), null, 2));"
+```
+
+期待結果: `{ "valid": true, "errors": [], "warnings": [] }`
+
+**Step 2 — 既存 staging ファイルを削除（再生成時は必須）**
+
+Sprint 2c では `staging/travel-{id}.html` の**上書き不可**です。`--dry-run` も同じ存在チェックを通るため、再実行前に削除が必要です。
+
+```powershell
+Remove-Item staging/travel-16.html -ErrorAction SilentlyContinue
+```
+
+**Step 3 — HTML 生成**
+
+```powershell
+node tools/travel/generate.js tools/travel/fixtures/mock-travel-16.json
+```
+
+期待結果: `Generated: ...\staging\travel-16.html`
+
+**Step 4 — プレースホルダ残存チェック**
+
+```powershell
+Select-String -Path staging/travel-16.html -Pattern '\{\{'
+```
+
+期待結果: マッチなし（出力なし）
+
+#### dry-run の使い方
+
+HTML をファイルに書かず stdout に出力して検証のみ行います。**Step 2 の削除を先に行うこと**（staging に同名ファイルがあると dry-run も中止されます）。
+
+```powershell
+Remove-Item staging/travel-16.html -ErrorAction SilentlyContinue
+node tools/travel/generate.js tools/travel/fixtures/mock-travel-16.json --dry-run 2>$null | Select-Object -First 20
+```
+
+stderr に `Dry run OK: would write to ...\staging\travel-16.html` が出れば成功。stdout には完全な HTML が出力されます。
+
+#### 本番ワークフロー参照（draft → ready → generate）
+
+E2E フィクスチャの代わりに、実際の記事を生成する場合の流れです（Sprint 2d では実行不要、Sprint 3 以降の参考）。
+
+1. iPhone フォーム（`tools/travel/form/`）で draft JSON を `drafts/travel-{id}.json` に保存
+2. PC 側で `build` ブロック（画像メタ・サイドバー・SEO 等）を追記し、`status: "ready"` に変更
+3. `validateReady()` で検証
+4. `node tools/travel/generate.js drafts/travel-{id}.json` で `staging/travel-{id}.html` を生成
+
+### 2. 検証手順（mock → generate → staging → confirm）
+
+#### 主要手段: HTML ソース diff
+
+生成物 `staging/travel-16.html` を、手書きの参照記事 `travel-15.html` とソース diff します。同一記事（イラフ SUI 122号室）をベースにしているため、**slug 参照（`travel-15` ↔ `travel-16`）以外の構造差分**が主な確認ポイントです。
+
+```powershell
+# slug 差分を除いたざっくり比較（PowerShell）
+Compare-Object (Get-Content travel-15.html) (Get-Content staging/travel-16.html) |
+  Where-Object { $_.InputObject -notmatch 'travel-15|travel-16' }
+```
+
+エディタの diff 機能（VS Code: 右クリック → 「選択項目と比較」）でも可。
+
+#### ブラウザプレビューの制約
+
+`npx serve .` で `http://localhost:3000/staging/travel-16.html` を開くと、**CSS / JS / 画像が壊れます**。
+
+| リソース | HTML 内のパス | staging から見た実際の解決先 | 結果 |
+|----------|---------------|------------------------------|------|
+| CSS | `style.css` | `/staging/style.css` | 404 |
+| JS | `script.js` | `/staging/script.js` | 404 |
+| 画像 | `images/travel/sui/...` | `/staging/images/travel/sui/...` | 404 |
+
+パスはリポジトリルート基準で書かれているため、`/staging/` 配下では相対パスが 1 段ずれます。
+
+#### 回避策
+
+| 方法 | 用途 | 注意 |
+|------|------|------|
+| **ソース diff（推奨）** | 構造・メタ・マークアップの正しさ | 上記 Compare-Object またはエディタ diff |
+| **一時的なルートコピー（ビジュアル確認のみ）** | レイアウト・CSS の目視確認 | `Copy-Item staging/travel-16.html travel-16.html` → 確認後 **必ず削除**。コミット禁止 |
+| **travel-15 をレイアウト参照** | picture / section / sidebar の並び | 同一テンプレート系なので構造比較に有効 |
+
+一時コピー例（確認後削除）:
+
+```powershell
+Copy-Item staging/travel-16.html travel-16.html
+# npx serve . → http://localhost:3000/travel-16.html で確認
+Remove-Item travel-16.html   # 確認後すぐ削除、コミットしない
+```
+
+#### 構造チェックリスト
+
+`staging/travel-16.html` を diff または目視で確認:
+
+- [ ] **head**: `<title>`, `meta description`, OGP（`og:title`, `og:description`, `og:image`, `og:url`）, canonical, JSON-LD（Article + BreadcrumbList）が埋まっている
+- [ ] **preload**: 1 枚目 `<link rel="preload" as="image">` が avif srcset 付きで出力されている
+- [ ] **hero**: `h2` タイトル、副題、`<p class="travel-location">` の locationTag
+- [ ] **picture**: photo セクション数（6）分の `<picture>` ブロック。avif / webp `<source>` + `<img>` の srcset / sizes / width / height / alt / loading（1 枚目 `eager`、以降 `lazy`）
+- [ ] **sections**: 最終 text セクションは `<picture>` なし。`<br>` が段落内に保持されている
+- [ ] **sidebar**: 地図 iframe（`mapQuery`, `zoom`, `iframeHeight`）+ カテゴリボックス
+- [ ] **footer**: 著作権、SNS リンク、X シェア URL（`travel-16` を指す）
+- [ ] **固定部分**: header / nav / back-to-top / `script.js` 参照
+
+#### 画像がローカルにない場合（`images/travel/sui/` 未配置）
+
+mock-travel-16 の `build.imageFolder` は `sui` ですが、リポジトリに `images/travel/sui/` が無くても **HTML 構造の検証は可能**です。
+
+| 手段 | 確認内容 |
+|------|----------|
+| **ソース diff** | `<picture>` / `<img>` の `src` / `srcset` パスが `images/travel/sui/sui-{n}...` 形式か |
+| **dry-run stdout** | 生成 HTML をファイル不要で inspect |
+| **Network 404（一時ルートコピー時）** | DevTools → Network で画像 URL が意図したパスを叩いているか（404 は想定内） |
+| **validateReady** | `build.photos[]` の index / variants と body photo セクション数の一致 |
+
+#### プレースホルダ残存の確認
+
+```powershell
+Select-String -Path staging/travel-16.html -Pattern '\{\{'
+```
+
+`{{TITLE_FULL}}` 等が 1 件も残っていないこと。残存があればレンダラーまたはテンプレート置換の不具合。
+
+### 3. Sprint 3 引き継ぎ
+
+#### Sprint 2 で完了すること
+
+| 領域 | 完了内容 |
+|------|----------|
+| 入力 | iPhone フォーム → draft JSON |
+| スキーマ | `schema.json` / `schema-ready.json` |
+| 検証 | `validate.js` / `validateReady.js` |
+| レンダリング | `render-head.js`, `render-picture.js`, `render-sections.js`, `render-sidebar.js` |
+| 生成 CLI | `generate.js` → `staging/travel-{id}.html` |
+| E2E 確認 | フィクスチャ mock → staging 生成・検証手順（本 README） |
+
+#### Sprint 3 のスコープ（Sprint 2 では行わない）
+
+| 項目 | 内容 |
+|------|------|
+| 本番反映 | `staging/travel-{id}.html` → リポジトリルート `travel-{id}.html` |
+| 一覧更新 | `travel.html` に新記事リンク追加 |
+| サイトマップ | `sitemap.xml` に URL 追加 |
+| 画像パイプライン | 原本 → AVIF/WebP 変換、`images/travel/{folder}/` 配置 |
+| `--force` | staging / ルート上書きオプション（Sprint 2c では未実装） |
+| `next-id.json` 更新 | 記事公開後に ID を進める |
+| デプロイ | GitHub Pages 等への反映 |
+
+#### Sprint 3 に渡す成果物
+
+| 成果物 | パス |
+|--------|------|
+| ready JSON フィクスチャ | `tools/travel/fixtures/mock-travel-16.json` |
+| HTML テンプレート | `tools/travel/templates/article.html` |
+| レンダラーモジュール | `tools/travel/render-*.js` |
+| 生成 CLI | `tools/travel/generate.js` |
+| ステージング HTML | `staging/travel-16.html`（E2E 生成物） |
+| 検証手順 | 本 README Sprint 2d セクション |
+| draft JSON（実記事分） | `drafts/travel-{id}.json`（フォーム出力、手動配置） |
+
+### 4. Sprint 2 完了チェックリスト
+
+レビュアー向け。すべてにチェックが付いたら Sprint 2 完了、Sprint 3 に進めます。
+
+#### パイプライン
+
+- [ ] `validateReady(mock-travel-16.json)` が `valid: true` を返す
+- [ ] `generate.js` が `staging/travel-16.html` を生成する
+- [ ] 再生成前に staging ファイル削除が必要（no-overwrite）であることを理解している
+- [ ] `--dry-run` が HTML を stdout に出力し、ファイルを書かない
+- [ ] 出力 HTML に `{{...}}` プレースホルダが残っていない
+
+#### 構造品質
+
+- [ ] `staging/travel-16.html` と `travel-15.html` の diff で head / picture / sections / sidebar / footer 構造が一致
+- [ ] slug 参照（canonical, og:url, JSON-LD, シェア URL）が `travel-16` を指す
+- [ ] photo セクション 6 + text セクション 1 の構成
+- [ ] `<picture>` の avif / webp variants が `build.photos[].variants` と一致
+
+#### 安全制約
+
+- [ ] 生成物は `staging/` のみ（ルート `travel-*.html` 未作成）
+- [ ] `travel.html` / `index.html` / `sitemap.xml` / `style.css` / `script.js` 未変更
+- [ ] 一時ルートコピーは確認後削除済み（コミットしていない）
+
+#### ドキュメント
+
+- [ ] 本 README に Sprint 2d E2E 手順が記載されている
+- [ ] ディレクトリ構成に `generate.js` と `fixtures/mock-travel-16.json` が記載されている
+- [ ] Sprint 3 引き継ぎ範囲が明確
+
+#### 既知の制限（受け入れ済み）
+
+- [ ] Sprint 2c/2d では staging 上書き不可（Sprint 3 で `--force` 検討）
+- [ ] `/staging/` URL では CSS/JS/画像が壊れる（ソース diff が主要検証手段）
+- [ ] 画像ファイル自体の生成・配置は Sprint 3（構造のみ Sprint 2 で確認）
+- [ ] 本番反映・一覧・サイトマップ更新は Sprint 3
