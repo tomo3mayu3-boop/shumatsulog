@@ -242,6 +242,47 @@ node -e "const {escapeHtml}=require('./tools/travel/escape'); console.log(escape
 
 ブラウザでは `TravelEscape.escapeHtml` / `TravelEscape.escapeAttr` として利用できます。
 
-### Sprint 2b 以降
+## Sprint 2b — HTML レンダラー
 
-Sprint 2b では `render-*.js`（head / picture / sections / sidebar）を追加し、Sprint 2c で `generate.js` CLI 統合を行います。
+Sprint 2a のプレースホルダを埋めるレンダラーモジュールです。
+
+```
+tools/travel/
+├── render-head.js       # head / hero プレースホルダ
+├── render-picture.js    # <picture> ブロック
+├── render-sections.js   # 本文セクション
+└── render-sidebar.js    # サイドバー地図
+```
+
+## Sprint 2c — generate.js CLI
+
+ready JSON から HTML を生成し、`staging/` に出力します（リポジトリルートの既存 `travel-*.html` は上書きしません）。
+
+### 使い方
+
+```bash
+# staging/travel-{id}.html を生成
+node tools/travel/generate.js tools/travel/fixtures/mock-travel-16.json
+
+# 検証のみ（HTML を stdout に出力、ファイルは書かない）
+node tools/travel/generate.js tools/travel/fixtures/mock-travel-16.json --dry-run
+
+# 出力先を指定（デフォルト: staging/）
+node tools/travel/generate.js drafts/travel-16.json --out staging/
+```
+
+### 処理フロー
+
+1. JSON を読み込み、`validateReady()` で検証（失敗時は stderr にエラー、exit 1）
+2. `{repoRoot}/travel-{id}.html` が既にあれば slug 衝突で中止
+3. `staging/travel-{id}.html` が既にあれば中止（Sprint 2c では上書き不可）
+4. `templates/article.html` を読み込み、レンダラーでプレースホルダを置換
+5. `staging/travel-{id}.html` に書き出し（`--dry-run` 時は stdout のみ）
+
+### 生成物
+
+| 出力 | 説明 |
+|------|------|
+| `staging/travel-{id}.html` | ステージング用 HTML（本番反映前の確認用） |
+
+> **Note:** Sprint 2c では `staging/` への出力のみです。本番ルートへのコピーは別スプリントで行います。
