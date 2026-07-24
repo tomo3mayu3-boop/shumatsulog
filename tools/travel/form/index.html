@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>旅行記事ドラフト入力</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="page-header">
+    <h1>旅行記事ドラフト</h1>
+    <p class="page-subtitle">iPhone Safari 向け入力フォーム</p>
+  </header>
+
+  <main class="form-container">
+    <div id="success-message" class="message message-success" hidden role="status">
+      JSON をダウンロードしました。drafts/ フォルダに保存してください。
+    </div>
+
+    <div id="error-summary" class="message message-error" hidden role="alert">
+      <p class="message-title">入力内容を確認してください</p>
+      <ul id="error-list"></ul>
+    </div>
+
+    <div id="warning-summary" class="message message-warning" hidden role="status">
+      <p class="message-title">確認事項</p>
+      <ul id="warning-list"></ul>
+    </div>
+
+    <form id="travel-form" novalidate>
+      <div class="field">
+        <label for="id">記事ID</label>
+        <input type="number" id="id" name="id" inputmode="numeric" min="1" step="1" required>
+        <p class="hint">次の記事番号（例: 16 → travel-16）</p>
+      </div>
+
+      <div class="field">
+        <label for="title">タイトル</label>
+        <input type="text" id="title" name="title" maxlength="80" required autocomplete="off">
+        <p class="hint">1〜80文字</p>
+      </div>
+
+      <div class="field">
+        <label for="date">日付</label>
+        <input type="date" id="date" name="date" required>
+      </div>
+
+      <div class="field">
+        <label for="locationTag">場所タグ</label>
+        <input type="text" id="locationTag" name="locationTag" required autocomplete="off" placeholder="例: 沖縄県宮古島市">
+        <p class="hint">📍 表示用</p>
+      </div>
+
+      <div class="field">
+        <label for="heroSubtitle">ヒーロー副題</label>
+        <input type="text" id="heroSubtitle" name="heroSubtitle" maxlength="200" required autocomplete="off">
+        <p class="hint">1〜200文字</p>
+      </div>
+
+      <div class="field">
+        <label for="body">本文</label>
+        <textarea id="body" name="body" rows="14" required spellcheck="false" placeholder="写真01のひとこと&#10;&#10;次の段落&#10;&#10;---&#10;&#10;写真02のひとこと&#10;&#10;---&#10;&#10;締めのテキスト"></textarea>
+        <p class="hint">
+          セクション区切りは行全体が <code>---</code>。<br>
+          段落は空行で区切る。改行は <code>&lt;br&gt;</code> をそのまま記述。
+        </p>
+      </div>
+
+      <div class="field">
+        <label for="listingDescription">一覧説明文</label>
+        <textarea id="listingDescription" name="listingDescription" rows="3" maxlength="300" required></textarea>
+        <p class="hint">travel.html 一覧用（1〜300文字）</p>
+      </div>
+
+      <div class="field field-readonly">
+        <label>スラッグ（自動）</label>
+        <output id="slug-preview" for="id">travel-16</output>
+      </div>
+    </form>
+  </main>
+
+  <footer class="save-bar">
+    <button type="submit" form="travel-form" id="save-btn" class="save-btn">
+      JSON を保存
+    </button>
+  </footer>
+
+  <script src="../parse-body.js"></script>
+  <script src="../validate.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
