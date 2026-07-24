@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://imona.example/tools/travel/schema-ready.json",
+  "title": "Travel Ready",
+  "description": "Ready JSON for travel articles (schemaVersion 1, status ready, build required)",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "status",
+    "category",
+    "id",
+    "slug",
+    "title",
+    "date",
+    "locationTag",
+    "heroSubtitle",
+    "listingDescription",
+    "body",
+    "build",
+    "meta"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "status": {
+      "type": "string",
+      "const": "ready"
+    },
+    "category": {
+      "type": "string",
+      "const": "travel"
+    },
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^travel-[0-9]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "locationTag": {
+      "type": "string",
+      "minLength": 1
+    },
+    "heroSubtitle": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "listingDescription": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "body": {
+      "type": "object",
+      "required": ["raw", "sections"],
+      "additionalProperties": false,
+      "properties": {
+        "raw": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["type", "paragraphs"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["photo", "text"]
+              },
+              "paragraphs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "required": [
+        "orientation",
+        "imageFolder",
+        "imagePrefix",
+        "photos",
+        "ogImage",
+        "sidebar",
+        "seo"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "orientation": {
+          "type": "string",
+          "enum": ["landscape", "portrait"]
+        },
+        "imageFolder": {
+          "type": "string",
+          "minLength": 1
+        },
+        "imagePrefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seo": {
+          "type": "object",
+          "required": ["description"],
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          }
+        },
+        "photos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["index", "alt", "width", "height", "variants"],
+            "additionalProperties": false,
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "alt": {
+                "type": "string",
+                "minLength": 1
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "variants": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        },
+        "ogImage": {
+          "type": "object",
+          "required": ["filename", "width", "height"],
+          "additionalProperties": false,
+          "properties": {
+            "filename": {
+              "type": "string",
+              "minLength": 1
+            },
+            "width": {
+              "type": "integer",
+              "const": 1200
+            },
+            "height": {
+              "type": "integer",
+              "const": 630
+            }
+          }
+        },
+        "sidebar": {
+          "type": "object",
+          "required": ["places"],
+          "additionalProperties": false,
+          "properties": {
+            "places": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["label", "detail", "mapQuery", "zoom", "iframeHeight"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "detail": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "mapQuery": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "zoom": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 21
+                  },
+                  "iframeHeight": {
+                    "type": "integer",
+                    "minimum": 100
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "required": ["createdAt", "updatedAt", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "string",
+          "const": "iphone-form-v1"
+        }
+      }
+    }
+  }
+}

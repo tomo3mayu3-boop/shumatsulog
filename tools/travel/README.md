@@ -114,6 +114,134 @@ console.log(JSON.stringify(result, null, 2));
 - `id <= 15`: 既存記事との重複リスク
 - 空のセクション（段落なし）
 
-## Sprint 2 以降
+## Sprint 2a — テンプレートと ready JSON 基盤
 
-Sprint 2 では `drafts/` の JSON から HTML 記事を生成するビルドスクリプトを追加予定です。テンプレートは `tools/travel/templates/` に配置します。
+Sprint 1 の draft JSON に PC 側で `build` ブロックを追記し、`status: "ready"` にした JSON を HTML 生成の入力とします。Sprint 2a ではその骨格（テンプレート・スキーマ・検証・エスケープ）を追加しました。
+
+### 追加ファイル
+
+```
+tools/travel/
+├── schema-ready.json      # ready 状態 JSON の JSON Schema
+├── validate-ready.js      # ready 専用バリデーション
+├── escape.js              # HTML / 属性エスケープ
+└── templates/
+    └── article.html       # travel-15 ベースの HTML 骨格
+```
+
+### schema-ready.json
+
+Sprint 1 の `schema.json` と同じベースフィールドに加え、`status` は `"ready"`、`build` は **必須オブジェクト** です。
+
+`build` ブロックの主要フィールド:
+
+| フィールド | 説明 |
+|-----------|------|
+| `orientation` | `"landscape"` または `"portrait"` |
+| `imageFolder` | `images/travel/` 以下のフォルダ名 |
+| `imagePrefix` | ファイル名プレフィックス（例: `sui-`） |
+| `photos[]` | 各写真の `index`, `alt`, `width`, `height`, `variants` |
+| `ogImage` | OGP 用 JPG（`filename`, `width: 1200`, `height: 630`） |
+| `sidebar.places[]` | サイドバー地図（`label`, `detail`, `mapQuery`, `zoom`, `iframeHeight`） |
+| `seo.description` | `<meta description>` 用テキスト |
+
+### validate-ready.js
+
+`validate.js` の `validateDraft` を再利用し、ready 状態専用の追加チェックを行います。
+
+| チェック | 内容 |
+|----------|------|
+| status | `"ready"` のみ許可（`draft` / `build: null` は拒否） |
+| build | null / undefined を拒否、build 各フィールドを検証 |
+| slug | `travel-{id}` 形式と id の一致 |
+| photo 数 | `countPhotoSections(body)` === `build.photos.length` |
+
+#### Node での簡易テスト
+
+```bash
+# draft / build:null は拒否される
+node -e "const v=require('./tools/travel/validate-ready'); console.log(v.validateReady({status:'draft',build:null}));"
+
+# photo セクション数と build.photos 数の不一致
+node -e "
+const { validateReady } = require('./tools/travel/validate-ready');
+const mock = {
+  schemaVersion: 1,
+  status: 'ready',
+  category: 'travel',
+  id: 16,
+  slug: 'travel-16',
+  title: 'テスト記事',
+  date: '2026-07-13',
+  locationTag: '沖縄県宮古島市',
+  heroSubtitle: '副題',
+  listingDescription: '一覧説明',
+  body: {
+    raw: 'photo\\n\\n---\\n\\ntext',
+    sections: [
+      { type: 'photo', paragraphs: ['写真'] },
+      { type: 'text', paragraphs: ['締め'] }
+    ]
+  },
+  build: {
+    orientation: 'landscape',
+    imageFolder: 'test',
+    imagePrefix: 'test-',
+    seo: { description: 'SEO説明文' },
+    photos: [
+      { index: 1, alt: 'a', width: 100, height: 100, variants: [400] },
+      { index: 2, alt: 'b', width: 100, height: 100, variants: [400] }
+    ],
+    ogImage: { filename: 'test-og.jpg', width: 1200, height: 630 },
+    sidebar: {
+      places: [
+        { label: '場所', detail: '詳細', mapQuery: 'query', zoom: 14, iframeHeight: 220 }
+      ]
+    }
+  },
+  meta: {
+    createdAt: '2026-07-24T08:00:00.000Z',
+    updatedAt: '2026-07-24T08:00:00.000Z',
+    source: 'iphone-form-v1'
+  }
+};
+console.log(validateReady(mock));
+"
+```
+
+期待結果: 1 件目は `valid: false`、2 件目は photo 数不一致エラー。
+
+### article.html プレースホルダ
+
+| プレースホルダ | 用途 |
+|----------------|------|
+| `{{TITLE_FULL}}` | `<title>` / og:title（タイトル + ` \| 週末ログ`） |
+| `{{DESCRIPTION}}` | meta description / og:description |
+| `{{OG_IMAGE_URL}}` | og:image / twitter:image |
+| `{{OG_IMAGE_WIDTH}}` / `{{OG_IMAGE_HEIGHT}}` | og:image サイズ |
+| `{{CANONICAL_URL}}` | canonical / og:url |
+| `{{PRELOAD_LINK}}` | 1 枚目 `<link rel="preload">` 全文 |
+| `{{JSON_LD_ARTICLE}}` | Article JSON-LD（1 行） |
+| `{{JSON_LD_BREADCRUMB}}` | BreadcrumbList JSON-LD（1 行） |
+| `{{ARTICLE_CLASS}}` | `travel-article travel-article-landscape` 等 |
+| `{{HERO_H2}}` / `{{HERO_SUBTITLE}}` / `{{LOCATION_TAG}}` | ヒーロー |
+| `{{BODY_SECTIONS}}` | 本文 `<section>` 群（Sprint 2b で生成） |
+| `{{SIDEBAR_PLACES}}` | サイドバー地図ボックス（Sprint 2b で生成） |
+| `{{SHARE_TEXT_ENCODED}}` / `{{SHARE_URL_ENCODED}}` | X シェア URL 用 |
+
+固定部分: header, nav, footer, `script.js`, back-to-top, サイドバーのカテゴリボックス、戻るリンク section。
+
+### escape.js
+
+Sprint 2b のレンダラーで alt テキストや属性値を安全に出力するためのユーティリティです。`&`, `<`, `>`, `"`, `'` をエスケープします。
+
+```bash
+node -e "const {escapeHtml}=require('./tools/travel/escape'); console.log(escapeHtml('<test>'));"
+# 期待: &lt;test&gt;
+```
+
+ブラウザでは `TravelEscape.escapeHtml` / `TravelEscape.escapeAttr` として利用できます。
+
+### Sprint 2b 以降
+
+Sprint 2b では `render-*.js`（head / picture / sections / sidebar）を追加し、Sprint 2c で `generate.js` CLI 統合を行います。
