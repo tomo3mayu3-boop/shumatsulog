@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5ZM4M1DXH"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>{{TITLE_FULL}}</title>
+
+  <meta name="description" content="{{DESCRIPTION}}">
+
+  <meta property="og:title" content="{{TITLE_FULL}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:image" content="{{OG_IMAGE_URL}}">
+  <meta property="og:image:width" content="{{OG_IMAGE_WIDTH}}">
+  <meta property="og:image:height" content="{{OG_IMAGE_HEIGHT}}">
+  <meta property="og:url" content="{{CANONICAL_URL}}">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="週末ログ">
+
+  {{PRELOAD_LINK}}
+  <link rel="stylesheet" href="style.css">
+  <link rel="canonical" href="{{CANONICAL_URL}}">
+  <meta name="color-scheme" content="light dark">
+  <script type="application/ld+json">
+  {{JSON_LD_ARTICLE}}
+  </script>
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@potato_weekend">
+  <meta name="twitter:image" content="{{OG_IMAGE_URL}}">
+  <meta name="theme-color" content="#222222">
+  <link rel="manifest" href="manifest.json">
+  <script type="application/ld+json">
+  {{JSON_LD_BREADCRUMB}}
+  </script>
+</head>
+<body>
+
+<header>
+  <h1>✈️ 週末ログ</h1>
+  <button class="nav-toggle" aria-label="メニューを開く">☰</button>
+  <nav id="main-nav">
+    <a href="index.html">ホーム</a>
+    <a href="carwash.html">洗車</a>
+    <span class="category disabled">料理</span>
+    <a href="travel.html" aria-current="page">旅行</a>
+    <a href="yurulog.html">ゆるログ</a>
+  </nav>
+</header>
+
+<main class="layout">
+  <div class="content">
+    <div class="{{ARTICLE_CLASS}}">
+
+      <section class="hero">
+        <h2>{{HERO_H2}}</h2>
+        <p>{{HERO_SUBTITLE}}</p>
+        <p class="travel-location">📍 {{LOCATION_TAG}}</p>
+      </section>
+
+      {{BODY_SECTIONS}}
+
+      <section>
+        <p><a href="travel.html" class="btn">← 旅行トップに戻る</a></p>
+      </section>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    {{SIDEBAR_PLACES}}
+    <div class="sidebar-box">
+      <h3>📂 カテゴリ</h3>
+      <ul>
+        <li><a href="carwash.html">🚗 洗車</a></li>
+        <li><span class="category disabled">🍳 料理</span></li>
+        <li><a href="travel.html" aria-current="page">✈️ 旅行</a></li>
+        <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
+      </ul>
+    </div>
+  </aside>
+</main>
+
+<footer>
+  <p>© 2026 週末ログ</p>
+  <p>
+    <a href="https://x.com/potato_weekend" target="_blank" rel="noopener noreferrer">X（Twitter）</a>
+    ／
+    <a href="https://shumatsulog.com/" target="_blank" rel="noopener noreferrer">HP</a>
+  </p>
+  <p style="text-align:center;margin:0 0 8px;"><a href="https://twitter.com/intent/tweet?text={{SHARE_TEXT_ENCODED}}&url={{SHARE_URL_ENCODED}}" target="_blank" rel="noopener noreferrer" class="share-x">𝕏 この記事をシェア</a></p>
+</footer>
+<script src="script.js"></script>
+<button id="back-to-top" aria-label="トップへ戻る" title="トップへ戻る">▲</button>
+</body>
+</html>
