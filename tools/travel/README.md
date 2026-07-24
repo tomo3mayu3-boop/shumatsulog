@@ -282,7 +282,10 @@ node tools/travel/generate.js drafts/travel-16.json --out staging/
 2. `{repoRoot}/travel-{id}.html` が既にあれば slug 衝突で中止
 3. `staging/travel-{id}.html` が既にあれば中止（Sprint 2c では上書き不可）
 4. `templates/article.html` を読み込み、レンダラーでプレースホルダを置換
-5. `staging/travel-{id}.html` に書き出し（`--dry-run` 時は stdout のみ）
+5. 未置換の `{{PLACEHOLDER}}` を検出（Sprint 3a、残存時は stderr にトークン一覧、exit 1）
+6. `staging/travel-{id}.html` に書き出し（`--dry-run` 時は stdout のみ）
+
+> **Note:** ステップ 5 はファイル書き込み**前**および `--dry-run` の stdout 出力**前**に実行されます。
 
 ### 生成物
 
@@ -291,6 +294,29 @@ node tools/travel/generate.js drafts/travel-16.json --out staging/
 | `staging/travel-{id}.html` | ステージング用 HTML（本番反映前の確認用） |
 
 > **Note:** Sprint 2c では `staging/` への出力のみです。本番ルートへのコピーは別スプリントで行います。
+
+## Sprint 3a — プレースホルダ自動検証
+
+Sprint 2c の `generate.js` に、未置換プレースホルダの自動検出を追加しました。
+
+### 動作
+
+- レンダリング後の HTML を `findRemainingPlaceholders()` で走査し、`{{TITLE_FULL}}` 等の `{{UPPER_SNAKE}}` 形式トークンを検出
+- 1 件でも残存していれば **exit 1** で中止。stderr に `Error: unreplaced placeholders remain: {{TOKEN1}}, {{TOKEN2}}, ...` と一覧表示
+- 検査は **ファイル書き込み前** および **`--dry-run` の stdout 出力前** の両方で実行（不完全な HTML が staging や stdout に出ない）
+
+### Sprint 2c との関係
+
+| 機能 | スプリント |
+|------|-----------|
+| ready JSON → staging HTML 生成 | Sprint 2c |
+| レンダラー統合（head / sections / sidebar） | Sprint 2c |
+| `--dry-run`（stdout のみ、ファイル書かない） | Sprint 2c |
+| slug 衝突チェック（ルート `travel-{id}.html`） | Sprint 2c |
+| staging 上書き不可 | Sprint 2c |
+| 未置換プレースホルダ自動検出（exit 1） | **Sprint 3a** |
+
+手動の `Select-String` による残存チェック（Sprint 2d）は引き続き任意の追加確認として利用できます。
 
 ## Sprint 2d — E2E 確認
 
@@ -338,6 +364,10 @@ node tools/travel/generate.js tools/travel/fixtures/mock-travel-16.json
 期待結果: `Generated: ...\staging\travel-16.html`
 
 **Step 4 — プレースホルダ残存チェック**
+
+Sprint 3a 以降、`generate.js` が書き込み前に未置換 `{{...}}` を自動検出します。Step 3 が exit 0 で完了していれば、プレースホルダ残存はないことが保証されます。
+
+任意の追加確認（手動）:
 
 ```powershell
 Select-String -Path staging/travel-16.html -Pattern '\{\{'
@@ -433,11 +463,13 @@ mock-travel-16 の `build.imageFolder` は `sui` ですが、リポジトリに 
 
 #### プレースホルダ残存の確認
 
+Sprint 3a 以降は `generate.js` が自動検出（残存時 exit 1）。手動確認は任意:
+
 ```powershell
 Select-String -Path staging/travel-16.html -Pattern '\{\{'
 ```
 
-`{{TITLE_FULL}}` 等が 1 件も残っていないこと。残存があればレンダラーまたはテンプレート置換の不具合。
+`{{TITLE_FULL}}` 等が 1 件も残っていないこと。`generate.js` が exit 0 なら通常は不要。残存があればレンダラーまたはテンプレート置換の不具合。
 
 ### 3. Sprint 3 引き継ぎ
 
