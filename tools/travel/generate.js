@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generate travel article HTML from ready JSON (Sprint 2c).
+ * Generate travel article HTML from ready JSON (Sprint 2c / 3a).
  *
  * Usage:
  *   node tools/travel/generate.js <path-to-json>
@@ -77,6 +77,27 @@ function applyPlaceholders(template, placeholders) {
   return result;
 }
 
+var PLACEHOLDER_RE = /\{\{[A-Z_]+\}\}/g;
+
+/**
+ * @param {string} html
+ * @returns {string[]}
+ */
+function findRemainingPlaceholders(html) {
+  var matches = html.match(PLACEHOLDER_RE);
+  if (!matches) {
+    return [];
+  }
+  var seen = {};
+  return matches.filter(function (token) {
+    if (seen[token]) {
+      return false;
+    }
+    seen[token] = true;
+    return true;
+  });
+}
+
 function main() {
   var args = parseArgs(process.argv);
   var raw;
@@ -142,6 +163,14 @@ function main() {
   });
 
   var html = applyPlaceholders(template, placeholders);
+
+  var remaining = findRemainingPlaceholders(html);
+  if (remaining.length > 0) {
+    console.error(
+      'Error: unreplaced placeholders remain: ' + remaining.join(', ')
+    );
+    process.exit(1);
+  }
 
   if (args.dryRun) {
     process.stdout.write(html);
