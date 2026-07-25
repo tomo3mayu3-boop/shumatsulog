@@ -101,6 +101,12 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://shumatsulog.com/travel-16</loc>
+    <lastmod>2026-07-13</lastmod>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
     <loc>https://shumatsulog.com/yurulog</loc>
     <lastmod>2026-06-12</lastmod>
     <priority>0.8</priority>
