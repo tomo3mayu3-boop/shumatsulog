@@ -7,7 +7,7 @@ description: iPhoneから写真＋一言メモだけで旅行記事(travel-N)を
 
 写真と一言メモを受け取り、記事を組み立てて公開まで進める。ユーザーの操作は「**写真を添付 → 一言メモ → プレビュー確認 → 承認**」だけ。
 
-**方式**: 画像変換だけ `build-images.js` を使い、**HTMLは Claude が既存記事（`travel-16.html` 等）を型にして直接書く**。中間JSON・`generate.js`・`validate-ready` などは**使わない**（ファイルは残置。使わないだけ）。修正は「この部分だけ直して」と依頼 → Claude が該当HTMLを直接編集する。
+**方式**: 画像変換だけ `build-images.js` を使い、**HTMLは Claude が「最新の travel 記事」を型にして直接書く**（構造・CSSクラス・メタの書き方をそこから写す。特定の記事に固定しない＝テンプレが進化したら自動で追従する）。中間JSON・`generate.js`・`validate-ready` などは**使わない**（ファイルは残置。使わないだけ）。修正は「この部分だけ直して」と依頼 → Claude が該当HTMLを直接編集する。
 
 ## 大前提（毎回）
 - **作業リポジトリは本番 `C:\homepage`**（= `shumatsulog` repo）。`C:\homepage_backup` では公開されない。cwd を確認する。
@@ -27,7 +27,7 @@ description: iPhoneから写真＋一言メモだけで旅行記事(travel-N)を
 1. cwd が `C:\homepage` か確認。
 2. `tools/travel/node_modules` が無ければ `cd tools/travel && npm install`（sharp）。
 3. `tools/travel/next-id.json` を読み `id` を決定（`slug = travel-{id}`）。
-4. **型にする直近記事**（`travel-16.html`）と `travel.html`・`sitemap.xml` を読む。
+4. **型にする最新記事を特定して読む**：`ls travel-*.html` の**最大番号**（例 `ls travel-*.html | sort -V | tail -1`）が直近公開記事。これを「型記事」として構造・CSSクラス・メタの書き方を写す。加えて `travel.html`（一覧フォーマット）と `sitemap.xml` も読む。以降このスキル内の `travel-16.html` はすべて**この型記事に読み替える**（例示にすぎない）。
 
 ### Step 1 — 原本を取り込む
 - 添付写真を `drafts/incoming/travel-{id}/` に順序が安定する名前（`01`,`02`,…）で保存。
@@ -46,15 +46,15 @@ node tools/travel/build-images.js --src drafts/incoming/travel-{id} --folder {fo
 - 原本を作業フォルダから消してよい場合は、変換後に `drafts/incoming/travel-{id}/` を削除して原本を残さない。
 
 ### Step 3 — HTMLを直接書く（＝執筆＋組版）
-`travel-16.html` を型として `travel-{id}.html` を新規作成する。以下を**必ず**満たす（=確認項目）。
+Step 0 で特定した**型記事（最大番号の `travel-{N}.html`）** を下敷きに `travel-{id}.html` を新規作成する。以下を**必ず**満たす（=確認項目）。
 
 #### ✅ 確認項目（チェックリスト）
-1. **既存記事の構造とデザインを踏襲**：header / nav / `main.layout>content>div.travel-article.travel-article-{orientation}` / hero / 写真section群 / 締めtext section / 戻るリンク / sidebar（地図＋カテゴリ）/ footer / `script.js` / back-to-top を `travel-16.html` と同一構造で。CSSクラス名・DOM構造・`script.js`挙動は変えない。`orientation` は断片の値。
+1. **既存記事の構造とデザインを踏襲**：header / nav / `main.layout>content>div.travel-article.travel-article-{orientation}` / hero / 写真section群 / 締めtext section / 戻るリンク / sidebar（地図＋カテゴリ）/ footer / `script.js` / back-to-top を**型記事と同一構造**で。CSSクラス名・DOM構造・`script.js`挙動・メタの書き方は型記事に合わせる（変えない）。`orientation` は断片の値。
 2. **canonical・OGP・JSON-LD・slug・日付を確認**：
    - `<title>` = `{title} | 週末ログ`、`meta description`
    - `og:title`/`og:description`/`og:type=article`/`og:site_name=週末ログ`
    - `og:image` = `https://shumatsulog.com/images/travel/{folder}/{prefix}og.jpg`、`og:image:width=1200`/`height=630`
-   - `og:url` と `canonical` = `https://shumatsulog.com/travel-{id}`（**slugを新IDに**。型のtravel-16を残さない）
+   - `og:url` と `canonical` = `https://shumatsulog.com/travel-{id}`（**slugを新IDに**。型記事のIDを残さない）
    - JSON-LD **Article**（headline/description/image=og.jpg/url/datePublished=`{date}`/publisher）
    - JSON-LD **BreadcrumbList**（3件目 name=タイトル・item=canonical）
    - `twitter:card=summary_large_image`/`twitter:site=@potato_weekend`/`twitter:image`=og.jpg
@@ -106,7 +106,7 @@ git push origin main
 
 ## 変更してよい範囲（安全制約）
 - 追加/更新してよいのは：新規 `travel-{id}.html`、`travel.html`(先頭prependのみ)、`sitemap.xml`(新URL追加のみ)、`tools/travel/next-id.json`、`images/travel/{folder}/`。
-- **触らない**：既存 `travel-1〜16.html`、`index.html`、`style.css`、`script.js`、他カテゴリ。
-- 新規ページのJSは外部 `script.js` のみ（本番CSPで inline `<script>` は実行されない）。※型のtravel-16は準拠済み。
+- **触らない**：既存の全 `travel-*.html`（型記事を含む。読むだけ）、`index.html`、`style.css`、`script.js`、他カテゴリ。
+- 新規ページのJSは外部 `script.js` のみ（本番CSPで inline `<script>` は実行されない）。※型記事は準拠済み。
 - OGは JPG（`{prefix}og.jpg` 1200×630）。WebPのOGはXで表示されない。
 - 修正依頼は指定箇所のみ編集。迷ったら公開前に止まって確認する。
