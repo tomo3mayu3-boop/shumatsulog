@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://imona.example/tools/travel/schema.json",
+  "title": "Travel Draft",
+  "description": "Draft JSON for travel articles (schemaVersion 1, status draft, build null)",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "status",
+    "category",
+    "id",
+    "slug",
+    "title",
+    "date",
+    "locationTag",
+    "heroSubtitle",
+    "listingDescription",
+    "body",
+    "build",
+    "meta"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "status": {
+      "type": "string",
+      "const": "draft"
+    },
+    "category": {
+      "type": "string",
+      "const": "travel"
+    },
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^travel-[0-9]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "locationTag": {
+      "type": "string",
+      "minLength": 1
+    },
+    "heroSubtitle": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "listingDescription": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "body": {
+      "type": "object",
+      "required": ["raw", "sections"],
+      "additionalProperties": false,
+      "properties": {
+        "raw": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["type", "paragraphs"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["photo", "text"]
+              },
+              "paragraphs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "build": {
+      "type": "null"
+    },
+    "meta": {
+      "type": "object",
+      "required": ["createdAt", "updatedAt", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "string",
+          "const": "iphone-form-v1"
+        }
+      }
+    }
+  }
+}
