@@ -11,6 +11,8 @@ tools/travel/
 ├── validate.js          # バリデーション（Node / ブラウザ両対応）
 ├── validate-ready.js    # ready 専用バリデーション（Sprint 2a）
 ├── generate.js          # ready JSON → staging HTML（Sprint 2c）
+├── apply.js             # staging → 本番反映（Sprint 3b）
+├── render-listing.js    # travel.html 一覧セクション生成（Sprint 3b）
 ├── next-id.json         # 次に使う記事 ID
 ├── fixtures/
 │   └── mock-travel-16.json  # E2E 確認用 ready JSON フィクスチャ
@@ -317,6 +319,91 @@ Sprint 2c の `generate.js` に、未置換プレースホルダの自動検出�
 | 未置換プレースホルダ自動検出（exit 1） | **Sprint 3a** |
 
 手動の `Select-String` による残存チェック（Sprint 2d）は引き続き任意の追加確認として利用できます。
+
+## Sprint 3b — apply.js（本番反映）
+
+ready JSON と `staging/travel-{id}.html` から、記事をサイトに反映します。
+
+### 使い方
+
+```bash
+# 本番反映（staging → ルート、travel.html / sitemap.xml / next-id.json 更新）
+node tools/travel/apply.js tools/travel/fixtures/mock-travel-16.json
+
+# 計画のみ表示（ファイルは書かない）
+node tools/travel/apply.js tools/travel/fixtures/mock-travel-16.json --dry-run
+
+# 既存ファイルがある場合の上書き
+node tools/travel/apply.js tools/travel/fixtures/mock-travel-16.json --force
+```
+
+### 前提
+
+1. `validateReady()` を通過する ready JSON
+2. `staging/travel-{id}.html` が存在（`generate.js` で事前生成）
+
+```bash
+# staging が無い場合は先に生成
+node tools/travel/generate.js tools/travel/fixtures/mock-travel-16.json
+```
+
+### 処理フロー
+
+1. ready JSON を読み込み、`validateReady()` で検証（失敗時 exit 1）
+2. `staging/travel-{id}.html` の存在確認（無ければ中止）
+3. ルート `travel-{id}.html` が既にあれば中止（`--force` で上書き可）
+4. `--dry-run`: 予定アクションを表示して終了
+5. `staging/travel-{id}.html` → ルート `travel-{id}.html` にコピー
+6. `travel.html`: ヒーロー直後（最初の `</section>` の後）に一覧 `<section>` を挿入。`href="travel-{id}.html"` が既にあれば中止（`--force` でスキップして続行）
+7. `sitemap.xml`: `travel-15` エントリの直後に URL を追加（`lastmod=data.date`, `priority=0.6`）。既にあればスキップ
+8. `next-id.json`: `id >= nextId` なら `nextId` を `id + 1` に更新
+9. 成功サマリを表示
+
+### 安全制約
+
+| 対象 | 動作 |
+|------|------|
+| `travel-1.html` 〜 `travel-15.html` | **変更しない**（新規 `travel-{id}.html` の追加のみ） |
+| `travel.html` | 既存記事セクションはそのまま、新記事を先頭に **prepend** |
+| `index.html` / `style.css` / `script.js` | **変更しない** |
+| `sitemap.xml` | 新 URL エントリの追加のみ |
+
+### dry-run / --force
+
+| オプション | 用途 |
+|-----------|------|
+| `--dry-run` | コピー・更新の予定を表示。ファイルは一切書かない |
+| `--force` | ルート HTML の上書きを許可。一覧・サイトマップが既にあればスキップして続行 |
+
+### E2E 確認（mock-travel-16）
+
+```powershell
+# 1. staging 生成（再実行時は staging を削除してから）
+Remove-Item staging/travel-16.html -ErrorAction SilentlyContinue
+node tools/travel/generate.js tools/travel/fixtures/mock-travel-16.json
+
+# 2. dry-run
+node tools/travel/apply.js tools/travel/fixtures/mock-travel-16.json --dry-run
+
+# 3. 本番反映
+node tools/travel/apply.js tools/travel/fixtures/mock-travel-16.json
+```
+
+期待結果:
+
+- `travel-16.html` がリポジトリルートに作成される
+- `travel.html` の先頭記事が `travel-16.html` へのリンクになる
+- `sitemap.xml` に `https://shumatsulog.com/travel-16` エントリが追加される
+- `next-id.json` の `nextId` が `17` になる
+
+### コミット前チェックリスト
+
+- [ ] `travel-1.html` 〜 `travel-15.html` に diff がない
+- [ ] `index.html` / `style.css` / `script.js` に diff がない
+- [ ] `travel.html` は新記事セクションの prepend のみ
+- [ ] `sitemap.xml` は travel-16 エントリ追加のみ
+- [ ] ルート `travel-16.html` が意図どおり（mock 適用時）
+- [ ] `--dry-run` で計画が期待どおり
 
 ## Sprint 2d — E2E 確認
 
