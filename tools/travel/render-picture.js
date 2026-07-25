@@ -70,12 +70,20 @@ function buildSrcset(build, photo, format) {
 function renderPicture(photo, build, options) {
   options = options || {};
   var isFirst = !!options.isFirst;
+  var imgClass =
+    options.imgClass !== undefined ? options.imgClass : 'viewer-photo';
+  var loading =
+    options.loading !== undefined
+      ? options.loading
+      : isFirst
+        ? 'eager'
+        : 'lazy';
   var basePath = imageBasePath(build, photo);
   var avifSrcset = buildSrcset(build, photo, 'avif');
   var webpSrcset = buildSrcset(build, photo, 'webp');
   var alt = escapeAttr(photo.alt);
-  var loading = isFirst ? 'eager' : 'lazy';
-  var fetchpriority = isFirst ? ' fetchpriority="high"' : '';
+  var fetchpriority =
+    isFirst && imgClass === 'viewer-photo' ? ' fetchpriority="high"' : '';
 
   return (
     '<picture>\n' +
@@ -93,7 +101,9 @@ function renderPicture(photo, build, options) {
     basePath +
     '.webp" alt="' +
     alt +
-    '" class="viewer-photo" loading="' +
+    '" class="' +
+    imgClass +
+    '" loading="' +
     loading +
     '"' +
     fetchpriority +
