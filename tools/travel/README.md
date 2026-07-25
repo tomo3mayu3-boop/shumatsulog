@@ -1,4 +1,48 @@
-# Travel Draft Tools (Sprint 1)
+# Travel Draft Tools
+
+iPhone から写真＋一言メモで旅行記事を作成・公開するためのツール群です。
+
+## Phase 1 — iPhone完結ワークフロー（現行・直接HTML方式）
+
+**目標体験**: iPhoneで「写真を添付 → 一言メモ → プレビュー確認 → 承認」だけで記事を公開する。画像変換・執筆・組版・反映は Claude が実行する。
+
+```
+写真＋メモ ──▶ build-images.js ──▶ Claudeが既存記事を型にHTML直接作成 ──▶ 一覧/sitemap/next-id更新 ──▶ プレビュー ──▶〔承認〕──▶ push
+   (添付)      images/travel/+断片      travel-{id}.html                      travel.html / sitemap.xml       (必須)
+```
+
+- 入口は **Claude Code スキル `travel-article`**（`.claude/skills/travel-article/SKILL.md`）。写真を添付して「旅行記事にして」で起動し、上記を一括実行する。
+- **画像変換だけ `build-images.js` を使い、HTMLは Claude が `travel-16.html` 等を型にして直接書く**。中間JSON・`generate.js`・`validate-ready` などの層は**使わない**（ファイルは下記「Sprint履歴」として残置。使わないだけ）。
+- **修正は「この部分だけ直して」と依頼** → Claude が該当HTMLを直接編集（指定箇所以外は触らない）。JSON編集・再生成はしない。
+- 公開は **必ずプレビュー後の明示承認** を挟む（自動push しない）。本番は `C:\homepage`（shumatsulog repo）、main 直コミット。
+
+### build-images.js（画像パイプライン / Node + sharp）
+
+原本フォルダから各写真の AVIF/WebP 多サイズ＋OG(JPG 1200×630) を生成し、`build` 断片JSON（`imageFolder`/`imagePrefix`/`orientation`/`photos[]`/`ogImage`）を出力する。**sharp が既定でEXIFを全除去**するため、出力にGPS・撮影日時・機種名は残らない。
+
+```bash
+cd tools/travel && npm install          # 初回のみ（sharp）
+node tools/travel/build-images.js --src drafts/incoming/travel-17 --folder sui --out-json drafts/travel-17.build.json
+```
+
+| オプション | 既定 | 説明 |
+|-----------|------|------|
+| `--src <dir>` | (必須) | 原本フォルダ。ファイル名順（自然順）に index 1.. を割当 |
+| `--folder <name>` | (必須) | `images/travel/{name}/` の出力先 |
+| `--prefix <p>` | `{folder}-` | 生成ファイル名の接頭辞 |
+| `--variants a,b` | `400,800` | 縮小幅（フル幅未満のみ採用）。フル幅は常に付与 |
+| `--og-index N` | `1` | OGに使う写真番号（横写真を選ぶ用） |
+| `--max-full N` | `1600` | フル幅の上限（超える原本は縮小） |
+| `--dry-run` / `--force` | off | 書かずに計画表示 / 既存上書き |
+
+- **画像原本 `drafts/incoming/` は `.gitignore` 済み**（GPS付き原本を公開しないため）。コミットしない。
+- OGは JPG のみ（WebPのOGはXで表示されないため）。
+
+---
+
+## Sprint 1 履歴（フォーム版・非推奨）
+
+> **Note:** 下記の入力フォーム（`form/`）と draft スキーマ（`schema.json`/`validate.js` の draft用途）は Sprint 1 の実装。Phase 1 では **フォーム入力は Claude の組み立てに置き換え**、通常は使わない（履歴として保持）。`validate.js` は `validate-ready.js` が内部再利用するため残す。
 
 iPhone Safari 向けの旅行記事ドラフト入力ツールです。フォームから JSON を生成し、`drafts/` に保存する前段階のワークフローを提供します。
 

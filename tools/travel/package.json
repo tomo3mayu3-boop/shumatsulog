@@ -1,0 +1,9 @@
+{
+  "name": "travel-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Travel article build tooling (image pipeline + generators). Not part of the static site.",
+  "dependencies": {
+    "sharp": "^0.35.3"
+  }
+}

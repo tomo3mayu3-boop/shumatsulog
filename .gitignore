@@ -23,3 +23,6 @@ dist/
 # --- 画像原本（重い・EXIF混入の恐れ）---
 *.HEIC
 *.heic
+
+# --- 旅行記事: iPhoneから受け取った原本（GPS/EXIF付き。変換前・絶対に公開しない）---
+drafts/incoming/
