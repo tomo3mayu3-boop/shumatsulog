@@ -46,4 +46,4 @@ Write-Host "  Start-ScheduledTask -TaskName $taskName"
 Write-Host ("  Get-Content `"{0}`" -Tail 5" -f (Join-Path $PSScriptRoot 'git-sync.log'))
 Write-Host ""
 Write-Host "解除:"
-Write-Host "  Unregister-ScheduledTask -TaskName $taskName -Confirm:`$false"
+Write-Host ('  Unregister-ScheduledTask -TaskName ' + $taskName + ' -Confirm:$false')
