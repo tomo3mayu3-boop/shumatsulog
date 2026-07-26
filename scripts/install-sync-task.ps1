@@ -1,29 +1,27 @@
 #requires -Version 5
-<#
-.SYNOPSIS
-  ログオン時に git-sync.ps1 をバックグラウンド実行するタスクを登録する（初回のみ手動実行）。
-.DESCRIPTION
-  - トリガー: 現在ユーザーのログオン時
-  - 遅延    : 45 秒（ログオン直後を避け、起動を妨げない）
-  - 実行    : PowerShell を非表示ウィンドウ・非対話で起動（バックグラウンド）
-  - 権限    : 現在ユーザー・限定権限（管理者不要）
-  Task Scheduler のログオンタスクは非同期に動くため、Windows の起動やデスクトップ表示を待たせない。
-  再実行しても -Force で同名タスクを上書きするので安全。
-.EXAMPLE
-  powershell -NoProfile -ExecutionPolicy Bypass -File C:\homepage\scripts\install-sync-task.ps1
-#>
+# Register a Scheduled Task that runs git-sync.ps1 in the background at logon.
+# Run this once, manually, on the PC. Administrator rights are NOT required.
+#   - Trigger: at the current user's logon
+#   - Delay  : 45 seconds (do not slow down startup)
+#   - Run    : PowerShell hidden and non-interactive (background)
+#   - Rights : current user, limited (no elevation)
+# Logon tasks run asynchronously, so Windows startup is not blocked.
+# Re-running is safe: -Force overwrites the task with the same name.
+#
+# Example:
+#   powershell -NoProfile -ExecutionPolicy Bypass -File C:\homepage\scripts\install-sync-task.ps1
 
 $ErrorActionPreference = 'Stop'
 
 $script = Join-Path $PSScriptRoot 'git-sync.ps1'
-if (-not (Test-Path $script)) { throw "git-sync.ps1 が見つかりません: $script" }
+if (-not (Test-Path $script)) { throw "git-sync.ps1 not found: $script" }
 
 $taskName = 'homepage-sync'
 
 $action = New-ScheduledTaskAction -Execute 'powershell.exe' `
     -Argument ('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}"' -f $script)
 
-# ログオン後 45 秒遅延
+# 45-second delay after logon
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $trigger.Delay = 'PT45S'
 
@@ -39,11 +37,11 @@ $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interac
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger `
     -Settings $settings -Principal $principal -Force | Out-Null
 
-Write-Host "✅ 登録しました: タスク '$taskName'（ログオン45秒後にバックグラウンド同期）"
-Write-Host ""
-Write-Host "手動テスト:"
-Write-Host "  Start-ScheduledTask -TaskName $taskName"
-Write-Host ("  Get-Content `"{0}`" -Tail 5" -f (Join-Path $PSScriptRoot 'git-sync.log'))
-Write-Host ""
-Write-Host "解除:"
+Write-Host ("Registered task '{0}' (background sync 45s after logon)." -f $taskName)
+Write-Host ''
+Write-Host 'Manual test:'
+Write-Host ('  Start-ScheduledTask -TaskName ' + $taskName)
+Write-Host ('  Get-Content "' + (Join-Path $PSScriptRoot 'git-sync.log') + '" -Tail 5')
+Write-Host ''
+Write-Host 'Uninstall:'
 Write-Host ('  Unregister-ScheduledTask -TaskName ' + $taskName + ' -Confirm:$false')
