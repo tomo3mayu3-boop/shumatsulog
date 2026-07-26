@@ -20,6 +20,9 @@ node_modules/
 dist/
 .cache/
 
+# --- ローカル同期スクリプトのログ（端末ごと・未追跡で同期を止めないため）---
+scripts/*.log
+
 # --- 画像原本（重い・EXIF混入の恐れ）---
 *.HEIC
 *.heic
