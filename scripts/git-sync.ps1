@@ -1,17 +1,13 @@
 #requires -Version 5
-<#
-.SYNOPSIS
-  C:\homepage を origin/main へ「安全に」fast-forward 同期する。
-.DESCRIPTION
-  ログオン時（遅延・バックグラウンド）に呼ばれる想定。安全設計：
-    - main ブランチのときだけ実行する
-    - 未コミット変更・未追跡ファイルがあれば同期しない（何も変更しない）
-    - git pull --ff-only origin main（分岐していたらマージせず中止）
-    - エラー時は作業ツリーを一切変更せず、ログだけ残す
-  すべての結果は scripts\git-sync.log に追記する。
-  リポジトリの場所はこのスクリプトの親フォルダから自動判定するため、
-  クローン先が C:\homepage 以外でもそのまま動作する。
-#>
+# Safely fast-forward the repo (e.g. C:\homepage) to origin/main.
+# Intended to run at logon (delayed, background). Safety rules:
+#   - Run only when the current branch is main
+#   - Do nothing if there are uncommitted or untracked changes
+#   - git pull --ff-only origin main (abort if diverged)
+#   - On any error, change nothing and only append to the log
+# All results are appended to scripts\git-sync.log.
+# The repo path is derived from this script's parent folder, so it works
+# even if cloned somewhere other than C:\homepage.
 
 $ErrorActionPreference = 'Continue'
 
@@ -24,44 +20,44 @@ function Write-Log {
     try { Add-Content -Path $log -Value $line -Encoding UTF8 } catch { }
 }
 
-# --- 作業ディレクトリへ移動 ---
+# --- Move into the repo ---
 try {
     Set-Location -Path $repo -ErrorAction Stop
 } catch {
-    Write-Log 'ERROR' "リポジトリへ移動できません: $repo"
+    Write-Log 'ERROR' "Cannot enter repo: $repo"
     exit 1
 }
 
-# --- git の存在確認 ---
+# --- git available? ---
 & git --version *> $null
-if ($LASTEXITCODE -ne 0) { Write-Log 'ERROR' 'git が見つかりません（PATH 未設定?）'; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Log 'ERROR' 'git not found (PATH not set?)'; exit 1 }
 
-# --- git リポジトリか確認 ---
+# --- Is this a git repo? ---
 & git rev-parse --is-inside-work-tree *> $null
-if ($LASTEXITCODE -ne 0) { Write-Log 'ERROR' "git リポジトリではありません: $repo"; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Log 'ERROR' "Not a git repository: $repo"; exit 1 }
 
-# --- main ブランチのみ実行 ---
+# --- main branch only ---
 $branch = (& git rev-parse --abbrev-ref HEAD 2>$null).Trim()
 if ($branch -ne 'main') {
-    Write-Log 'SKIP' "現在のブランチ '$branch' は main ではないため同期しません"
+    Write-Log 'SKIP' "Current branch '$branch' is not main; skipping"
     exit 0
 }
 
-# --- 安全弁：未コミット変更・未追跡ファイルがあれば中止（何も変更しない）---
+# --- Safety: stop if there are uncommitted or untracked changes (make no change) ---
 $dirty = & git status --porcelain
-if ($LASTEXITCODE -ne 0) { Write-Log 'ERROR' 'git status に失敗しました'; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Log 'ERROR' 'git status failed'; exit 1 }
 if ($dirty) {
-    Write-Log 'SKIP' '未コミット変更/未追跡ファイルあり。同期を中止しました（変更なし）'
+    Write-Log 'SKIP' 'Uncommitted or untracked changes present; aborting (no change made)'
     foreach ($l in $dirty) { Write-Log 'DIRTY' $l }
     exit 0
 }
 
-# --- fast-forward のみ（失敗しても作業ツリーは不変）---
+# --- fast-forward only (working tree stays unchanged on failure) ---
 $out = & git pull --ff-only origin main 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Log 'ERROR' ("fast-forward 不可（分岐/ネットワーク等）。変更なし: " + ($out -join ' '))
+    Write-Log 'ERROR' ('fast-forward not possible (diverged/network). No change: ' + ($out -join ' '))
     exit 1
 }
 
-Write-Log 'OK' ("同期完了: " + ($out -join ' '))
+Write-Log 'OK' ('Sync complete: ' + ($out -join ' '))
 exit 0
