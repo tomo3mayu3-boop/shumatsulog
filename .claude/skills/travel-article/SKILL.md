@@ -124,6 +124,11 @@ Hero
    ```
    を追加（重複させない）。
 3. **`tools/travel/next-id.json`**：`nextId` を `{id}+1` に更新。
+4. **トップページ（`index.html`）の「最近の旅行」**：`#travel` セクションの `article-row` を**最新記事に更新**する。新記事公開時は毎回更新する。
+   - 更新する要素：**トップ画像**（`<picture>` の `<source>` 群＋`<img>`）／**alt**／**紹介文**（記事固有の1文の `<p>`）／**記事へのリンク**（既存規約では一覧 `travel.html`。ボタン文言も既存のまま）。
+   - **トップ画像は記事本文の先頭画像を機械的に使わない。** `.travel-photo` は横長バナー表示（`height:300px` cover）なので、**横向き（landscape）でトップ映えする写真を選定する**（先頭が縦写真なら、その記事の別の横写真を選ぶ）。`width`/`height` は選んだ画像の実寸、`srcset` は断片の `variants` を使う。
+   - 2つ目の総則文 `<p>`（例「行った場所や食べたものの記録。」）は変えない。
+   - **最終更新日**：`index.html` フッターの「最終更新：…」は自動更新ワークフローが push 時に更新するため手動編集しない。
 
 ### Step 5 — プレビュー提示 → 承認
 - ブラウザで確認（`/staging/`ではなくルートに置いた `travel-{id}.html` なら相対パスが正しく解決する）。
@@ -134,7 +139,7 @@ Hero
 
 ### Step 6 — 公開（承認後だけ）
 ```bash
-git add travel-{id}.html travel.html sitemap.xml images/travel/{folder} tools/travel/next-id.json
+git add travel-{id}.html travel.html sitemap.xml images/travel/{folder} tools/travel/next-id.json index.html
 git commit -m "feat(travel-{id}): {タイトル} を追加"
 git push origin main
 ```
@@ -144,8 +149,8 @@ git push origin main
 ---
 
 ## 変更してよい範囲（安全制約）
-- 追加/更新してよいのは：新規 `travel-{id}.html`、`travel.html`(先頭prependのみ)、`sitemap.xml`(新URL追加のみ)、`tools/travel/next-id.json`、`images/travel/{folder}/`。
-- **触らない**：既存の全 `travel-*.html`（型記事を含む。読むだけ）、`index.html`、`style.css`、`script.js`、他カテゴリ。
+- 追加/更新してよいのは：新規 `travel-{id}.html`、`travel.html`(先頭prependのみ)、`sitemap.xml`(新URL追加のみ)、`tools/travel/next-id.json`、`images/travel/{folder}/`、`index.html`(**`#travel` の「最近の旅行」`article-row` のみ**更新)。
+- **触らない**：既存の全 `travel-*.html`（型記事を含む。読むだけ）、`style.css`、`script.js`、他カテゴリ。`index.html` も「最近の旅行」以外（他セクション・フッターの最終更新など）は触らない。
 - 新規ページのJSは外部 `script.js` のみ（本番CSPで inline `<script>` は実行されない）。※型記事は準拠済み。
 - OGは JPG（`{prefix}og.jpg` 1200×630）。WebPのOGはXで表示されない。
 - 修正依頼は指定箇所のみ編集。迷ったら公開前に止まって確認する。
