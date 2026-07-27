@@ -48,8 +48,47 @@ node tools/travel/build-images.js --src drafts/incoming/travel-{id} --folder {fo
 ### Step 3 — HTMLを直接書く（＝執筆＋組版）
 Step 0 で特定した**型記事（最大番号の `travel-{N}.html`）** を下敷きに `travel-{id}.html` を新規作成する。以下を**必ず**満たす（=確認項目）。
 
+#### 標準レイアウト（固定）— travel-15・16 を標準テンプレートとする
+旅行記事は **travel-15・travel-16 の構成を標準テンプレート**とする。新規作成時にこの構成を変更しない（下敷きにする型記事＝最大番号の記事も、この標準に準拠している前提で写す）。
+
+**レイアウト（この順序で固定）**
+```
+Hero
+→ Section（画像＋本文）
+→ Section（画像＋本文）
+→ …（写真の数だけ繰り返し）
+→ 締め
+→ 旅行一覧へ戻る
+```
+
+**画像**
+- 記事コンテナは `.travel-article-landscape` を使用する。
+- 写真はすべて `class="viewer-photo"`。
+- `width`/`height` は画像本来の実寸を保持（縦横比を保つ）。表示サイズは既存CSSで揃える。
+- 画像の作り方・サイズ展開は travel-15・16 と同一（`build-images.js` の出力をそのまま使う）。
+
+**本文**
+- 各 Section は「画像 ＋ 短文（2〜4行）」を基本とする。
+- 長文は避ける。写真を見ながら読めるテンポを優先する。
+
+**Hero**
+- 「タイトル ／ 一文 ／ 場所」のみ。余計な説明を書かない。
+
+**締め**
+- 「感想（写真なしの短い余韻）／ 旅行一覧へ戻るリンク」で終える。
+
+**禁止事項**
+- 独自レイアウトを作らない。
+- `travel-article-portrait` を使わない。
+- 記事ごとに HTML 構造を変えない。
+- CSS を増やさない。
+- 既存テンプレートを崩さない。
+
+**記事ごとに変更してよいのは：タイトル・本文・写真・地図・OGP・JSON-LD のみ。** HTML 構造・class 名・section 構成は変更しない。
+
 #### ✅ 確認項目（チェックリスト）
-1. **既存記事の構造とデザインを踏襲**：header / nav / `main.layout>content>div.travel-article.travel-article-{orientation}` / hero / 写真section群 / 締めtext section / 戻るリンク / sidebar（地図＋カテゴリ）/ footer / `script.js` / back-to-top を**型記事と同一構造**で。CSSクラス名・DOM構造・`script.js`挙動・メタの書き方は型記事に合わせる（変えない）。`orientation` は断片の値。
+1. **既存記事の構造とデザインを踏襲**：header / nav / `main.layout>content>div.travel-article.travel-article-landscape` / hero / 写真section群 / 締めtext section / 戻るリンク / sidebar（地図＋カテゴリ）/ footer / `script.js` / back-to-top を**型記事と同一構造**で。CSSクラス名・DOM構造・`script.js`挙動・メタの書き方は型記事に合わせる（変えない）。
+   - **記事コンテナのクラスは常に `travel-article-landscape` を使う（既存の標準）。先頭画像が縦（portrait）でも `travel-article-portrait` へ変更しない。** 断片JSONの `orientation` 値は各画像の縦横比の把握にのみ使い、コンテナのクラス切り替えには使わない（縦写真は landscape 記事内でも既存CSSで適切に表示される）。各画像の `width`/`height` は断片の実寸をそのまま入れ、縦横比は保持する。
 2. **canonical・OGP・JSON-LD・slug・日付を確認**：
    - `<title>` = `{title} | 週末ログ`、`meta description`
    - `og:title`/`og:description`/`og:type=article`/`og:site_name=週末ログ`
