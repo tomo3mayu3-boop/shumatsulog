@@ -102,6 +102,7 @@
 .ji-skip{ position:absolute; right:18px; bottom:16px; z-index:2; padding:8px 16px; border:1px solid rgba(242,246,247,.35); border-radius:999px; background:rgba(6,16,26,.45); color:rgba(242,246,247,.85); font-size:11px; letter-spacing:.22em; text-indent:.22em; cursor:pointer; backdrop-filter:blur(3px); }
 .ji-skip:hover{ border-color:rgba(242,246,247,.7); color:#fff; }
 .ji-attrib{ position:absolute; left:14px; bottom:14px; font-size:10px; color:rgba(242,246,247,.5); letter-spacing:.06em; pointer-events:none; }
+@media (max-width:640px){ .ji-attrib{ max-width:46vw; line-height:1.5; } } /* スキップボタンと重ならないよう2行に折返し */
 
 /* ================= Phase1 キーフレーム(--ji-p1でスケール) ================= */
 @keyframes jiZoom{ 0%{transform:scale(1)} 42%{transform:scale(1.05)} 60%{transform:scale(1.4)} 92%{transform:scale(2.55)} 100%{transform:scale(2.62)} }
