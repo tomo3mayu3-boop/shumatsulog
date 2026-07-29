@@ -29,7 +29,7 @@
       phase1Ms: 13000, flightStartPct: 0.46, flightEndPct: 0.90,
       crossfadeMs: 900, heroCrossfadeMs: 240, /* v1.1: 映画的マッチカット(旧1000msはconfigで指定可) */
       labelFadeMs: 380, labelPassDelayMs: 250,
-      arrival: { holdMs: 380, pinMs: 600, labelStartMs: 560, labelMs: 560, coordStartMs: 640, coordMs: 1000, pauseMs: 280 }
+      arrival: { holdMs: 380, pinMs: 600, labelStartMs: 560, labelMs: 560, coordStartMs: 640, coordMs: 1000, pauseMs: 1280 } /* 実機FB: 座標ロック後の余韻+1s(地図はCSS13s終了済で停止状態) */
     },
     skip: { button: true, label: 'スキップ', oncePerSession: true },
     brand: '週末ログ · Journey'
