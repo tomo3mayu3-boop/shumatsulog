@@ -19,8 +19,9 @@
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="週末ログ">
 
-  <link rel="preload" as="image" href="images/travel/sup/sup-1.avif" imagesrcset="images/travel/sup/sup-1-400.avif 400w, images/travel/sup/sup-1-800.avif 800w, images/travel/sup/sup-1.avif 1600w" imagesizes="(max-width: 640px) 100vw, (max-width: 1024px) 60vw, 780px" fetchpriority="high">
+  <link rel="preload" as="image" href="images/travel/sup/sup-1.avif" imagesrcset="images/travel/sup/sup-1-400.avif 400w, images/travel/sup/sup-1-800.avif 800w, images/travel/sup/sup-1.avif 1600w" imagesizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 660px" fetchpriority="high">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="assets/journey/journey-intro.css">
   <link rel="canonical" href="https://shumatsulog.com/travel-17">
   <meta name="color-scheme" content="light dark">
   <script type="application/ld+json">
@@ -61,9 +62,9 @@
 
             <section>
         <picture>
-          <source type="image/avif" srcset="images/travel/sup/sup-1-400.avif 400w, images/travel/sup/sup-1-800.avif 800w, images/travel/sup/sup-1.avif 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 60vw, 780px">
-          <source type="image/webp" srcset="images/travel/sup/sup-1-400.webp 400w, images/travel/sup/sup-1-800.webp 800w, images/travel/sup/sup-1.webp 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 60vw, 780px">
-          <img src="images/travel/sup/sup-1.webp" alt="上空から見たユニの浜の砂州に寝そべる人影" class="viewer-photo" loading="eager" fetchpriority="high" width="1600" height="2844">
+          <source type="image/avif" srcset="images/travel/sup/sup-1-400.avif 400w, images/travel/sup/sup-1-800.avif 800w, images/travel/sup/sup-1.avif 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 660px">
+          <source type="image/webp" srcset="images/travel/sup/sup-1-400.webp 400w, images/travel/sup/sup-1-800.webp 800w, images/travel/sup/sup-1.webp 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 660px">
+          <img src="images/travel/sup/sup-1.webp" alt="上空から見たユニの浜の砂州に寝そべる人影" class="viewer-photo ji-hero" loading="eager" fetchpriority="high" width="1600" height="2844">
         </picture>
         <p>
           SUPツアーの日。<br>台風のあとで、海は少し濁っていた。<br>色は、いつもより控えめ。
@@ -168,5 +169,27 @@
 </footer>
 <script src="script.js"></script>
 <button id="back-to-top" aria-label="トップへ戻る" title="トップへ戻る">▲</button>
+
+<!-- Journey Intro (記事固有の旅設定。エンジン: assets/journey/) -->
+<script type="application/json" id="journey-intro-config">
+{
+  "version": 1,
+  "id": "travel-17",
+  "route": {
+    "map": "abstract-v1",
+    "path": "M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150",
+    "waypoints": [
+      { "jp": "東京",   "ro": "Tokyo",      "node": [258, 44] },
+      { "jp": "沖縄",   "ro": "Okinawa",    "node": [244, 92] },
+      { "jp": "宮古島", "ro": "Miyakojima", "node": [222, 140] }
+    ],
+    "introLabel": { "jp": "世界", "ro": "The World" }
+  },
+  "destination": { "jp": "ユニの浜", "ro": "Uni Beach", "lat": 24.7880, "lon": 125.2480 },
+  "video": { "src": "assets/video/journey-arrival.mp4" },
+  "skip": { "button": true, "label": "スキップ", "oncePerSession": true }
+}
+</script>
+<script src="assets/journey/journey-intro.js" defer></script>
 </body>
 </html>

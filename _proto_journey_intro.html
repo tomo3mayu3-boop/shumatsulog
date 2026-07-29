@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>【試作】Journey Intro Engine v1 | 週末ログ</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="assets/journey/journey-intro.css">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    /* ===== ハーネス専用(本番記事には不要) ===== */
+    .ji-dev{ position:fixed; left:0; right:0; bottom:0; z-index:10000; display:flex; align-items:center; gap:12px; padding:10px 16px; background:rgba(10,14,20,.9); color:#cfe6ea; font:12px/1.4 sans-serif; backdrop-filter:blur(4px); border-top:1px solid rgba(255,255,255,.1); }
+    .ji-dev button{ background:#17505e; color:#eafaff; border:0; border-radius:6px; padding:6px 12px; cursor:pointer; letter-spacing:.05em; }
+    .ji-dev input[type=range]{ flex:1; accent-color:#6fd3dd; }
+    .ji-dev .tag{ opacity:.6; letter-spacing:.1em; }
+    .ji-dev b{ font-variant-numeric:tabular-nums; min-width:88px; text-align:right; }
+    /* 記事側調整: Hero画像のみ(他画像非影響) */
+    .viewer-photo.ji-hero{ max-width:640px; margin-left:auto; margin-right:auto; }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     記事への組み込みは本来この3点だけ:
+       1) <link href="assets/journey/journey-intro.css">
+       2) 下の config JSON (id="journey-intro-config" にすると自動起動)
+       3) <script src="assets/journey/journey-intro.js" defer>
+     ※ このハーネスでは手動起動するため id を ji-config にしている
+     ============================================================ -->
+<script type="application/json" id="ji-config">
+{
+  "version": 1,
+  "id": "travel-17",
+  "route": {
+    "map": "abstract-v1",
+    "path": "M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150",
+    "waypoints": [
+      { "jp": "東京",   "ro": "Tokyo",      "node": [258, 44] },
+      { "jp": "沖縄",   "ro": "Okinawa",    "node": [244, 92] },
+      { "jp": "宮古島", "ro": "Miyakojima", "node": [222, 140] }
+    ],
+    "introLabel": { "jp": "世界", "ro": "The World" }
+  },
+  "destination": { "jp": "ユニの浜", "ro": "Uni Beach", "lat": 24.7880, "lon": 125.2480 },
+  "video": { "src": "assets/video/journey-arrival.mp4" },
+  "skip": { "button": true, "label": "スキップ", "oncePerSession": false }
+}
+</script>
+
+<header>
+  <h1>✈️ 週末ログ</h1>
+  <button class="nav-toggle" aria-label="メニューを開く">☰</button>
+  <nav id="main-nav">
+    <a href="index.html">ホーム</a>
+    <a href="carwash.html">洗車</a>
+    <span class="category disabled">料理</span>
+    <a href="travel.html" aria-current="page">旅行</a>
+    <a href="yurulog.html">ゆるログ</a>
+  </nav>
+</header>
+
+<main class="layout">
+  <div class="content">
+    <div class="travel-article travel-article-landscape">
+      <section class="hero">
+        <h2>ユニの浜でSUPした日</h2>
+        <p>台風のあと、海の色は控えめだったけど、ドローンで撮ってもらうSUPは楽しかった。</p>
+        <p class="travel-location">📍 ユニの浜</p>
+      </section>
+      <section>
+        <picture>
+          <source type="image/avif" srcset="images/travel/sup/sup-1-400.avif 400w, images/travel/sup/sup-1-800.avif 800w, images/travel/sup/sup-1.avif 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 660px">
+          <source type="image/webp" srcset="images/travel/sup/sup-1-400.webp 400w, images/travel/sup/sup-1-800.webp 800w, images/travel/sup/sup-1.webp 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 660px">
+          <img src="images/travel/sup/sup-1.webp" alt="上空から見たユニの浜の砂州に寝そべる人影" class="viewer-photo ji-hero" width="1600" height="2844">
+        </picture>
+        <p>SUPツアーの日。<br>台風のあとで、海は少し濁っていた。<br>色は、いつもより控えめ。</p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- ===== 開発ハーネス(エンジン公開APIのみ使用・本番記事には載せない) ===== -->
+<div class="ji-dev">
+  <span class="tag">ENGINE v1</span>
+  <button id="d-play">▶ リプレイ</button>
+  <button id="d-video">⏩ 動画へ</button>
+  <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input id="d-loop" type="checkbox" checked>ループ</label>
+  <input id="d-scrub" type="range" min="0" max="15000" value="0" step="10">
+  <b id="d-time">0.00s</b>
+</div>
+
+<script src="assets/journey/journey-intro.js"></script>
+<script>
+(function(){
+  var cfg = JSON.parse(document.getElementById('ji-config').textContent);
+  var scrub=document.getElementById('d-scrub'), timeLbl=document.getElementById('d-time'), loopChk=document.getElementById('d-loop');
+  var loopTimer;
+
+  function boot(){
+    clearTimeout(loopTimer);
+    if(window.__ji) window.__ji.destroy();
+    window.__ji = JourneyIntro.start(cfg, {
+      force:true,
+      onTick:function(ms, phase){
+        if(phase===2){ if(timeLbl) timeLbl.textContent='vid '+(ms/1000).toFixed(2)+'s'; return; }
+        if(scrub) scrub.value=Math.min(ms, +scrub.max);
+        if(timeLbl) timeLbl.textContent=(ms/1000).toFixed(2)+'s';
+      },
+      onComplete:function(){
+        if(loopChk && loopChk.checked){ loopTimer=setTimeout(boot, 1200); }
+      }
+    });
+    if(window.__ji && scrub) scrub.max=Math.round(window.__ji.durations.scrubMax);
+  }
+
+  document.getElementById('d-play').addEventListener('click', boot);
+  document.getElementById('d-video').addEventListener('click', function(){ if(window.__ji) window.__ji.enterVideo(); });
+  scrub.addEventListener('input', function(){
+    if(!window.__ji) return;
+    if(window.__ji.state.phase!==1){ boot(); } /* 動画/完了中のスクラブは作り直してPhase1へ */
+    window.__ji.seek(+scrub.value);
+    if(timeLbl) timeLbl.textContent=(+scrub.value/1000).toFixed(2)+'s';
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>
