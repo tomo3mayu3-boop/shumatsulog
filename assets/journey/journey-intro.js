@@ -1,5 +1,6 @@
-/*! Journey Intro Engine v1.1.0 | shumatsulog.com | 依存0
-   v1.1.0: Phase2演出ブラッシュアップ(トレイルグリント/着地リング/映画的マッチカット/粒状ノイズ+ビネット)。API・config後方互換 */
+/*! Journey Intro Engine v1.2.0 | shumatsulog.com | 依存0
+   v1.1.0: Phase2演出(トレイルグリント/着地リング/映画的マッチカット/粒状ノイズ+ビネット)
+   v1.2.0: vector-v2 MapProvider(地球地図日本+Natural Earth実海岸線・出典自動表示・欠落時abstract-v1降格)。API・config後方互換 */
 /* 設計書: _spec_journey_intro_engine.md
    記事側: <link journey-intro.css> + <script type="application/json" id="journey-intro-config">{…}</script> + <script src=journey-intro.js defer>
    公開API: JourneyIntro.start(cfg, opts) / registerMap(name, provider) / current
@@ -69,12 +70,58 @@
         + '<path d="M210 34 L250 26 L296 24 L322 36 L330 46 L314 52 L292 54 L268 56 L244 58 L222 54 L212 46 Z"/>'
         + '<path d="M244 58 L254 74 L246 84 L238 72 L240 62 Z"/><path d="M300 106 L326 104 L332 118 L316 128 L300 122 L296 112 Z"/>'
         + '<path d="M306 48 L312 44 L318 52 L314 60 L308 56 Z"/></g></svg>';
-      var globe = document.createElement('div'); globe.className = 'ji-globe';
-      globe.innerHTML = '<div class="ji-strip"><div class="ji-world">' + world + '</div><div class="ji-world">' + world + '</div></div><div class="ji-globe-shade"></div>';
-      var glow = document.createElement('div'); glow.className = 'ji-glow';
+      var globe = document.createElement('div'); globe.className = 'ji-globe'; globe.setAttribute('data-anim', '');
+      globe.innerHTML = '<div class="ji-strip" data-anim><div class="ji-world">' + world + '</div><div class="ji-world">' + world + '</div></div><div class="ji-globe-shade"></div>';
+      var glow = document.createElement('div'); glow.className = 'ji-glow'; glow.setAttribute('data-anim', '');
       scenes.appendChild(globe); scenes.appendChild(glow);
     },
     destroy: function () {}
+  });
+
+  /* --- vector-v2: 実測ベクトル海岸線(地球地図日本+Natural Earth)。
+         データは map-data/journey-map.v1.js が window.JOURNEY_MAP_DATA に定義。
+         欠落/破損時は abstract-v1 に自動降格(記事は壊れない) --- */
+  registerMap('vector-v2', {
+    attribution: null,
+    mount: function (scenes, cfg, inst) {
+      this.attribution = null; /* 降格時に前回mountの出典が残らないよう毎回リセット */
+      var D = global.JOURNEY_MAP_DATA;
+      if (!D || !D.stages || !D.stages.world) { providers['abstract-v1'].mount(scenes, cfg, inst); return; }
+      this.attribution = D.attribution || null;
+      function svgFor(st, cls) {
+        return '<svg viewBox="' + st.viewBox + '" preserveAspectRatio="xMidYMid meet"><g class="' + cls + '">'
+          + st.paths.map(function (d) { return '<path d="' + d + '"/>'; }).join('') + '</g></svg>';
+      }
+      /* 地球儀: v1と同じ球体+帯スクロール機構に、実データの世界地図を流す */
+      var globe = document.createElement('div'); globe.className = 'ji-globe'; globe.setAttribute('data-anim', '');
+      var worldSvg = svgFor(D.stages.world, 'ji-land ji-land-globe');
+      globe.innerHTML = '<div class="ji-strip" data-anim><div class="ji-world">' + worldSvg + '</div><div class="ji-world">' + worldSvg + '</div></div><div class="ji-globe-shade"></div>';
+      scenes.appendChild(globe);
+      /* 降下ステージ: 日本→南西諸島→宮古(実海岸線)。anchor(緯度経度)が画面の焦点(50%,47%)に来るよう配置 */
+      function anchorPct(st, lat, lon) {
+        var vb = st.viewBox.split(' ');
+        var w = +vb[2], h = +vb[3], b = st.bbox;
+        var k = Math.cos((b[1] + b[3]) / 2 * Math.PI / 180);
+        var s = w / ((b[2] - b[0]) * k);
+        return [((lon - b[0]) * k * s) / w * 100, ((b[3] - lat) * s) / h * 100];
+      }
+      var dl = cfg.destination.lat || 24.79, dn = cfg.destination.lon || 125.28;
+      [{ key: 'japan', a: [35.69, 139.69] },   /* 東京を焦点に */
+       { key: 'ryukyu', a: [dl, dn] },          /* 目的地方向へ */
+       { key: 'miyako', a: [dl, dn] }].forEach(function (def) {
+        var st = D.stages[def.key]; if (!st) return;
+        var p = anchorPct(st, def.a[0], def.a[1]);
+        var div = document.createElement('div');
+        div.className = 'ji-stage ji-stage-' + def.key;
+        div.setAttribute('data-anim', '');
+        div.style.transform = 'translate(-' + p[0].toFixed(2) + '%,-' + p[1].toFixed(2) + '%)';
+        div.innerHTML = svgFor(st, 'ji-land');
+        scenes.appendChild(div);
+      });
+      var glow = document.createElement('div'); glow.className = 'ji-glow'; glow.setAttribute('data-anim', '');
+      scenes.appendChild(glow);
+    },
+    destroy: function () { this.attribution = null; }
   });
 
   /* ================= DOM生成 ================= */
@@ -175,8 +222,6 @@
       video: ov.querySelector('.ji-video video'),
       skip: ov.querySelector('.ji-skip')
     };
-    var anims = [].slice.call(els.abstract.querySelectorAll('[data-anim]'));
-
     /* ---- 星(静的・軽量) ---- */
     (function () {
       var h = '';
@@ -195,6 +240,8 @@
       var at = document.createElement('div'); at.className = 'ji-attrib'; at.textContent = provider.attribution;
       ov.appendChild(at);
     }
+    /* シーク/再生の制御対象。プロバイダ生成要素(data-anim付与)も含むため mount 後に収集 */
+    var anims = [].slice.call(els.abstract.querySelectorAll('[data-anim]'));
     this._provider = provider;
 
     /* ---- 動画 ---- */
@@ -422,7 +469,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.1.1',
+    version: '1.2.0',
     current: null,
     registerMap: registerMap,
     providers: providers,

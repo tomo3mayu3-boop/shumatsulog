@@ -30,6 +30,16 @@
 .ji-globe-shade{ position:absolute; inset:0; border-radius:50%; pointer-events:none; background:radial-gradient(circle at 37% 33%, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 32%), radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 58%, rgba(2,12,20,.6) 100%); }
 .ji-glow{ position:absolute; left:50%; top:47%; width:44vmin; height:44vmin; transform:translate(-50%,-50%); background:radial-gradient(circle, rgba(158,230,236,.58) 0%, rgba(110,211,221,.4) 24%, rgba(110,211,221,.1) 48%, rgba(110,211,221,0) 66%); opacity:0; animation:jiGlow var(--ji-p1) ease-in-out both; }
 
+/* ---- vector-v2 プロバイダ(実測海岸線ステージ) ---- */
+.ji-land path{ fill:rgba(206,228,231,.72); }                                  /* 地球儀上(暗背景) */
+.ji-stage{ position:absolute; left:50%; top:47%; width:min(120vmin,1100px); opacity:0; will-change:opacity; }
+.ji-stage svg{ display:block; width:100%; height:auto; overflow:visible; }
+.ji-stage .ji-land path{ fill:rgba(224,244,246,.30); stroke:rgba(234,250,252,.55); stroke-width:.8; vector-effect:non-scaling-stroke; } /* 海上(ターコイズ背景)は透過+細い海岸線 */
+.ji-stage-miyako .ji-land path{ fill:rgba(230,247,249,.38); }
+.ji-stage-japan{ animation:jiStJapan var(--ji-p1) ease-in-out both; }
+.ji-stage-ryukyu{ animation:jiStRyukyu var(--ji-p1) ease-in-out both; }
+.ji-stage-miyako{ animation:jiStMiyako var(--ji-p1) ease-in-out both; }
+
 /* ---- Phase2 fx: 質感(静的・アニメなし=GPU負荷ゼロ) ---- */
 /* 粒状ノイズ: data:URI の SVG feTurbulence タイル。Illustrator的な均質さを4%だけ崩す */
 .ji-grain{ position:absolute; inset:0; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
@@ -105,5 +115,9 @@
 @keyframes jiReticle{ 0%,20%{opacity:0} 24%{opacity:.5} 100%{opacity:.5} }
 @keyframes jiFill{ 0%,10%{transform:scaleX(0)} 74%{transform:scaleX(.8)} 100%{transform:scaleX(.85)} }
 @keyframes jiNode{ 0%,44%{opacity:0} 50%{opacity:.9} 100%{opacity:.9} }
+/* vector-v2 ステージ: 日本(東京)→南西諸島→宮古 のLODクロスフェード */
+@keyframes jiStJapan{ 0%,47%{opacity:0} 53%{opacity:1} 62%{opacity:1} 68%{opacity:0} 100%{opacity:0} }
+@keyframes jiStRyukyu{ 0%,60%{opacity:0} 66%{opacity:1} 74%{opacity:1} 80%{opacity:0} 100%{opacity:0} }
+@keyframes jiStMiyako{ 0%,72%{opacity:0} 80%{opacity:.95} 100%{opacity:.95} }
 
 @media (prefers-reduced-motion: reduce){ .ji-overlay{ display:none; } }
