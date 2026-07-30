@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## V2 最終候補確定（2026-07-31 / travel-17）
+実機(iPhone)確認を経て、Journey Intro V2 の演出パラメータを確定（エンジン無改変・config層のみ）:
+- 動画: `journey-arrival-v2.mp4`（縦720p/faststart/無音）を **startAt 3.5s → playSeconds 16.0s**（ドローン尺12.5s・到着感維持）
+- Heroフェード: **heroCrossfadeMs 1000ms ＋ heroZoom(Scale)** ＝ Dissolve+Scale（"ボワーン"と柔らかく溶け込む）
+- 到着減速(easeOut 900ms)・到着セレモニーは既定のまま
+- iOS動画自動再生の堅牢化(v1.2.1: muted属性/先読み)込み
+- ※main マージ・Cloudflare公開はユーザー最終確認後
+
+
 ## v1.2.0 (2026-07-29〜30) — V2品質仕上げ ※正式公開版候補
 
 **地図エンジン刷新（vector-v2）**
