@@ -171,7 +171,7 @@
       +   '<div class="a-coord"></div>'
       + '</div>'
       + '</div>'
-      + '<div class="ji-video" aria-hidden="true"><video playsinline preload="metadata"></video></div>';
+      + '<div class="ji-video" aria-hidden="true"><video playsinline muted preload="metadata"></video></div>';
     /* スキップ/出典は aria-hidden 領域の外(フォーカス可能) */
     if (cfg.skip.button) {
       var btn = document.createElement('button');
@@ -385,6 +385,8 @@
       cancelAnimationFrame(raf); cancelAnimationFrame(rafV); cancelWaapi();
       ov.style.opacity = ''; els.abstract.style.opacity = ''; els.videoWrap.style.opacity = ''; els.videoWrap.style.transform = '';
       resetCeremony(); els.plane.style.opacity = ''; if (els.trailHl) els.trailHl.style.opacity = '0';
+      /* 地図フェーズ中に動画を先読み(iOS等で13s後の再生が間に合うように) */
+      try { vid.preload = 'auto'; if (vid.load && vid.readyState < 2) vid.load(); } catch (e) {}
       try { vid.pause(); vid.currentTime = cfg.video.startAt || 0; vid.playbackRate = 1; } catch (e) {}
       anims.forEach(function (el) { el.style.animation = 'none'; });
       void els.abstract.offsetWidth;
@@ -469,7 +471,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.2.0',
+    version: '1.2.1',
     current: null,
     registerMap: registerMap,
     providers: providers,
