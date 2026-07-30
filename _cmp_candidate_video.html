@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>【比較】候補動画(順再生) vs 現在 | Journey Intro</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="assets/journey/journey-intro.css">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    .cmp-bar{ position:fixed; left:0; right:0; bottom:0; z-index:10000; padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background:rgba(10,14,20,.94); color:#cfe6ea; font:13px/1.4 sans-serif; backdrop-filter:blur(4px); border-top:1px solid rgba(255,255,255,.12); }
+    .cmp-row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+    .cmp-bar button{ background:#17505e; color:#eafaff; border:0; border-radius:8px; padding:9px 14px; cursor:pointer; font-size:14px; }
+    .cmp-bar button.active{ background:#2b8ca0; outline:2px solid #7fe0ea; }
+    .cmp-bar button.ref{ background:#3a3f46; }
+    .cmp-bar label{ display:flex; align-items:center; gap:5px; cursor:pointer; }
+    .cmp-bar .now{ font-variant-numeric:tabular-nums; opacity:.9; }
+    .cmp-bar .warn{ flex-basis:100%; color:#ffd9a8; font-size:11px; }
+    .cmp-bar .hint{ flex-basis:100%; opacity:.6; font-size:11px; }
+    .cmp-scrub{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; flex-basis:100%; margin-top:6px; }
+    .cmp-scrub-ctl{ display:flex; align-items:center; gap:8px; flex:1; min-width:240px; }
+    .cmp-scrub input[type=range]{ flex:1; accent-color:#6fd3dd; }
+    .cmp-scrub video{ width:min(280px,68vw); aspect-ratio:16/9; height:auto; object-fit:cover; border-radius:6px; background:#000; }
+    .cmp-scrub b{ font-variant-numeric:tabular-nums; min-width:64px; font-size:15px; color:#eafaff; }
+    body{ padding-bottom:180px; }
+    .viewer-photo.ji-hero{ max-width:640px; margin-left:auto; margin-right:auto; }
+  </style>
+</head>
+<body>
+
+<header><h1>✈️ 週末ログ</h1></header>
+<main class="layout">
+  <div class="content">
+    <div class="travel-article travel-article-landscape">
+      <section class="hero">
+        <h2>ユニの浜でSUPした日</h2>
+        <p>台風のあと、海の色は控えめだったけど、ドローンで撮ってもらうSUPは楽しかった。</p>
+        <p class="travel-location">📍 ユニの浜</p>
+      </section>
+      <section>
+        <picture>
+          <source type="image/avif" srcset="images/travel/sup/sup-1-400.avif 400w, images/travel/sup/sup-1-800.avif 800w, images/travel/sup/sup-1.avif 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 660px">
+          <source type="image/webp" srcset="images/travel/sup/sup-1-400.webp 400w, images/travel/sup/sup-1-800.webp 800w, images/travel/sup/sup-1.webp 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 660px">
+          <img src="images/travel/sup/sup-1.webp" alt="上空から見たユニの浜の砂州に寝そべる人影" class="viewer-photo ji-hero" width="1600" height="2844">
+        </picture>
+        <p>SUPツアーの日。<br>台風のあとで、海は少し濁っていた。<br>色は、いつもより控えめ。</p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div class="cmp-bar">
+  <div class="cmp-row">
+    <span>再生:</span>
+    <button id="cmp-cand">候補(順再生)を接続点で再生</button>
+    <button id="cmp-cur" class="ref">現在動画</button>
+    <label>接続点(秒) <b id="cmp-x">3.0</b></label>
+    <button id="cmp-xm" type="button">◀0.1</button>
+    <input type="range" id="cmp-xs" min="0.5" max="19.5" step="0.1" value="3.0" style="width:200px">
+    <button id="cmp-xp" type="button">0.1▶</button>
+    <label><input type="checkbox" id="cmp-full">地図から通し</label>
+    <label><input type="checkbox" id="cmp-loop" checked>ループ</label>
+    <span class="now" id="cmp-now">—</span>
+  </div>
+  <div class="warn">✓ 候補は web最適化済み（元4K/218MB → <b>720×1280縦・H.264・faststart・無音 2.9MB</b>）。iPhoneでも快適に再生できます。接続点(playSeconds)を、この動画で最も自然にHeroへつながる位置に合わせてください。</div>
+  <div class="cmp-scrub">
+    <video id="cmp-raw" src="assets/video/journey-arrival-v2.mp4" preload="metadata" muted playsinline></video>
+    <div class="cmp-scrub-ctl">
+      <span>接続点さがし</span>
+      <button id="cmp-rawplay" type="button">▶ 再生</button>
+      <button id="cmp-b1" type="button">◀0.1</button>
+      <input type="range" id="cmp-raw-scrub" min="0" max="19.69" step="0.05" value="0">
+      <button id="cmp-f1" type="button">0.1▶</button>
+      <b id="cmp-raw-t">0.00s</b>
+      <button id="cmp-usethis" type="button">この秒数を接続点に</button>
+    </div>
+  </div>
+  <div class="hint">Heroと最も自然につながるフレーム(人物がHero写真に近い瞬間)を下段でさがし「この秒数を接続点に」→上段「候補を接続点で再生」で 候補→Heroフェード を確認。ローカルの読込に時間がかかる場合があります(218MB)。</div>
+</div>
+
+<script src="assets/journey/map-data/journey-map.v1.js?v=121"></script>
+<script src="assets/journey/journey-intro.js?v=121"></script>
+<script>
+(function(){
+  var BASE = { version:1, id:'cmp-cand',
+    route:{ map:'vector-v2', path:'M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150',
+      waypoints:[ {jp:'東京',ro:'Tokyo',node:[258,44]}, {jp:'沖縄',ro:'Okinawa',node:[244,92]}, {jp:'宮古島',ro:'Miyakojima',node:[222,140]} ],
+      introLabel:{ jp:'世界', ro:'The World' } },
+    destination:{ jp:'ユニの浜', ro:'Uni Beach', lat:24.7880, lon:125.2480 },
+    video:{ src:'assets/video/journey-arrival.mp4' },
+    skip:{ button:true, label:'スキップ', oncePerSession:false } };
+  var nowEl=document.getElementById('cmp-now'), fullChk=document.getElementById('cmp-full'), loopChk=document.getElementById('cmp-loop');
+  var xEl=document.getElementById('cmp-x'), xs=document.getElementById('cmp-xs');
+  var loopTimer, lastMode='cand';
+  function X(){ return +xs.value; }
+  function setX(v){ v=Math.max(0.5,Math.min(+xs.max,v)); xs.value=v; xEl.textContent=v.toFixed(1); }
+
+  function startWith(src, ps, mode){
+    clearTimeout(loopTimer); lastMode=mode;
+    document.getElementById('cmp-cand').classList.toggle('active', mode==='cand');
+    document.getElementById('cmp-cur').classList.toggle('active', mode==='cur');
+    var c=JSON.parse(JSON.stringify(BASE));
+    c.video.src=src; c.video.startAt=0; if(ps!=null) c.video.playSeconds=ps;
+    if(!fullChk.checked){ c.timing={ crossfadeMs:300 }; }
+    nowEl.textContent = (mode==='cand'?'候補':'現在')+' / 接続点'+(ps!=null?ps+'s':'(全尺)')+(fullChk.checked?' / 通し':' / 動画から');
+    if(window.__cmp) window.__cmp.destroy();
+    window.__cmp = JourneyIntro.start(c, { force:true,
+      onComplete:function(){ if(loopChk.checked){ loopTimer=setTimeout(function(){ startWith(src,ps,mode); }, 1400); } } });
+    if(!fullChk.checked && window.__cmp){ window.__cmp.enterVideo(); }
+  }
+  document.getElementById('cmp-cand').addEventListener('click', function(){ startWith('assets/video/journey-arrival-v2.mp4', X(), 'cand'); });
+  document.getElementById('cmp-cur').addEventListener('click', function(){ startWith('assets/video/journey-arrival.mp4', 6.35, 'cur'); });
+  document.getElementById('cmp-xm').addEventListener('click', function(){ setX(X()-0.1); });
+  document.getElementById('cmp-xp').addEventListener('click', function(){ setX(X()+0.1); });
+  xs.addEventListener('input', function(){ xEl.textContent=X().toFixed(1); });
+
+  /* 生候補動画スクラバー(接続点さがし) */
+  var raw=document.getElementById('cmp-raw'), rs=document.getElementById('cmp-raw-scrub'), rt=document.getElementById('cmp-raw-t');
+  var rawplay=document.getElementById('cmp-rawplay'); var dragging=false;
+  function fmt(t){ return (t||0).toFixed(2)+'s'; }
+  function setT(t){ var d=isFinite(raw.duration)?raw.duration:19.69; t=Math.max(0,Math.min(d,t)); try{ raw.currentTime=t; }catch(e){} rs.value=t; rt.textContent=fmt(t); }
+  function syncBtn(){ rawplay.textContent = raw.paused ? '▶ 再生' : '⏸ 停止'; }
+  raw.addEventListener('loadedmetadata', function(){ rs.max=raw.duration.toFixed(2); try{ raw.currentTime=0.05; }catch(e){} });
+  rawplay.addEventListener('click', function(){ if(raw.paused){ var p=raw.play(); if(p&&p.catch)p.catch(function(){}); } else raw.pause(); });
+  raw.addEventListener('play', syncBtn); raw.addEventListener('pause', syncBtn); raw.addEventListener('ended', syncBtn);
+  raw.addEventListener('timeupdate', function(){ rt.textContent=fmt(raw.currentTime); if(!dragging) rs.value=raw.currentTime; });
+  raw.addEventListener('seeked', function(){ rt.textContent=fmt(raw.currentTime); });
+  rs.addEventListener('pointerdown', function(){ dragging=true; raw.pause(); });
+  rs.addEventListener('pointerup', function(){ dragging=false; });
+  rs.addEventListener('change', function(){ dragging=false; });
+  rs.addEventListener('input', function(){ setT(+rs.value); });
+  document.getElementById('cmp-b1').addEventListener('click', function(){ raw.pause(); setT((+rs.value)-0.1); });
+  document.getElementById('cmp-f1').addEventListener('click', function(){ raw.pause(); setT((+rs.value)+0.1); });
+  document.getElementById('cmp-usethis').addEventListener('click', function(){ setX(+rs.value); });
+})();
+</script>
+</body>
+</html>
