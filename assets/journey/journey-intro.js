@@ -1,6 +1,8 @@
 /*! Journey Intro Engine v1.2.0 | shumatsulog.com | 依存0
    v1.1.0: Phase2演出(トレイルグリント/着地リング/映画的マッチカット/粒状ノイズ+ビネット)
-   v1.2.0: vector-v2 MapProvider(地球地図日本+Natural Earth実海岸線・出典自動表示・欠落時abstract-v1降格)。API・config後方互換 */
+   v1.2.0: vector-v2 MapProvider(地球地図日本+Natural Earth実海岸線・出典自動表示・欠落時abstract-v1降格)
+   v1.2.1: iOS動画自動再生の堅牢化(muted属性/地図中に先読み)
+   v1.3.0-step1: V3 端末別 動画ソース選択(video.sources/端末クラス判定・sources無しはV2のsrc)。API・config後方互換 */
 /* 設計書: _spec_journey_intro_engine.md
    記事側: <link journey-intro.css> + <script type="application/json" id="journey-intro-config">{…}</script> + <script src=journey-intro.js defer>
    公開API: JourneyIntro.start(cfg, opts) / registerMap(name, provider) / current
@@ -47,6 +49,26 @@
   }
   function clamp01(x) { return x < 0 ? 0 : (x > 1 ? 1 : x); }
   function easeOut3(x) { x = clamp01(x); return 1 - Math.pow(1 - x, 3); }
+
+  /* ================= V3 Step1: 端末別 動画ソース選択 =================
+     - cfg.video.sources が無ければ cfg.video.src(=V2)をそのまま使用（後方互換）
+     - ある場合は viewport幅(=デバイスクラス)を各source.maxWidthに突き合わせ「条件を満たす最小tier」を選択
+       (mobile軽量を維持するため、DPRでtierを引き上げない。DPRは将来のdesktop 4K向け上げ幅に使用余地)
+     - 回線(Save-Data/2G)による出し分けは Step2 で追加。ここでは端末別のみ。 */
+  function pickVideoSource(v, vwOverride) {
+    if (!v) return { src: null, tier: null, reason: 'no-video' };
+    if (!v.sources || !v.sources.length) return { src: v.src || null, tier: 'v2-single', reason: 'no-sources' };
+    var vw = vwOverride || global.innerWidth || 1024;
+    var dpr = (global.devicePixelRatio || 1);
+    var sorted = v.sources.slice().sort(function (a, b) {
+      return (a.maxWidth == null ? Infinity : a.maxWidth) - (b.maxWidth == null ? Infinity : b.maxWidth);
+    });
+    var chosen = sorted[sorted.length - 1]; /* 既定=最上位(maxWidth無し) */
+    for (var i = 0; i < sorted.length; i++) {
+      if (sorted[i].maxWidth == null || vw <= sorted[i].maxWidth) { chosen = sorted[i]; break; }
+    }
+    return { src: chosen.src || v.src, tier: chosen.tier || null, reason: 'viewport', vw: vw, dpr: dpr };
+  }
 
   /* ================= MapProvider レジストリ ================= */
   var providers = {};
@@ -247,7 +269,9 @@
     /* ---- 動画 ---- */
     var vid = els.video;
     vid.muted = true; /* 音は audio フックで別管理(将来) */
-    if (cfg.video.src) vid.src = cfg.video.src;
+    var chosen = pickVideoSource(cfg.video);   /* V3: 端末別に1本選択(sources無しはV2のsrc) */
+    self.chosenVideo = chosen;                 /* テスト/デバッグ用に公開 */
+    if (chosen.src) vid.src = chosen.src;
     if (cfg.video.poster) vid.poster = cfg.video.poster;
     vid.style.objectPosition = cfg.video.objectPosition || 'center';
 
@@ -471,10 +495,11 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.2.1',
+    version: '1.3.0-step1',
     current: null,
     registerMap: registerMap,
     providers: providers,
+    _pickVideoSource: pickVideoSource, /* V3: 選択ロジックの単体テスト用(内部) */
     start: function (userCfg, opts) {
       var cfg = merge(DEFAULTS, userCfg || {});
       if (cfg.version !== SCHEMA_VERSION) {
