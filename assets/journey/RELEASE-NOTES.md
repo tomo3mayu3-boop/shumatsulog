@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase1 Step2 (2026-07-31 / branch: journey-engine-v3) — 降下ステージのconfig化（route.descent）
+エンジンにハードコードされていた降下順 `japan / ryukyu / miyako` を `config.route.descent` へ移設（v1.3.2→**1.3.3-descent**）:
+- `DEFAULTS.route.descent` に既定3ステージを定義。**未指定configは deep-merge でこの既定を継承＝現行と完全同一**
+- 各 `descent[]` = `{ stage, anchor }`。`anchor:[lat,lon]` で焦点固定 / `"destination"`(省略時も)で目的地に焦点
+- vector-v2プロバイダはハードコード配列を `cfg.route.descent` 反復に置換。`stage` は `D.stages[]`＋CSS `.ji-stage-<stage>` に対応。データ無しstageはスキップ（他は描画）
+- **travel-17は完全に挙動不変**（descent未指定→既定継承。旧ハードコードとアンカー解決がバイト等価であることを検証済）
+- 地図描画のみに関与。**ルート線(ji-flight)・到着ピン(a-pin)・座標(a-coord)は buildDom 側で不変**（プロバイダは globe/stages/glow のみ scenes へ追加）
+- CONFIG.md §3/§7 更新。V2/V3後方互換維持。記事側HTMLの変更は不要
+
 ## Phase1 Step1 (2026-07-31 / branch: journey-engine-v3) — テンプレート化: config完全ドキュメント（エンジン変更なし）
 週末ログ全体で再利用するためのテンプレート整備。エンジン/地図/CSSは全記事共有・記事側はHTML4点+configのみ、を明文化:
 - `CONFIG.md` 新規: 記事作成者向けリファレンス（HTML4点／記事ごとに変える値の対応表／config全フィールド・必須マーク／route作り方／動画ビルド手順／自動処理一覧／既知の制約）

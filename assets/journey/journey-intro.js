@@ -20,7 +20,15 @@
       map: 'abstract-v1',
       path: 'M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150',
       waypoints: [],
-      introLabel: { jp: '世界', ro: 'The World' }
+      introLabel: { jp: '世界', ro: 'The World' },
+      /* 降下ステージ(vector-v2)。未指定=この既定=日本→南西諸島→宮古(現行と同一)。
+         各stageは map-data の D.stages[stage] キー＝CSSアニメ ji-stage-<stage> に対応。
+         anchor: [lat,lon] で焦点固定 / 'destination'(既定) で目的地に焦点 */
+      descent: [
+        { stage: 'japan',  anchor: [35.69, 139.69] },
+        { stage: 'ryukyu', anchor: 'destination' },
+        { stage: 'miyako', anchor: 'destination' }
+      ]
     },
     destination: { jp: '', ro: '', lat: 0, lon: 0 },
     hero: '.ji-hero', /* 記事側Hero画像セレクタ(クロスフェード前に先読み/decode) */
@@ -170,7 +178,8 @@
       var worldSvg = svgFor(D.stages.world, 'ji-land ji-land-globe');
       globe.innerHTML = '<div class="ji-strip" data-anim><div class="ji-world">' + worldSvg + '</div><div class="ji-world">' + worldSvg + '</div></div><div class="ji-globe-shade"></div>';
       scenes.appendChild(globe);
-      /* 降下ステージ: 日本→南西諸島→宮古(実海岸線)。anchor(緯度経度)が画面の焦点(50%,47%)に来るよう配置 */
+      /* 降下ステージ(config.route.descent 駆動)。anchor(緯度経度)が画面の焦点(50%,47%)に来るよう配置。
+         未指定時は DEFAULTS.route.descent = 日本→南西諸島→宮古(現行と同一)。stage キーは D.stages[] と CSS ji-stage-<key> に対応 */
       function anchorPct(st, lat, lon) {
         var vb = st.viewBox.split(' ');
         var w = +vb[2], h = +vb[3], b = st.bbox;
@@ -178,14 +187,17 @@
         var s = w / ((b[2] - b[0]) * k);
         return [((lon - b[0]) * k * s) / w * 100, ((b[3] - lat) * s) / h * 100];
       }
-      var dl = cfg.destination.lat || 24.79, dn = cfg.destination.lon || 125.28;
-      [{ key: 'japan', a: [35.69, 139.69] },   /* 東京を焦点に */
-       { key: 'ryukyu', a: [dl, dn] },          /* 目的地方向へ */
-       { key: 'miyako', a: [dl, dn] }].forEach(function (def) {
-        var st = D.stages[def.key]; if (!st) return;
-        var p = anchorPct(st, def.a[0], def.a[1]);
+      var dl = cfg.destination.lat != null ? cfg.destination.lat : 24.79;
+      var dn = cfg.destination.lon != null ? cfg.destination.lon : 125.28;
+      (cfg.route.descent || []).forEach(function (def) {
+        var key = def.stage;
+        var st = D.stages[key]; if (!st) return; /* 対応データが無いステージはスキップ(降格せず他ステージは描画) */
+        var a = def.anchor;
+        var lat = (a === 'destination' || a == null) ? dl : a[0];
+        var lon = (a === 'destination' || a == null) ? dn : a[1];
+        var p = anchorPct(st, lat, lon);
         var div = document.createElement('div');
-        div.className = 'ji-stage ji-stage-' + def.key;
+        div.className = 'ji-stage ji-stage-' + key;
         div.setAttribute('data-anim', '');
         div.style.transform = 'translate(-' + p[0].toFixed(2) + '%,-' + p[1].toFixed(2) + '%)';
         div.innerHTML = svgFor(st, 'ji-land');
@@ -617,7 +629,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.2-arrivalEase',
+    version: '1.3.3-descent',
     current: null,
     registerMap: registerMap,
     providers: providers,

@@ -58,7 +58,12 @@ Journey Intro は **エンジン非依存・config駆動**。新記事は「HTML
     "waypoints": [                 // 経由地ラベル（node は同 300×300 座標）
       { "jp": "東京", "ro": "Tokyo", "node": [258, 44] }
     ],
-    "introLabel": { "jp": "世界", "ro": "The World" }
+    "introLabel": { "jp": "世界", "ro": "The World" },
+    "descent": [                   // 降下ステージ(vector-v2)。省略時=下記既定=日本→南西諸島→宮古(現行と同一)
+      { "stage": "japan",  "anchor": [35.69, 139.69] }, // stage=map-dataキー(D.stages[])かつCSS ji-stage-<stage>
+      { "stage": "ryukyu", "anchor": "destination" },   // anchor: [lat,lon]で固定 / "destination"(省略時も)で目的地に焦点
+      { "stage": "miyako", "anchor": "destination" }    // 最終ステージはそのまま停止し動画へ接続
+    ]
   },
 
   "destination": {                 // * 目的地（座標セレモニー＋地図アンカーに使用）
@@ -139,9 +144,12 @@ Skip／`prefers-reduced-motion`（即Hero）／同一セッション2回目の�
 
 ## 7. 既知の制約（Phase 2 で解消予定）
 
-- **降下ステージの地域固定**: `vector-v2` の降下は 日本→南西諸島→**宮古(実海岸線)**。目的地は `lat/lon` で焦点合わせされるが、**表示される海岸線の“形”は宮古周辺のデータ**。
-  → 宮古・八重山エリアの記事はそのまま高精度。**別地域（本島/北海道等）は海岸線の形が一致しない**ため、
-  Phase 2 で (a) 降下ステージを `route.descent` としてconfig化、(b) 地域別 map-data ステージの追加、で対応予定。
-  それまで別地域は `route.map:"abstract-v1"`（様式化・地域非依存）を使えば違和感なく成立する。
+- **降下ステージの地域固定**: 降下順は `route.descent` で**config化済み**（Phase1 Step2）。ただし各 `stage` は
+  (a) `map-data` に対応する海岸線データ `D.stages[stage]` と (b) 段送りアニメの CSS `.ji-stage-<stage>` が必要。
+  現状データ/CSSが揃うのは `japan / ryukyu / miyako`（宮古・八重山エリア）のみ。
+  → 同エリアの記事は `descent` 省略（既定）でそのまま高精度。**別地域**は
+  (a) `scripts/build-map-data.mjs` でその地域の `D.stages` を追加、(b) `.ji-stage-<key>` の段送りCSSを追加、
+  してから `route.descent` に列挙する（データ/CSSの汎用化は Phase 2 予定）。それまで別地域は `route.map:"abstract-v1"`（地域非依存）が無難。
+- `descent` の `stage` に対応データが無い場合はそのステージのみスキップ（他ステージは描画・全体は破綻しない）。
 - 音声(`audio`)はフックのみ（無音運用）。
 - `route` の緯度経度→航路座標の自動投影は未対応（航路は viewBox 座標で手動指定）。
