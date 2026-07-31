@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase1 Step4 (2026-07-31 / branch: journey-engine-v3) — 新記事 config 雛形ジェネレータ（エンジン非改変）
+「configだけで新記事を開始」を実現する `scripts/new-article.mjs`（ビルド時のみ・**エンジン本体は無変更**）:
+- 記事固有値（--id/--jp/--ro/--lat/--lon ほか）から、貼付用 config・HTML4点・動画ビルドコマンド・チェックリストを出力
+- 出力configは travel-17 の確定プリセット（vector-v2 / arrivalEase:false / heroZoom:false / heroCrossfadeMs:1000 / startAt3.5・playSeconds16.0）ベース＋記事固有値
+- 記事スクリプトの `?v=` は travel-17 から自動取得して整合。`--config-out` で config 書き出し可
+- 別地域（宮古・八重山エリア外）指定時は降下データ不一致の注意を表示（CONFIG.md §7 と整合）
+- 実証: 生成した travel-18 config が `JourneyIntro.validate` で **0件**（そのまま動作）を確認
+- CONFIG.md §0 クイックスタート追記。**travel-17・既存記事・エンジンは無変更**。V2/V3後方互換維持
+
 ## Phase1 Step3 (2026-07-31 / branch: journey-engine-v3) — config検証 JourneyIntro.validate（警告のみ）
 記事作成者が不足項目を把握しやすくする開発補助（v1.3.3→**1.3.4-validate**）:
 - `JourneyIntro.validate(cfg)` 公開。`[{level:'warn',path,msg}]` を返し console.warn 出力。**警告のみ・停止しない・configは非改変**

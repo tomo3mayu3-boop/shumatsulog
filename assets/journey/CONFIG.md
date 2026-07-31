@@ -5,6 +5,23 @@ Journey Intro は **エンジン非依存・config駆動**。新記事は「HTML
 
 ---
 
+## 0. クイックスタート（config雛形を生成）
+
+記事固有値を渡すと、貼り付け用の config・HTML4点・動画ビルドコマンド・チェックリストを出力します（エンジン非改変）:
+
+```bash
+node scripts/new-article.mjs --id travel-18 --jp 川平湾 --ro "Kabira Bay" --lat 24.454 --lon 124.145
+```
+
+- 出力 config は travel-17 の確定プリセット（vector-v2 / arrivalEase:false / heroZoom:false / heroCrossfadeMs:1000 / startAt3.5・playSeconds16.0）ベース。
+- そのまま `<script id="journey-intro-config">` に貼れば **validate 0件**（生成物は検証済）。
+- 別地域（宮古・八重山外）を指定すると降下データ不一致の注意を表示（§7）。
+- `--config-out <file>` で config を書き出し。全オプションは `scripts/new-article.mjs` 冒頭コメント参照。
+
+以降（§1〜）は手書き・詳細把握用のリファレンスです。
+
+---
+
 ## 1. 記事HTMLに差し込む4点
 
 ```html
