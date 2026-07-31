@@ -1,5 +1,12 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase1 Step1 (2026-07-31 / branch: journey-engine-v3) — テンプレート化: config完全ドキュメント（エンジン変更なし）
+週末ログ全体で再利用するためのテンプレート整備。エンジン/地図/CSSは全記事共有・記事側はHTML4点+configのみ、を明文化:
+- `CONFIG.md` 新規: 記事作成者向けリファレンス（HTML4点／記事ごとに変える値の対応表／config全フィールド・必須マーク／route作り方／動画ビルド手順／自動処理一覧／既知の制約）
+- `README.md` 更新: CONFIG.md/V3-VERIFY.md へ誘導、V3実態（sources/poster・build-video-renditions・abstract降格）に整合
+- **既知の制約を明文化**: `vector-v2` の降下ステージは 日本→南西諸島→宮古 の海岸線データに固定（目的地はlat/lonで焦点合わせされるが海岸線の“形”は宮古周辺）。別地域は当面 `abstract-v1` 推奨。Phase2で `route.descent` config化＋地域別ステージ追加予定
+- エンジンコード/挙動は無変更（v1.3.2-arrivalEase）。V2/V3後方互換は不変
+
 ## v1.3.2-arrivalEase (2026-07-31 / branch: journey-engine-v3) — 到着減速(playbackRate)の切り分けA/B
 iPhone実機でフェード直前の微小カクつきが残存。位置が到着減速開始(接続16.0sの0.9s前=15.1s)と一致するため、`playbackRate` 操作を原因候補として切り分け:
 - 新フラグ `video.arrivalEase`（既定true=現行）。**false で easeOut ランプを完全スキップ**＝初期化後 `playbackRate` に一切触れず 1.0固定（フェード中も1.0）
