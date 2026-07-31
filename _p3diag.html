@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase3 動画画質 診断（tier/URL/実効倍率）</title>
+<link rel="stylesheet" href="assets/journey/journey-intro.css?v=p3diag">
+<meta name="color-scheme" content="light dark">
+<style>
+  html,body{ margin:0; background:#0d1117; color:#c9d6e5; font-family:system-ui,sans-serif; }
+  .wrap{ max-width:760px; margin:0 auto; padding:14px 12px 40px; }
+  h1{ font-size:16px; } h2{ font-size:13px; opacity:.85; margin:14px 0 6px; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; } th,td{ border:1px solid #2a3340; padding:6px 8px; text-align:left; } th{ background:#161c26; }
+  .now{ font-variant-numeric:tabular-nums; } code{ font-size:12px; } .warn{ color:#ffb357; font-weight:700; } .ok{ color:#7fe0a0; font-weight:700; }
+  button{ background:#17505e; color:#eafaff; border:0; border-radius:9px; padding:12px 16px; font-size:15px; margin:6px 6px 0 0; cursor:pointer; }
+  /* 本番Journey Introと同一の表示条件（全画面 + object-fit:cover）で実測 */
+  #fs{ position:fixed; inset:0; z-index:9999; background:#03080f; display:none; }
+  #fs video{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+  #fsbar{ position:fixed; left:0; right:0; bottom:0; z-index:10000; display:none; padding:8px; background:rgba(6,12,20,.85); }
+  #fsbar button{ padding:9px 12px; font-size:13px; }
+  #log{ white-space:pre-wrap; font:12px/1.5 ui-monospace,monospace; background:#05080d; border-radius:8px; padding:8px; margin-top:10px; }
+</style>
+</head><body>
+<div class="wrap">
+  <h1>Phase3 動画画質 診断 — travel-17 と同一config</h1>
+  <p style="font-size:12px;opacity:.8">エンジン/CSSは travel-17 と同一。**新クエリ ?v=p3diag / 動画 ?v=diag1** でキャッシュ排除。ウィンドウ幅で tier が変わる点に注意。</p>
+  <h2>① 端末・ビューポート（リサイズで更新）</h2>
+  <div><table id="dev"></table></div>
+  <h2>② 選択tier / 動画URL（travel-17 実configの pickVideoSource）</h2>
+  <div><table id="pick"></table></div>
+  <h2>③ 各tierの実ファイル（HEAD: Status/Content-Length）</h2>
+  <div><table id="head"><thead><tr><th>tier</th><th>URL</th><th>Status</th><th>Content-Length</th></tr></thead><tbody></tbody></table></div>
+  <h2>④ 全画面再生で実測（currentSrc・ネイティブ解像度・表示サイズ・実効倍率）</h2>
+  <button id="play">▶ 選択tierを全画面再生して実測</button>
+  <div><table id="meas"></table></div>
+  <div id="log"></div>
+</div>
+<div id="fs"><video id="fsv" playsinline webkit-playsinline muted controls></video></div>
+<div id="fsbar"><button id="fsclose">× 閉じる</button> <span id="fslab" style="color:#cfe6ea;font-size:12px"></span></div>
+
+<script src="assets/journey/map-data/journey-map.v1.js?v=p3diag"></script>
+<script src="assets/journey/journey-intro.js?v=p3diag"></script>
+<script>
+(function(){
+  var LOG=document.getElementById('log'); function log(s){ LOG.textContent+=s+'\n'; }
+  var DIR='assets/video/travel-17/', Q='?v=diag1';
+  // travel-17 と同一の video config（キャッシュ排除のため ?v=diag1 に差し替え）
+  var V={ src:DIR+'arrival-720.mp4'+Q,
+    sources:[ {src:DIR+'arrival-720.mp4'+Q,maxWidth:640,tier:'mobile'},{src:DIR+'arrival-1080.mp4'+Q,maxWidth:1024,tier:'tablet'},{src:DIR+'arrival-1080.mp4'+Q,tier:'desktop'} ] };
+  var JI=window.JourneyIntro;
+  if(!JI){ log('ERROR engine未ロード'); return; }
+  log('engine '+JI.version);
+
+  function row(t,k,v){ var tr=document.createElement('tr'); tr.innerHTML='<th>'+k+'</th><td class="now">'+v+'</td>'; t.appendChild(tr); }
+  function dev(){
+    var d=document.getElementById('dev'); d.innerHTML='';
+    var dpr=window.devicePixelRatio||1;
+    row(d,'innerWidth × innerHeight (CSS)', window.innerWidth+' × '+window.innerHeight);
+    row(d,'devicePixelRatio', dpr);
+    row(d,'デバイスピクセル(実)', Math.round(window.innerWidth*dpr)+' × '+Math.round(window.innerHeight*dpr));
+    row(d,'isIOS', JI._isIOS());
+    var pk=JI._pickVideoSource(V); var pl=JI._planVideo(V,pk);
+    var p=document.getElementById('pick'); p.innerHTML='';
+    row(p,'選択tier', '<b>'+pk.tier+'</b>'+(pk.tier==='mobile'?' <span class="warn">← 720p(ウィンドウが狭い)</span>':' <span class="ok">← 1080p</span>'));
+    row(p,'選択URL', '<code>'+(pk.src||'').split('/').pop()+'</code>');
+    row(p,'reason', pk.reason+' / plan '+(pl.play?'再生':'Hero')+'('+pl.reason+')');
+    return pk;
+  }
+  var CUR=dev();
+  window.addEventListener('resize', function(){ CUR=dev(); });
+  window.addEventListener('orientationchange', function(){ setTimeout(function(){CUR=dev();},300); });
+
+  // ③ HEAD
+  var files=[['mobile','arrival-720.mp4'],['tablet/desktop','arrival-1080.mp4']];
+  var htb=document.querySelector('#head tbody');
+  files.forEach(function(f){
+    var url=DIR+f[1]+Q; var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+f[0]+'</td><td><code>'+f[1]+Q+'</code></td><td id="s_'+f[1].replace(/\W/g,'')+'">…</td><td id="c_'+f[1].replace(/\W/g,'')+'">…</td>';
+    htb.appendChild(tr);
+    fetch(url,{method:'HEAD',cache:'no-store'}).then(function(r){
+      document.getElementById('s_'+f[1].replace(/\W/g,'')).textContent=r.status;
+      var l=r.headers.get('content-length'); document.getElementById('c_'+f[1].replace(/\W/g,'')).textContent=l?((l/1048576).toFixed(2)+' MB'):'-';
+      log('HEAD '+f[1]+' = '+r.status+' / '+(l?((l/1048576).toFixed(2)+'MB'):'?'));
+    }).catch(function(e){ document.getElementById('s_'+f[1].replace(/\W/g,'')).textContent='err'; });
+  });
+
+  // ④ 全画面再生で実測
+  var fs=document.getElementById('fs'), fsv=document.getElementById('fsv'), fsbar=document.getElementById('fsbar'), fslab=document.getElementById('fslab');
+  function measure(){
+    var dpr=window.devicePixelRatio||1;
+    var rect=fsv.getBoundingClientRect();
+    var nw=fsv.videoWidth, nh=fsv.videoHeight;
+    var dispW=Math.round(rect.width), dispH=Math.round(rect.height);
+    var devW=Math.round(dispW*dpr), devH=Math.round(dispH*dpr);
+    var cover = nw&&nh ? Math.max(devW/nw, devH/nh) : 0;
+    var m=document.getElementById('meas'); m.innerHTML='';
+    row(m,'currentSrc(実際に読込)', '<code>'+(fsv.currentSrc||'').split('/').pop()+'</code>');
+    row(m,'ネイティブ解像度(decoded)', nw+' × '+nh+(nw>=1080?' <span class="ok">1080p</span>':' <span class="warn">720p</span>'));
+    row(m,'表示サイズ(CSS px)', dispW+' × '+dispH);
+    row(m,'表示サイズ(device px)', devW+' × '+devH+' (×DPR'+dpr+')');
+    row(m,'cover実効倍率', cover.toFixed(2)+'×'+(cover>1.6?' <span class="warn">拡大大→軟化</span>':(cover>1.15?' やや拡大':' <span class="ok">ほぼ等倍〜縮小</span>')));
+    fslab.textContent=(fsv.currentSrc||'').split('/').pop()+' / '+nw+'x'+nh+' / '+cover.toFixed(2)+'x';
+    log('MEAS src='+(fsv.currentSrc||'').split('/').pop()+' native='+nw+'x'+nh+' disp='+dispW+'x'+dispH+' dev='+devW+'x'+devH+' cover='+cover.toFixed(2)+'x');
+  }
+  document.getElementById('play').onclick=function(){
+    fsv.src=CUR.src; fs.style.display='block'; fsbar.style.display='block';
+    fsv.addEventListener('loadedmetadata', function h(){ fsv.removeEventListener('loadedmetadata',h); fsv.play(); setTimeout(measure,60); },{once:true});
+    fsv.load();
+  };
+  document.getElementById('fsclose').onclick=function(){ fs.style.display='none'; fsbar.style.display='none'; fsv.pause(); };
+})();
+</script>
+</body></html>
