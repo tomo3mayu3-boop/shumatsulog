@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase3 実描画比較 — travel-17 vs _p3review2</title>
+<style>
+  html,body{ margin:0; background:#0d1117; color:#c9d6e5; font-family:system-ui,sans-serif; }
+  .wrap{ padding:12px; }
+  h1{ font-size:16px; margin:4px 0; }
+  button{ background:#2b8ca0; color:#04121a; border:0; border-radius:9px; padding:12px 18px; font-size:15px; font-weight:700; cursor:pointer; margin:4px 0; }
+  .frames{ display:flex; gap:8px; margin:8px 0; }
+  .frames > div{ flex:1; }
+  .frames iframe{ width:100%; height:44vh; border:1px solid #2a3340; background:#000; }
+  .lab{ font-size:12px; opacity:.8; margin-bottom:3px; }
+  table{ border-collapse:collapse; width:100%; font-size:12.5px; margin-top:8px; }
+  th,td{ border:1px solid #2a3340; padding:5px 7px; text-align:left; vertical-align:top; word-break:break-all; }
+  th{ background:#161c26; } .diff{ background:rgba(255,120,80,.22); font-weight:700; } .same{ color:#7fe0a0; }
+  code{ font-size:11.5px; } .st{ font-size:12px; opacity:.85; }
+  #log{ white-space:pre-wrap; font:11.5px/1.5 ui-monospace,monospace; background:#05080d; border-radius:8px; padding:8px; margin-top:8px; max-height:160px; overflow:auto; }
+</style>
+</head><body>
+<div class="wrap">
+  <h1>実描画比較 — travel-17 vs _p3review2（video要素の実測値）</h1>
+  <p class="st">両ページを同一ウィンドウ幅の iframe で読み込み、動画フェーズへ進めて video 要素の実測値を突き合わせます。差分のみ赤表示。</p>
+  <button id="run">▶ 両方を計測（動画フェーズへ進めて実測）</button>
+  <div class="frames">
+    <div><div class="lab">A: travel-17.html</div><iframe id="fa" src="travel-17.html?cmp=1"></iframe></div>
+    <div><div class="lab">B: _p3review2.html</div><iframe id="fb" src="_p3review2.html?cmp=1"></iframe></div>
+  </div>
+  <table id="tbl"><thead><tr><th>プロパティ</th><th>A travel-17</th><th>B _p3review2</th><th>判定</th></tr></thead><tbody></tbody></table>
+  <div id="log"></div>
+</div>
+<script>
+(function(){
+  var LOG=document.getElementById('log'); function log(s){ LOG.textContent+=s+'\n'; LOG.scrollTop=LOG.scrollHeight; }
+
+  function ensureStarted(win, cb){
+    var tries=0;
+    (function w(){
+      var JI=win.JourneyIntro;
+      if(JI){
+        if(JI.current){ cb(win, JI.current); return; }
+        // 起動していなければ: ハーネスの起動ボタン→無ければ inline config を force 起動
+        var btn=win.document.querySelector('button[data-v="refined"],button#go,button#play');
+        if(btn){ try{ btn.click(); }catch(e){} }
+        else { var tag=win.document.getElementById('journey-intro-config'); if(tag){ try{ JI.start(JSON.parse(tag.textContent),{force:true}); }catch(e){} } }
+        var t2=0; (function w2(){ if(JI.current){ cb(win,JI.current); } else if(t2++<120){ setTimeout(w2,50); } else cb(win,null); })();
+        return;
+      }
+      if(tries++<200){ setTimeout(w,50); } else cb(win,null);
+    })();
+  }
+  function toVideoThenRead(win, inst, done){
+    try{ if(inst && inst.enterVideo) inst.enterVideo(); }catch(e){}
+    var v=win.document.querySelector('.ji-video video');
+    if(!v){ done({error:'video要素なし'}); return; }
+    function read(){
+      var vp=v.parentElement, cs=win.getComputedStyle(v), csp=win.getComputedStyle(vp), r=v.getBoundingClientRect();
+      done({
+        videoWidth: v.videoWidth, videoHeight: v.videoHeight,
+        currentSrc: (v.currentSrc||v.src||'').split('/').pop(),
+        rect: Math.round(r.width)+'×'+Math.round(r.height)+' @('+Math.round(r.left)+','+Math.round(r.top)+')',
+        dpr: win.devicePixelRatio,
+        transform: cs.transform, filter: cs.filter, opacity: cs.opacity,
+        imageRendering: cs.imageRendering, objectFit: cs.objectFit,
+        width: cs.width, height: cs.height,
+        parentTransform: csp.transform, parentFilter: csp.filter, parentOpacity: csp.opacity,
+        innerWidth: win.innerWidth
+      });
+    }
+    if(v.videoWidth>0){ setTimeout(read,80); }
+    else { v.addEventListener('loadedmetadata', function(){ setTimeout(read,120); }, {once:true}); try{v.load&&v.load();}catch(e){} setTimeout(read,3000); }
+  }
+
+  var ORDER=['innerWidth','dpr','videoWidth','videoHeight','currentSrc','rect','width','height','objectFit','transform','filter','opacity','imageRendering','parentTransform','parentFilter','parentOpacity'];
+  var LABEL={ innerWidth:'iframe innerWidth', dpr:'devicePixelRatio', videoWidth:'videoWidth', videoHeight:'videoHeight', currentSrc:'currentSrc', rect:'getBoundingClientRect', width:'computed width', height:'computed height', objectFit:'object-fit', transform:'computed transform', filter:'computed filter', opacity:'computed opacity', imageRendering:'image-rendering', parentTransform:'親(.ji-video) transform', parentFilter:'親(.ji-video) filter', parentOpacity:'親(.ji-video) opacity' };
+
+  function render(A,B){
+    var tb=document.querySelector('#tbl tbody'); tb.innerHTML='';
+    var diffs=0;
+    ORDER.forEach(function(k){
+      var a=A&&A[k]!=null?String(A[k]):'(なし)', b=B&&B[k]!=null?String(B[k]):'(なし)';
+      var same=a===b;
+      if(!same) diffs++;
+      var tr=document.createElement('tr');
+      tr.innerHTML='<th>'+LABEL[k]+'</th><td><code>'+a+'</code></td><td><code>'+b+'</code></td>'+
+        (same?'<td class="same">一致</td>':'<td class="diff">差分</td>');
+      if(!same) tr.querySelectorAll('td').forEach&&[].forEach.call(tr.querySelectorAll('td'),function(td,i){ if(i<2) td.classList.add('diff'); });
+      tb.appendChild(tr);
+    });
+    var head=document.createElement('tr');
+    head.innerHTML='<th>差分件数</th><td colspan="3" class="'+(diffs?'diff':'same')+'">'+(diffs===0?'完全一致（0件）＝ 2ページの動画描画は同一':diffs+' 件の差分（下記赤）')+'</td>';
+    tb.insertBefore(head, tb.firstChild);
+    log('差分 '+diffs+' 件');
+  }
+
+  document.getElementById('run').onclick=function(){
+    log('計測開始…');
+    var RA=null, RB=null, doneN=0;
+    function chk(){ if(++doneN>=2) render(RA,RB); }
+    ensureStarted(document.getElementById('fa').contentWindow, function(w,inst){ log('A起動 '+(inst?'ok':'失敗')); toVideoThenRead(w,inst,function(r){ RA=r; log('A実測 '+(r.currentSrc||r.error)); chk(); }); });
+    ensureStarted(document.getElementById('fb').contentWindow, function(w,inst){ log('B起動 '+(inst?'ok':'失敗')); toVideoThenRead(w,inst,function(r){ RB=r; log('B実測 '+(r.currentSrc||r.error)); chk(); }); });
+  };
+})();
+</script>
+</body></html>
