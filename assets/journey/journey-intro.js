@@ -23,13 +23,16 @@
       introLabel: { jp: '世界', ro: 'The World' }
     },
     destination: { jp: '', ro: '', lat: 0, lon: 0 },
+    hero: '.ji-hero', /* 記事側Hero画像セレクタ(クロスフェード前に先読み/decode) */
     video: { src: null, poster: null, startAt: 0, playSeconds: null, easeOutMs: 900, easeOutRate: 0.30, objectPosition: 'center', loadBudgetMs: 6000, saveDataFallback: 'hero' },
     audio: { src: null, volume: 0.5, fadeInMs: 1400 },
-    /* Phase2 fx: すべて既定ON・configでOFF可(後方互換: 未指定=従来見た目+質感) */
-    fx: { trailGlint: true, glintLen: 0.07, pinRing: true, grain: true, vignette: true, heroZoom: true },
+    /* Phase2 fx: すべて既定ON・configでOFF可(後方互換: 未指定=従来見た目+質感)
+       v1.3.1 遷移スムーズ化: heroPreload/progressComplete/pauseAfterFade(既定ON)、heroZoomは比較用にOFF可 */
+    fx: { trailGlint: true, glintLen: 0.07, pinRing: true, grain: true, vignette: true, heroZoom: true, heroPreload: true, progressComplete: true, pauseAfterFade: true },
     timing: {
       phase1Ms: 13000, flightStartPct: 0.46, flightEndPct: 0.90,
       crossfadeMs: 900, heroCrossfadeMs: 240, /* v1.1: 映画的マッチカット(旧1000msはconfigで指定可) */
+      heroPreloadLeadMs: 250, progressCompleteMs: 250, /* v1.3.1 遷移スムーズ化 */
       labelFadeMs: 380, labelPassDelayMs: 250,
       arrival: { holdMs: 380, pinMs: 600, labelStartMs: 560, labelMs: 560, coordStartMs: 640, coordMs: 1000, pauseMs: 1280 } /* 実機FB: 座標ロック後の余韻+1s(地図はCSS13s終了済で停止状態) */
     },
@@ -290,6 +293,7 @@
       aCoord: ov.querySelector('.a-coord'),
       videoWrap: ov.querySelector('.ji-video'),
       video: ov.querySelector('.ji-video video'),
+      progress: ov.querySelector('.ji-progress i'),
       skip: ov.querySelector('.ji-skip')
     };
     /* ---- 星(静的・軽量) ---- */
@@ -436,6 +440,30 @@
       var a = el.animate([{ opacity: from }, { opacity: to }], { duration: dur, easing: easing || 'ease', fill: 'forwards' });
       waapi.push(a); return a;
     }
+    /* v1.3.1 #1: Hero画像をクロスフェード前に先読み/decode(合成準備を済ませ、reveal時のジャンクを防ぐ) */
+    var heroPreloaded = false;
+    function preloadHero() {
+      if (heroPreloaded) return; heroPreloaded = true;
+      try {
+        var img = document.querySelector(cfg.hero || '.ji-hero');
+        if (!img) return;
+        if (img.decode) { img.decode().catch(function () {}); }
+        else if (!img.complete) { var i = new Image(); i.src = img.currentSrc || img.src; }
+      } catch (e) {}
+    }
+    /* v1.3.1 #2: progressバーを100%まで満たしてから次のフェードへ移行 */
+    function completeProgress(done) {
+      var p = els.progress;
+      if (!p) { done(); return; }
+      var called = false; function fin() { if (called) return; called = true; done(); }
+      try {
+        p.style.animation = 'none'; p.style.transform = 'scaleX(0.85)'; void p.offsetWidth;
+        var a = p.animate([{ transform: 'scaleX(0.85)' }, { transform: 'scaleX(1)' }],
+          { duration: T.progressCompleteMs, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+        waapi.push(a); a.onfinish = fin;
+      } catch (e) { fin(); return; }
+      setTimeout(fin, T.progressCompleteMs + 60); /* 保険 */
+    }
     function tickShared(ms) {
       updateFlight(ms); updateLabels(ms);
       if (ms >= FE) driveCeremony(ms - FE); else resetCeremony();
@@ -459,6 +487,7 @@
       self.state.phase = 1;
       cancelAnimationFrame(raf); cancelAnimationFrame(rafV); cancelWaapi();
       ov.style.opacity = ''; els.abstract.style.opacity = ''; els.videoWrap.style.opacity = ''; els.videoWrap.style.transform = '';
+      heroPreloaded = false; if (els.progress) { els.progress.style.transform = ''; els.progress.style.animation = ''; } /* v1.3.1: 再生毎にリセット */
       resetCeremony(); els.plane.style.opacity = ''; if (els.trailHl) els.trailHl.style.opacity = '0';
       /* 地図フェーズ中に動画を先読み(iOS等で13s後の再生が間に合うように) */
       try { vid.preload = 'auto'; if (vid.load && vid.readyState < 2) vid.load(); } catch (e) {}
@@ -482,6 +511,11 @@
       self.state.phase = 2;
       cancelAnimationFrame(raf);
       anims.forEach(function (el) { el.style.animationPlayState = 'paused'; });
+      /* v1.3.1 #2: progressを100%まで満たしてから 地図→動画 クロスフェード */
+      if (cfg.fx.progressComplete) completeProgress(startVideoCrossfade); else startVideoCrossfade();
+    }
+    function startVideoCrossfade() {
+      if (self.state.phase !== 2) return;
       fade(els.abstract, 1, 0, T.crossfadeMs);
       fade(els.videoWrap, 0, 1, T.crossfadeMs);
       vid.playbackRate = 1;
@@ -518,7 +552,14 @@
           vid.playbackRate = 1 - (1 - cfg.video.easeOutRate) * ep;
         }
         if (self.opts.onTick) self.opts.onTick(ct * 1000, 2);
-        if (!ended && (ct >= dur - 0.05 || vid.ended)) { ended = true; vid.pause(); toHero(); return; }
+        /* v1.3.1 #1: Hero Crossfade開始の約 heroPreloadLeadMs 前にHeroを先読み/decode */
+        if (cfg.fx.heroPreload && !heroPreloaded && ct >= dur - (T.heroPreloadLeadMs / 1000)) preloadHero();
+        if (!ended && (ct >= dur - 0.05 || vid.ended)) {
+          ended = true;
+          /* v1.3.1 #4: pauseAfterFade時はここでpauseせず、フェード終了後にpause(フェード中も動画が動き続ける) */
+          if (!cfg.fx.pauseAfterFade) { try { vid.pause(); } catch (e) {} }
+          toHero(); return;
+        }
         rafV = requestAnimationFrame(loop);
       })();
     }
@@ -528,6 +569,7 @@
       cancelAnimationFrame(rafV);
       clearTimeout(self._budget); /* V3 Step2: 読込予算ウォッチドッグの後発火を防止 */
       try { vid.oncanplay = null; } catch (e) {} /* V3 Step3: 保留中のcanplay再生を無効化 */
+      if (cfg.fx.heroPreload) preloadHero(); /* v1.3.1 #1: 保険(skip/失敗/直行など先読み前に来た場合) */
       /* 映画的マッチカット: 短いフェード + 動画のごく僅かな前進(scale)で「切り替わった」感を出す */
       fade(ov, 1, 0, T.heroCrossfadeMs, 'cubic-bezier(.4,0,.2,1)');
       if (cfg.fx.heroZoom) {
@@ -538,6 +580,8 @@
       }
       markSeen(cfg);
       setTimeout(function () {
+        /* v1.3.1 #4: フェード終了後に動画をpause(フェード中は動き続ける) */
+        if (cfg.fx.pauseAfterFade) { try { vid.pause(); } catch (e) {} }
         ov.style.pointerEvents = 'none';
         restoreScroll();
         if (self.opts.onComplete) self.opts.onComplete();
@@ -570,7 +614,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.0-step3',
+    version: '1.3.1-transition',
     current: null,
     registerMap: registerMap,
     providers: providers,

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3 遷移スムーズ化 A/B — Hero Crossfade</title>
+<link rel="stylesheet" href="assets/journey/journey-intro.css">
+<meta name="color-scheme" content="light dark">
+<style>
+  html,body{ margin:0; background:#000; }
+  /* 記事Hero相当: 全画面背景。オーバーレイがフェードするとこれが現れる */
+  .bg-hero{ position:fixed; inset:0; z-index:0; }
+  .bg-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .bar{ position:fixed; left:0; right:0; bottom:0; z-index:10001; padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+    background:rgba(8,12,18,.92); color:#cfe6ea; font:13px/1.4 system-ui,sans-serif; backdrop-filter:blur(4px); border-top:1px solid rgba(255,255,255,.12); }
+  .row{ display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin:3px 0; }
+  .bar button{ background:#17505e; color:#eafaff; border:0; border-radius:8px; padding:9px 12px; font-size:14px; cursor:pointer; }
+  .bar button.preset{ background:#2b6a3a; } .bar button.cur{ background:#5a3a2a; }
+  .bar label{ display:flex; align-items:center; gap:4px; cursor:pointer; background:rgba(255,255,255,.06); padding:5px 8px; border-radius:7px; }
+  .bar .grp{ font-weight:600; opacity:.8; min-width:74px; }
+  .bar .now{ font-variant-numeric:tabular-nums; opacity:.9; flex-basis:100%; font-size:11.5px; }
+</style>
+</head><body>
+<div class="bg-hero"><img class="ji-hero" src="images/travel/sup/sup-1.webp" alt="hero"></div>
+
+<div class="bar">
+  <div class="row">
+    <span class="grp">プリセット</span>
+    <button class="cur" data-preset="cur">A: 現行(旧)</button>
+    <button class="preset" data-preset="newz0">B: 改善+Zoom OFF</button>
+    <button class="preset" data-preset="newz1">C: 改善+Zoom ON</button>
+  </div>
+  <div class="row">
+    <span class="grp">個別</span>
+    <label><input type="checkbox" id="f_preload">①Hero先読み</label>
+    <label><input type="checkbox" id="f_progress">②progress100%</label>
+    <label><input type="checkbox" id="f_zoom">③heroZoom</label>
+    <label><input type="checkbox" id="f_pause">④pause後</label>
+  </div>
+  <div class="row">
+    <span class="grp">再生</span>
+    <button data-mode="tail">接続部のみ(高速)</button>
+    <button data-mode="video">動画から</button>
+    <button data-mode="full">地図から通し</button>
+    <label><input type="checkbox" id="loop">ループ</label>
+    <span class="now" id="now">—</span>
+  </div>
+</div>
+
+<script src="assets/journey/map-data/journey-map.v1.js?v=131"></script>
+<script src="assets/journey/journey-intro.js?v=131"></script>
+<script>
+(function(){
+  var DIR='assets/video/travel-17/';
+  var BASE = { version:1, id:'v3trans',
+    route:{ map:'vector-v2', path:'M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150',
+      waypoints:[ {jp:'東京',ro:'Tokyo',node:[258,44]}, {jp:'沖縄',ro:'Okinawa',node:[244,92]}, {jp:'宮古島',ro:'Miyakojima',node:[222,140]} ],
+      introLabel:{ jp:'世界', ro:'The World' } },
+    destination:{ jp:'ユニの浜', ro:'Uni Beach', lat:24.7880, lon:125.2480 },
+    hero:'.ji-hero',
+    video:{ src:DIR+'arrival-720.mp4?v=2',
+      sources:[ {src:DIR+'arrival-720.mp4?v=2',maxWidth:640,tier:'mobile'}, {src:DIR+'arrival-1080.mp4?v=2',maxWidth:1024,tier:'tablet'}, {src:DIR+'arrival-1080.mp4?v=2',tier:'desktop'} ],
+      poster:DIR+'arrival-poster.webp?v=2', startAt:3.5, playSeconds:16.0 },
+    timing:{ heroCrossfadeMs:1000 },
+    skip:{ button:true, label:'スキップ', oncePerSession:false } };
+
+  var el=function(id){return document.getElementById(id);};
+  var now=el('now'), loopChk=el('loop');
+  var C={ preload:el('f_preload'), progress:el('f_progress'), zoom:el('f_zoom'), pause:el('f_pause') };
+  var PRESETS={
+    cur:   { preload:false, progress:false, zoom:true,  pause:false },
+    newz0: { preload:true,  progress:true,  zoom:false, pause:true },
+    newz1: { preload:true,  progress:true,  zoom:true,  pause:true }
+  };
+  function setP(p){ C.preload.checked=p.preload; C.progress.checked=p.progress; C.zoom.checked=p.zoom; C.pause.checked=p.pause; }
+  setP(PRESETS.newz0);
+
+  var loopTimer, lastMode='tail';
+  function fx(){ return { heroPreload:C.preload.checked, progressComplete:C.progress.checked, heroZoom:C.zoom.checked, pauseAfterFade:C.pause.checked }; }
+  function play(mode){
+    lastMode=mode||lastMode; clearTimeout(loopTimer);
+    var c=JSON.parse(JSON.stringify(BASE));
+    c.fx = fx();
+    if(lastMode==='tail'){ c.video.startAt=14.5; }        // 接続直前〜Heroだけ高速確認
+    if(lastMode!=='full'){ c.timing.crossfadeMs=300; }     // 動画/接続モードは地図→動画を短く
+    var f=c.fx;
+    now.textContent='['+lastMode+'] 先読み='+f.heroPreload+' progress100='+f.progressComplete+' zoom='+f.heroZoom+' pause後='+f.pauseAfterFade;
+    if(window.__ji) window.__ji.destroy();
+    window.__ji = JourneyIntro.start(c, { force:true,
+      onComplete:function(){ if(loopChk.checked){ loopTimer=setTimeout(function(){ play(lastMode); }, 1400); } }
+    });
+    if(lastMode!=='full' && window.__ji){ window.__ji.enterVideo(); }
+  }
+  [].forEach.call(document.querySelectorAll('button[data-preset]'),function(b){ b.addEventListener('click',function(){ setP(PRESETS[b.dataset.preset]); play(); }); });
+  [].forEach.call(document.querySelectorAll('button[data-mode]'),function(b){ b.addEventListener('click',function(){ play(b.dataset.mode); }); });
+  if(!window.JourneyIntro){ now.textContent='ERROR: engine未ロード'; return; }
+  now.textContent='engine '+JourneyIntro.version+' / プリセットB選択中。再生ボタンを押してください（progress100%は「地図から通し」で確認）';
+})();
+</script>
+</body></html>

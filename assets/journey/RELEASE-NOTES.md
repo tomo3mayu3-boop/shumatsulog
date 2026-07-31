@@ -1,5 +1,15 @@
 # Journey Intro Engine ― Release Notes
 
+## v1.3.1-transition (2026-07-31 / branch: journey-engine-v3) — Hero Crossfade スムーズ化（4点A/B）
+`toHero`（動画→Hero）と `enterVideo`（地図→動画）の遷移を4点改善。すべて `cfg.fx` でトグル可＝A/B比較用:
+- **①heroPreload**（既定ON）: Hero Crossfade開始の約 `timing.heroPreloadLeadMs`(250ms) 前に記事Hero画像を `img.decode()` 先読み。reveal時のデコードジャンク回避。対象は `cfg.hero`（既定 `.ji-hero`）
+- **②progressComplete**（既定ON）: progressバーを100%(`scaleX(1)`)まで満たしてから 地図→動画 クロスフェード（`timing.progressCompleteMs` 250ms）。※「地図から通し」再生時のみ体感
+- **③heroZoom**（既定ON・**比較用にconfigでOFF可**）: 末尾の scale(1→1.035)。拡大による軟化要因のため travel-17 は **OFF採用**
+- **④pauseAfterFade**（既定ON）: フェード開始時に `video.pause()` せず、**フェード終了後**にpause（フェード中も動画が動き続け、静止フレームの固さを解消）
+- travel-17: `"fx": { "heroZoom": false }` を採用、engine読込 `?v=131`。**エンジンAPI/演出の他要素・V2後方互換は不変**（新フラグ未指定の旧configは従来挙動）
+- 比較ページ `_v3trans.html`（プリセットA現行/B改善+ZoomOFF/C改善+ZoomON＋個別トグル、接続部のみ/動画から/地図から通し、Hero画像背景つき）
+- 検証注意: ④は `playSeconds`(16.0s) を越えてフェード中に約0.3s前進するため、カット済み末尾が僅かに覗く可能性 → A/Bで要確認
+
 ## v1.3.0 動画品質確定 (2026-07-31 / branch: journey-engine-v3) — tier再設計＋高画質再エンコード
 実機診断で「甘さの主因はエンコードでなく **高DPI端末での540p全画面拡大**（object-fit:cover による2.6〜2.9倍拡大）」と判明。tier方針を再設計:
 - **540pを廃止**。mobile=**720p** / tablet=**1080p** / desktop=**1080p**（全tier **CRF20 / preset slow / bt709色タグ明示 / faststart / 無音**）
