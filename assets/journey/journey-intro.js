@@ -36,7 +36,10 @@
     audio: { src: null, volume: 0.5, fadeInMs: 1400 },
     /* Phase2 fx: すべて既定ON・configでOFF可(後方互換: 未指定=従来見た目+質感)
        v1.3.1 遷移スムーズ化: heroPreload/progressComplete/pauseAfterFade(既定ON)、heroZoomは比較用にOFF可 */
-    fx: { trailGlint: true, glintLen: 0.07, pinRing: true, grain: true, vignette: true, heroZoom: true, heroPreload: true, progressComplete: true, pauseAfterFade: true },
+    fx: { trailGlint: true, glintLen: 0.07, pinRing: true, grain: true, vignette: true, heroZoom: true, heroPreload: true, progressComplete: true, pauseAfterFade: true,
+      /* P3-2: 到着リップルの独立調整値（既定=洗練版。driveCeremony既存計算をパラメータ化・rAF処理は増やさない）。
+         現行比較値: opacity .5 / echo .26 / scaleTo 2.23 / durMs 650 / offsetMs 300 / easePow 2 */
+      ripple: { opacity: 0.46, opacityEcho: 0.20, scaleFrom: 0.38, scaleTo: 2.05, durMs: 720, offsetMs: 330, easePow: 2.4 } },
     timing: {
       phase1Ms: 13000, flightStartPct: 0.46, flightEndPct: 0.90,
       crossfadeMs: 900, heroCrossfadeMs: 240, /* v1.1: 映画的マッチカット(旧1000msはconfigで指定可) */
@@ -279,6 +282,10 @@
     var P1 = T.phase1Ms;
     var FS = P1 * T.flightStartPct, FE = P1 * T.flightEndPct;
     var A = T.arrival;
+    var RIP = cfg.fx.ripple || {}; /* P3-2: リップル調整値を構築時に1回だけローカル化(毎フレーム参照しない) */
+    var ripOp = RIP.opacity != null ? RIP.opacity : 0.46, ripEcho = RIP.opacityEcho != null ? RIP.opacityEcho : 0.20;
+    var ripFrom = RIP.scaleFrom != null ? RIP.scaleFrom : 0.38, ripTo = RIP.scaleTo != null ? RIP.scaleTo : 2.05;
+    var ripDur = RIP.durMs != null ? RIP.durMs : 720, ripOff = RIP.offsetMs != null ? RIP.offsetMs : 330, ripPow = RIP.easePow != null ? RIP.easePow : 2.4;
     var CEREMONY = Math.max(A.holdMs + A.pinMs, A.labelStartMs + A.labelMs, A.coordStartMs + A.coordMs) + A.pauseMs;
     this.durations = { phase1: P1, flightStart: FS, flightEnd: FE, ceremony: CEREMONY, scrubMax: FE + CEREMONY };
 
@@ -431,14 +438,14 @@
         updateCoordText(Math.min(1, (c - A.coordStartMs) / A.coordMs));
         els.aCoord.style.opacity = String(easeOut3((c - A.coordStartMs) / (A.coordMs * 0.5)));
       } else { els.aCoord.style.opacity = '0'; }
-      /* ピン着地リング(1回目=明確・2回目=残響。Google Maps的な最小限) */
+      /* ピン着地リング(1回目=明確・2回目=残響。Google Maps的な最小限)。P3-2: 強さ/速度/透明度は cfg.fx.ripple で調整(既存計算のパラメータ化=rAF処理増なし) */
       var land = A.holdMs + A.pinMs * 0.9;
       els.rings.forEach(function (r, idx) {
-        var p = (c - (land + idx * 300)) / 650;
+        var p = (c - (land + idx * ripOff)) / ripDur;
         if (p <= 0 || p >= 1) { r.style.opacity = '0'; return; }
-        var e = 1 - Math.pow(1 - p, 2);
-        r.style.opacity = String((1 - p) * (idx ? 0.26 : 0.5));
-        r.style.transform = 'scale(' + (0.38 + 1.85 * e).toFixed(3) + ')';
+        var e = 1 - Math.pow(1 - p, ripPow);
+        r.style.opacity = String((1 - p) * (idx ? ripEcho : ripOp));
+        r.style.transform = 'scale(' + (ripFrom + (ripTo - ripFrom) * e).toFixed(3) + ')';
       });
     }
     function resetCeremony() {
@@ -711,7 +718,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.6-failsafe',
+    version: '1.3.7-ripple',
     current: null,
     registerMap: registerMap,
     providers: providers,

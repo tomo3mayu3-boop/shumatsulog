@@ -93,8 +93,11 @@
 /* ピン着地リング(Google Maps風・JS時間駆動で1〜2回だけ) */
 .ji-arrival .a-ring{ position:absolute; left:50%; top:50%; width:84px; height:84px; margin:-42px 0 0 -42px; border:1px solid rgba(140,225,235,.9); border-radius:50%; opacity:0; pointer-events:none; will-change:transform,opacity; }
 .ji-arrival .a-pin svg{ display:block; }
-.ji-arrival .a-coord{ position:absolute; left:50%; top:calc(50% + 30px); transform:translateX(-50%); font-family:"SFMono-Regular",Consolas,"Courier New",monospace; font-size:11px; letter-spacing:.22em; color:rgba(242,246,247,.85); white-space:nowrap; font-variant-numeric:tabular-nums; text-shadow:0 1px 6px rgba(5,17,30,.6); opacity:0; }
-.ji-arrival .a-coord.locked{ color:#eafeff; text-shadow:0 0 10px rgba(111,211,221,.6); }
+/* P3-2: ロック時の余韻を一度きりのtransitionで滑らかに(paint・毎フレーム不介入)。opacityはJS駆動のため対象外。
+   余韻の長さ/グロー色は --ji-coord-settle / --ji-coord-glow で独立調整可 */
+.ji-arrival .a-coord{ position:absolute; left:50%; top:calc(50% + 30px); transform:translateX(-50%); font-family:"SFMono-Regular",Consolas,"Courier New",monospace; font-size:11px; letter-spacing:.22em; color:rgba(242,246,247,.85); white-space:nowrap; font-variant-numeric:tabular-nums; text-shadow:0 1px 6px rgba(5,17,30,.6); opacity:0; transition:color var(--ji-coord-settle,.5s) ease, text-shadow var(--ji-coord-settle,.5s) ease; }
+/* ロック: 暗い下地(可読性維持)＋控えめなターコイズのグロー。数値ロールアップ完了が“カチッ”と静かに定着 */
+.ji-arrival .a-coord.locked{ color:#eafeff; text-shadow:0 1px 6px rgba(5,17,30,.6), 0 0 10px var(--ji-coord-glow, rgba(111,211,221,.55)); }
 
 /* ---- Phase2: 動画 ---- */
 .ji-video{ position:absolute; inset:0; opacity:0; background:#03080f; }

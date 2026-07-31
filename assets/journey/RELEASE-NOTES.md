@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase3 Step2 (2026-08-01 / branch: journey-engine-v3) — 到着セレモニーの余韻（リップル洗練・座標ロックの余韻）
+既存演出の微調整のみ。**新しい派手なエフェクトは追加せず**、強さ/速度/透明度と読み取れる余韻だけ整える（v1.3.6→**1.3.7-ripple**）:
+- **ピンのリップル**: 既存 driveCeremony の定数を `cfg.fx.ripple`（7値：opacity/opacityEcho/scaleFrom/scaleTo/durMs/offsetMs/easePow）へ**パラメータ化**し独立調整可能に。既定＝洗練版
+  - before→after: opacity `.5→.46` / echo `.26→.20` / scaleTo `2.23→2.05` / durMs `650→720`(やや緩やか) / offsetMs `300→330` / easePow `2→2.4`(柔らかい収束)。値は構築時に1回ローカル化＝**rAF処理は増やさない**（同一計算のパラメータ化）
+- **座標ロックの余韻**: `.a-coord.locked` に**一度きりのCSS transition**（`--ji-coord-settle` 既定.5s／paint・毎フレーム不介入）。暗い下地を維持し可読性向上＋控えめなターコイズグロー `--ji-coord-glow`（独立調整可）。**余韻の長さは延長しない**
+- **保護不変**: `CEREMONY`(2920ms)＝接続時刻(enterVideo 14620ms)はリップル値に非依存＝**タイミング/接続16.0s 不変**（証明済）。動画・Hero・画質・arrivalEase 不触
+- **性能**: rAF内処理増なし・毎フレーム割当なし・iPhoneカクつき要因なし（CSSは一度きりtransition）。JS +525gzip / CSS +270gzip（config値＋コメント）
+- 比較ページ `_p3review2.html`（洗練↔現行を独立A/B・phase1短縮で到着を素早く確認）。travel-17本番HTML無変更・config互換維持
+
 ## Phase3 Step1 (2026-08-01 / branch: journey-engine-v3) — 静的質感の底上げ（静か・清潔・上品／純CSS）
 「演出追加」でなく「高級感を磨く」方針で、質感を静かに整える（**engine無変更＝CSSのみ**）:
 - **grain 減衰**: opacity `.05→.03`（「入っているか分からない」上限・映画風回避）
