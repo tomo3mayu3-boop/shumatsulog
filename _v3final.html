@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3 通し確認（本番相当）— 到着減速なし</title>
+<link rel="stylesheet" href="assets/journey/journey-intro.css">
+<meta name="color-scheme" content="light dark">
+<style>
+  html,body{ margin:0; background:#000; color:#eafaff; font-family:system-ui,sans-serif; }
+  /* 記事Hero相当（全画面背景。イントロ完了でここへ着地） */
+  .bg-hero{ position:fixed; inset:0; z-index:0; }
+  .bg-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .bg-hero .cap{ position:absolute; left:16px; bottom:96px; z-index:1; text-shadow:0 2px 10px rgba(0,0,0,.6); }
+  .bg-hero .cap h2{ margin:0 0 4px; font-size:22px; } .bg-hero .cap p{ margin:0; font-size:13px; opacity:.9; }
+  /* 常時最前面の操作バー（オーバーレイz-index9999より上） */
+  .bar{ position:fixed; left:0; right:0; bottom:0; z-index:100000; padding:12px 12px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(8,12,18,.94); border-top:1px solid rgba(255,255,255,.14); backdrop-filter:blur(4px); text-align:center; }
+  .bar button{ background:#2b8ca0; color:#04121a; border:0; border-radius:10px; padding:14px 22px; font-size:16px; font-weight:700; cursor:pointer; }
+  .bar button:disabled{ opacity:.5; }
+  .bar .st{ font-size:12px; opacity:.85; margin-top:8px; font-variant-numeric:tabular-nums; }
+  .bar .cond{ font-size:11px; opacity:.6; margin-top:4px; line-height:1.5; }
+</style>
+</head><body>
+<div class="bg-hero">
+  <img class="ji-hero" src="images/travel/sup/sup-1.webp" alt="ユニの浜">
+  <div class="cap"><h2>ユニの浜でSUPした日</h2><p>📍 ユニの浜</p></div>
+</div>
+
+<div class="bar">
+  <button id="go">▶ 通し再生を開始</button>
+  <div class="st" id="st">地図→動画→Hero を通しで再生します（タップで開始＝iOSで確実に再生）</div>
+  <div class="cond">条件: playbackRate 1.0固定 / Dissolve+Scale 1000ms / Hero先読み / pauseはフェード後 / progress100% / Mobile=720p</div>
+</div>
+
+<script src="assets/journey/map-data/journey-map.v1.js?v=133"></script>
+<script src="assets/journey/journey-intro.js?v=133"></script>
+<script>
+(function(){
+  var DIR='assets/video/travel-17/';
+  // 本番(travel-17)相当 + 確定条件
+  var CFG = { version:1, id:'v3final',
+    route:{ map:'vector-v2', path:'M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150',
+      waypoints:[ {jp:'東京',ro:'Tokyo',node:[258,44]}, {jp:'沖縄',ro:'Okinawa',node:[244,92]}, {jp:'宮古島',ro:'Miyakojima',node:[222,140]} ],
+      introLabel:{ jp:'世界', ro:'The World' } },
+    destination:{ jp:'ユニの浜', ro:'Uni Beach', lat:24.7880, lon:125.2480 },
+    hero:'.ji-hero',
+    video:{ src:DIR+'arrival-720.mp4?v=2',
+      sources:[ {src:DIR+'arrival-720.mp4?v=2',maxWidth:640,tier:'mobile'}, {src:DIR+'arrival-1080.mp4?v=2',maxWidth:1024,tier:'tablet'}, {src:DIR+'arrival-1080.mp4?v=2',tier:'desktop'} ],
+      poster:DIR+'arrival-poster.webp?v=2', startAt:3.5, playSeconds:16.0,
+      arrivalEase:false },  /* ← 到着減速なし・1.0固定 */
+    fx:{ heroPreload:true, progressComplete:true, heroZoom:true, pauseAfterFade:true }, /* Dissolve+Scale */
+    timing:{ heroCrossfadeMs:1000 },
+    skip:{ button:true, label:'スキップ', oncePerSession:false } };
+
+  var go=document.getElementById('go'), st=document.getElementById('st');
+  var n=0;
+  if(!window.JourneyIntro){ st.textContent='ERROR: engine未ロード'; return; }
+  st.textContent='engine '+JourneyIntro.version+' / タップで通し再生';
+
+  function run(){
+    n++;
+    go.disabled=true; go.textContent='再生中… ('+n+'回目)';
+    if(window.__ji){ try{ window.__ji.destroy(); }catch(e){} }
+    window.__ji = JourneyIntro.start(JSON.parse(JSON.stringify(CFG)), {
+      force:true,
+      onComplete:function(){
+        go.disabled=false; go.textContent='🔁 もう一度 通し再生';
+        var ch=window.__ji && window.__ji.chosenVideo;
+        st.textContent=n+'回目 完了。選択tier='+(ch&&ch.tier)+' / '+((ch&&ch.src)||'').split('/').pop()+' / arrivalEase=false';
+      }
+    });
+    var ch=window.__ji && window.__ji.chosenVideo;
+    st.textContent=n+'回目 再生中… 選択tier='+(ch&&ch.tier)+' ('+((ch&&ch.src)||'').split('/').pop()+')';
+  }
+  go.addEventListener('click', run);
+})();
+</script>
+</body></html>

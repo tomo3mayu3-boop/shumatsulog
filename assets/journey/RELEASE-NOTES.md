@@ -4,6 +4,7 @@
 iPhone実機でフェード直前の微小カクつきが残存。位置が到着減速開始(接続16.0sの0.9s前=15.1s)と一致するため、`playbackRate` 操作を原因候補として切り分け:
 - 新フラグ `video.arrivalEase`（既定true=現行）。**false で easeOut ランプを完全スキップ**＝初期化後 `playbackRate` に一切触れず 1.0固定（フェード中も1.0）
 - A/B比較ページ `_v3ease.html`（A=減速あり / B=1.0固定。共通: Hero先読みON・フェード1000ms・Dissolve+Scale(heroZoom ON)・pauseAfterFade。開始位置14.5/13.0/3.5s・ループ）
+- 通し確認ページ `_v3final.html`（本番相当: 地図→動画→Hero を通し。arrivalEase:false / Dissolve+Scale 1000ms / Hero先読み / pause後 / progress100% / Mobile 720p。タップで通し再生を2〜3回繰り返し可）
 - ramp検証: A は 15.1→16.0s で rate 1.0→0.30、B は全域 1.0（代入自体が走らない）
 - **後方互換**: 未指定=true=従来挙動。travel-17 は現状のまま（本A/Bはハーネスで隔離、確定後に反映）
 - 方針: iPhone SafariでBのみ滑らかなら到着減速を廃止し、フェード＋Scaleで到着感を維持（heroZoom再ON検討）
