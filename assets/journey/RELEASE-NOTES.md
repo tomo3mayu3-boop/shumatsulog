@@ -1,5 +1,15 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase3 Step3 (2026-08-01 / branch: journey-engine-v3) — 動画→Hero Dissolve+Scale（Hero画像側のみ）
+動画→Heroの接続に上品な Dissolve+Scale を追加。**Scaleは Hero画像側のみ・動画は等倍（画質低下ゼロ）**（v1.3.8→**1.3.9-heroscale**）:
+- 新 `fx.heroScaleIn`（既定true）＝`toHero` のDissolve(heroCrossfadeMs 1000)中に **Hero画像(`cfg.hero`=.ji-hero)を `heroScaleFrom(1.025)→heroScaleTo(1.0)` の settle**（自然サイズへ収束）。WAAPI compositor transform・毎フレームJS無し
+- **動画にはScaleを掛けない**: `fx.heroZoom`(動画側scale)は travel-17 で false 継続。動画は常に等倍＝画質低下ゼロ
+- 記事Heroにインラインtransformを残さない（完了/破棄/中断で cancel＋clear。settle既定なので無ジャンプ）
+- **playbackRate 1.0固定を確実化**: travel-17 は `arrivalEase` 未指定で**既定 `true`(減速ON)を継承していた不整合**を発見→ **既定を `true`→`false` に修正**。travel-17も1.0固定に（接続は動画タイムスタンプ16.0sで発火＝接続点不変。enterVideo 14620ms・CEREMONY 2920ms 不変）
+- 維持: PC=1080p / Mobile=720p（tier不変）・動画再エンコード無し
+- 性能: WAAPI1本(compositor)・rAF増なし・毎フレーム割当なし・iPhone安全。JS gzip +523 / CSS 0
+- 通し確認 `_p3review3.html`（本番同一timing・実Hero背景・settle/scale-in/OFF のA/B・タップ起動）
+
 ## Phase3 Step2-fix (2026-08-01 / branch: journey-engine-v3) — プログレスバー100%到達＋比較ページ本番同一速度
 - **バー100%修正**: `jiFill` 最終値 `scaleX(.85)→scaleX(1)`＝**100%到達**。CSSアニメの最終フレームは `fill:both` で保持＝iPhone Safariでも確実描画。`completeProgress` は **WAAPI(fill:forwards)依存を撤去**しインラインで `scaleX(1)` を確定＋`progressCompleteMs(250)` の間を維持（接続16.0s・タイミング不変）
   - タイムライン: 0→13000msで100%充填→CEREMONY中(13000-14620ms)は100%保持→enterVideoで100%確定→14870msで地図フェードと共に退場。**動画移行直前に必ず100%**

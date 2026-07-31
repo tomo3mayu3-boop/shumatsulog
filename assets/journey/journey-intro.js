@@ -32,11 +32,13 @@
     },
     destination: { jp: '', ro: '', lat: 0, lon: 0 },
     hero: '.ji-hero', /* 記事側Hero画像セレクタ(クロスフェード前に先読み/decode) */
-    video: { src: null, poster: null, startAt: 0, playSeconds: null, easeOutMs: 900, easeOutRate: 0.30, arrivalEase: true, objectPosition: 'center', loadBudgetMs: 6000, saveDataFallback: 'hero' },
+    video: { src: null, poster: null, startAt: 0, playSeconds: null, easeOutMs: 900, easeOutRate: 0.30, arrivalEase: false, objectPosition: 'center', loadBudgetMs: 6000, saveDataFallback: 'hero' },
     audio: { src: null, volume: 0.5, fadeInMs: 1400 },
     /* Phase2 fx: すべて既定ON・configでOFF可(後方互換: 未指定=従来見た目+質感)
        v1.3.1 遷移スムーズ化: heroPreload/progressComplete/pauseAfterFade(既定ON)、heroZoomは比較用にOFF可 */
     fx: { trailGlint: true, glintLen: 0.07, pinRing: true, grain: true, vignette: true, heroZoom: true, heroPreload: true, progressComplete: true, pauseAfterFade: true,
+      /* P3-3: Dissolve+Scale は Hero画像側のみ(動画にはScaleを掛けない=画質低下回避)。既定=settle(1.025→1.0で自然サイズに収まる) */
+      heroScaleIn: true, heroScaleFrom: 1.025, heroScaleTo: 1.0,
       /* P3-2: 到着リップルの独立調整値（既定=洗練版。driveCeremony既存計算をパラメータ化・rAF処理は増やさない）。
          現行比較値: opacity .5 / echo .26 / scaleTo 2.23 / durMs 650 / offsetMs 300 / easePow 2 */
       ripple: { opacity: 0.46, opacityEcho: 0.20, scaleFrom: 0.38, scaleTo: 2.05, durMs: 720, offsetMs: 330, easePow: 2.4 } },
@@ -604,6 +606,7 @@
       try { cancelWaapi(); } catch (e) {}
       try { vid.pause(); } catch (e) {}
       try { restoreScroll(); } catch (e) {}
+      try { if (self._heroAnim) self._heroAnim.cancel(); if (self._heroEl) self._heroEl.style.transform = ''; } catch (e) {} /* P3-3: Hero transform残さない */
       try { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
       if (JI.current === self) JI.current = null;
       try { if (self.opts.onComplete) self.opts.onComplete(); } catch (e) {}
@@ -618,16 +621,31 @@
       if (cfg.fx.heroPreload) preloadHero(); /* v1.3.1 #1: 保険(skip/失敗/直行など先読み前に来た場合) */
       /* 映画的マッチカット: 短いフェード + 動画のごく僅かな前進(scale)で「切り替わった」感を出す */
       fade(ov, 1, 0, T.heroCrossfadeMs, 'cubic-bezier(.4,0,.2,1)');
-      if (cfg.fx.heroZoom) {
+      if (cfg.fx.heroZoom) { /* 旧: 動画側scale(既定OFF運用)。travel-17は動画にScaleを掛けない */
         var z = els.videoWrap.animate(
           [{ transform: 'scale(1)' }, { transform: 'scale(1.035)' }],
           { duration: T.heroCrossfadeMs + 140, easing: 'cubic-bezier(.33,0,.2,1)', fill: 'forwards' });
         waapi.push(z);
       }
+      /* P3-3: Dissolve+Scale は Hero画像側のみ(動画は等倍=画質低下ゼロ)。既定=settle(1.025→1.0で自然サイズに収束)。コンポジタtransform・毎フレームJS無し */
+      var heroEl = null;
+      if (cfg.fx.heroScaleIn) {
+        try { heroEl = document.querySelector(cfg.hero || '.ji-hero'); self._heroEl = heroEl; } catch (e) {}
+        if (heroEl) {
+          try {
+            self._heroAnim = heroEl.animate(
+              [{ transform: 'scale(' + (cfg.fx.heroScaleFrom != null ? cfg.fx.heroScaleFrom : 1.025) + ')' },
+               { transform: 'scale(' + (cfg.fx.heroScaleTo != null ? cfg.fx.heroScaleTo : 1.0) + ')' }],
+              { duration: T.heroCrossfadeMs, easing: 'cubic-bezier(.2,0,.2,1)', fill: 'forwards' });
+          } catch (e) {}
+        }
+      }
       markSeen(cfg);
       setTimeout(function () {
         /* v1.3.1 #4: フェード終了後に動画をpause(フェード中は動き続ける) */
         if (cfg.fx.pauseAfterFade) { try { vid.pause(); } catch (e) {} }
+        /* P3-3: 記事Heroにインラインtransformを残さない(最終=自然サイズ。settle既定なのでキャンセル時も無ジャンプ) */
+        try { if (self._heroAnim) self._heroAnim.cancel(); if (heroEl) heroEl.style.transform = ''; } catch (e) {}
         ov.style.pointerEvents = 'none';
         restoreScroll();
         if (self.opts.onComplete) self.opts.onComplete();
@@ -646,6 +664,7 @@
     this.destroy = function () {
       cancelAnimationFrame(raf); cancelAnimationFrame(rafV); cancelWaapi();
       clearTimeout(self._budget); clearTimeout(self._watchdog); /* Phase2 Step3: タイマ解除 */
+      try { if (self._heroAnim) self._heroAnim.cancel(); if (self._heroEl) self._heroEl.style.transform = ''; } catch (e) {} /* P3-3: Hero transform解除 */
       restoreScroll();
       try { vid.pause(); vid.removeAttribute('src'); vid.load(); } catch (e) {} /* デコーダ解放 */
       try { provider.destroy(); } catch (e) {}
@@ -713,7 +732,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.8-progress',
+    version: '1.3.9-heroscale',
     current: null,
     registerMap: registerMap,
     providers: providers,
