@@ -35,10 +35,11 @@
 .ji-stage{ position:absolute; left:50%; top:47%; width:min(120vmin,1100px); opacity:0; will-change:opacity; }
 .ji-stage svg{ display:block; width:100%; height:auto; overflow:visible; }
 .ji-stage .ji-land path{ fill:rgba(224,244,246,.30); stroke:rgba(234,250,252,.55); stroke-width:.8; vector-effect:non-scaling-stroke; } /* 海上(ターコイズ背景)は透過+細い海岸線 */
-.ji-stage-miyako .ji-land path{ fill:rgba(230,247,249,.38); }
-.ji-stage-japan{ animation:jiStJapan var(--ji-p1) ease-in-out both; }
-.ji-stage-ryukyu{ animation:jiStRyukyu var(--ji-p1) ease-in-out both; }
-.ji-stage-miyako{ animation:jiStMiyako var(--ji-p1) ease-in-out both; }
+/* 段送りは降下index(slot)依存＝地域名非依存。keyframeは不変。最終段は --last */
+.ji-stage--last .ji-land path{ fill:rgba(230,247,249,.38); }
+.ji-stage--i0{ animation:jiStJapan var(--ji-p1) ease-in-out both; }
+.ji-stage--i1{ animation:jiStRyukyu var(--ji-p1) ease-in-out both; }
+.ji-stage--i2{ animation:jiStMiyako var(--ji-p1) ease-in-out both; }
 
 /* ---- Phase2 fx: 質感(静的・アニメなし=GPU負荷ゼロ) ---- */
 /* 粒状ノイズ: data:URI の SVG feTurbulence タイル。Illustrator的な均質さを4%だけ崩す */

@@ -189,7 +189,9 @@
       }
       var dl = cfg.destination.lat != null ? cfg.destination.lat : 24.79;
       var dn = cfg.destination.lon != null ? cfg.destination.lon : 125.28;
-      (cfg.route.descent || []).forEach(function (def) {
+      var desc = cfg.route.descent || [];
+      var lastIdx = desc.length - 1;
+      desc.forEach(function (def, i) {
         var key = def.stage;
         var st = D.stages[key]; if (!st) return; /* 対応データが無いステージはスキップ(降格せず他ステージは描画) */
         var a = def.anchor;
@@ -197,7 +199,8 @@
         var lon = (a === 'destination' || a == null) ? dn : a[1];
         var p = anchorPct(st, lat, lon);
         var div = document.createElement('div');
-        div.className = 'ji-stage ji-stage-' + key;
+        /* 段送りアニメは降下index(slot)＝地域名非依存。最終段のみ --last(保持＋明るいfill) */
+        div.className = 'ji-stage ji-stage--i' + i + (i === lastIdx ? ' ji-stage--last' : '');
         div.setAttribute('data-anim', '');
         div.style.transform = 'translate(-' + p[0].toFixed(2) + '%,-' + p[1].toFixed(2) + '%)';
         div.innerHTML = svgFor(st, 'ji-land');
@@ -681,7 +684,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.4-validate',
+    version: '1.3.5-slot',
     current: null,
     registerMap: registerMap,
     providers: providers,

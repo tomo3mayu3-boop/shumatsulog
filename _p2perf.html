@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase2 性能ハーネス — init/seek/FPS/mem</title>
+<link rel="stylesheet" href="assets/journey/journey-intro.css">
+<meta name="color-scheme" content="light dark">
+<style>
+  body{ font-family:system-ui,sans-serif; margin:0; background:#0d1117; color:#c9d6e5; }
+  .wrap{ max-width:680px; margin:0 auto; padding:14px 12px 40px; }
+  h1{ font-size:16px; } .bg-hero{position:fixed;inset:0;z-index:-1;opacity:0}.bg-hero img{width:100%;height:100%;object-fit:cover}
+  button{ background:#17505e; color:#eafaff; border:0; border-radius:9px; padding:12px 16px; font-size:15px; margin:4px 4px 4px 0; cursor:pointer; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; margin-top:10px; }
+  th,td{ border:1px solid #2a3340; padding:6px 8px; text-align:left; } th{ background:#161c26; }
+  .now{ font-variant-numeric:tabular-nums; } code{font-size:12px}
+  #log{ white-space:pre-wrap; font:12px/1.5 ui-monospace,monospace; background:#05080d; border-radius:8px; padding:8px; margin-top:10px; }
+</style>
+</head><body>
+<div class="bg-hero"><img class="ji-hero" src="images/travel/sup/sup-1.webp" alt=""></div>
+<div class="wrap">
+  <h1>Phase2 性能ハーネス（travel-17相当config）</h1>
+  <p style="font-size:12px;opacity:.8">各Stepの前後で実行し数値を比較。engine版数は下に表示。iPhoneは memory 非対応（他は測定可）。</p>
+  <div>
+    <button id="run">▶ 計測（init×20 / seek×200 / FPS 4s）</button>
+    <button id="runinit">init のみ</button>
+    <button id="runseek">seek のみ</button>
+    <button id="runfps">FPS のみ</button>
+  </div>
+  <table id="tbl"><thead><tr><th>指標</th><th>値</th><th>備考</th></tr></thead><tbody></tbody></table>
+  <div id="log"></div>
+</div>
+
+<script src="assets/journey/map-data/journey-map.v1.js?v=140"></script>
+<script src="assets/journey/journey-intro.js?v=140"></script>
+<script>
+(function(){
+  var DIR='assets/video/travel-17/';
+  var CFG={ version:1, id:'p2perf',
+    route:{ map:'vector-v2', path:'M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150',
+      waypoints:[ {jp:'東京',ro:'Tokyo',node:[258,44]}, {jp:'沖縄',ro:'Okinawa',node:[244,92]}, {jp:'宮古島',ro:'Miyakojima',node:[222,140]} ],
+      introLabel:{ jp:'世界', ro:'The World' } },
+    destination:{ jp:'ユニの浜', ro:'Uni Beach', lat:24.7880, lon:125.2480 },
+    hero:'.ji-hero',
+    video:{ src:DIR+'arrival-720.mp4?v=2', sources:[ {src:DIR+'arrival-720.mp4?v=2',maxWidth:640,tier:'mobile'},{src:DIR+'arrival-1080.mp4?v=2',maxWidth:1024,tier:'tablet'},{src:DIR+'arrival-1080.mp4?v=2',tier:'desktop'} ], poster:DIR+'arrival-poster.webp?v=2', startAt:3.5, playSeconds:16.0, arrivalEase:false },
+    fx:{ heroZoom:false }, timing:{ heroCrossfadeMs:1000 }, skip:{ button:true, label:'スキップ', oncePerSession:false } };
+
+  var tb=document.querySelector('#tbl tbody'), LOG=document.getElementById('log');
+  function log(s){ LOG.textContent+=s+'\n'; }
+  function row(k,v,note){ var tr=document.createElement('tr'); tr.innerHTML='<td>'+k+'</td><td class="now">'+v+'</td><td>'+(note||'')+'</td>'; tb.appendChild(tr); }
+  function med(a){ a=a.slice().sort(function(x,y){return x-y;}); return a[Math.floor(a.length/2)]; }
+
+  function measureInit(runs){
+    var t=[]; for(var i=0;i<runs;i++){ var t0=performance.now(); var inst=JourneyIntro.start(CFG,{force:true,autoplay:false}); var t1=performance.now(); t.push(t1-t0); inst.destroy(); }
+    return { median:med(t).toFixed(2), min:Math.min.apply(null,t).toFixed(2), max:Math.max.apply(null,t).toFixed(2) };
+  }
+  function measureSeek(n){
+    var inst=JourneyIntro.start(CFG,{force:true,autoplay:false}); var max=inst.durations.scrubMax;
+    inst.seek(0); inst.seek(max*0.5); // warmup
+    var t0=performance.now(); for(var i=0;i<n;i++){ inst.seek((i/n)*max); } var t1=performance.now();
+    inst.destroy(); return ((t1-t0)/n).toFixed(4);
+  }
+  function measureFPS(ms, cb){
+    var m0=(performance.memory&&performance.memory.usedJSHeapSize)||0;
+    var inst=JourneyIntro.start(CFG,{force:true});
+    var frames=[], last=performance.now(), start=last;
+    requestAnimationFrame(function loop(now){
+      frames.push(now-last); last=now;
+      if(now-start<ms) requestAnimationFrame(loop);
+      else { var m1=(performance.memory&&performance.memory.usedJSHeapSize)||0; try{inst.destroy();}catch(e){}
+        var avg=frames.reduce(function(a,b){return a+b;},0)/frames.length;
+        cb({ fps:(1000/avg).toFixed(1), avgMs:avg.toFixed(2), maxMs:Math.max.apply(null,frames).toFixed(2), n:frames.length, memDelta:((m1-m0)/1048576).toFixed(2) }); }
+    });
+  }
+
+  document.getElementById('runinit').onclick=function(){ var r=measureInit(20); row('init 構築(中央値)', r.median+' ms', 'min '+r.min+' / max '+r.max+' (×20)'); log('init median '+r.median+'ms'); };
+  document.getElementById('runseek').onclick=function(){ var r=measureSeek(200); row('seek() 平均', r+' ms/回', '×200 全区間'); log('seek avg '+r+'ms'); };
+  document.getElementById('runfps').onclick=function(){ row('FPS 計測','測定中…',''); measureFPS(4000,function(r){ tb.lastChild.remove(); row('再生FPS(地図4s)', r.fps+' fps', 'avg '+r.avgMs+'ms / 最大frame '+r.maxMs+'ms / '+r.n+'frames'); if(r.memDelta!=='0.00'&&performance.memory) row('JSヒープ増分', r.memDelta+' MB','FPS計測中の増分(GC前)'); log('fps '+r.fps+' maxFrame '+r.maxMs+'ms mem+'+r.memDelta+'MB'); }); };
+  document.getElementById('run').onclick=function(){
+    tb.innerHTML=''; LOG.textContent='';
+    row('engine', JourneyIntro.version, 'このビルド');
+    var i=measureInit(20); row('init 構築(中央値)', i.median+' ms', 'min '+i.min+'/max '+i.max+' (×20)');
+    var s=measureSeek(200); row('seek() 平均', s+' ms/回', '×200 全区間');
+    row('FPS 計測','測定中(4s)…',''); measureFPS(4000,function(r){ tb.lastChild.remove();
+      row('再生FPS(地図4s)', r.fps+' fps','avg '+r.avgMs+'ms / 最大frame '+r.maxMs+'ms');
+      if(performance.memory) row('JSヒープ増分', r.memDelta+' MB','FPS計測中(GC前)');
+      log('=== '+JourneyIntro.version+' === init '+i.median+'ms / seek '+s+'ms / '+r.fps+'fps / maxFrame '+r.maxMs+'ms');
+    });
+  };
+  if(!window.JourneyIntro) LOG.textContent='ERROR: engine未ロード';
+  else log('ready: engine '+JourneyIntro.version);
+})();
+</script>
+</body></html>

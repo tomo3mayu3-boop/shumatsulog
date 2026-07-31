@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase2 Step1 (2026-07-31 / branch: journey-engine-v3) — 段送りアニメの脱・名前依存（slotインデックス化 / Performance First採用=A2）
+降下ステージのCSSアニメを地域名依存から降下index依存へ（v1.3.4→**1.3.5-slot**）。**Performance First により JS駆動(A1)ではなくコンポジタ維持のslotCSS(A2)を採用**:
+- CSS: `.ji-stage-japan/ryukyu/miyako` → `.ji-stage--i0/i1/i2`（keyframe `jiStJapan/Ryukyu/Miyako` は不変）、最終段の明るいfillは `.ji-stage--last` へ
+- provider: 降下index で `ji-stage--i<n>`＋最終段 `ji-stage--last` を付与（地域名クラス廃止）
+- travel-17(3段)=i0/i1/i2＋last＝**同keyframe・同fill・同段＝バイト等価レンダリング**（検証済）
+- **性能**: JS +223B(gzip +119) / CSS +96B(gzip +70)＝コメント+slot条件のみ。**rAF追加コスト0・毎フレーム割当0**（stageは従来どおりコンポジタCSSアニメ、JS opacityにしない）。init/seek/再生は静的解析上不変
+- 別地域は同3段構造なら stage差替のみで動作（N≠3は後続で slotセット拡張）。V2/V3後方互換維持・記事HTML変更ゼロ
+- 性能ハーネス `_p2perf.html`（init×20/seek×200/FPS/mem）を追加
+
 ## Phase1 Step4 (2026-07-31 / branch: journey-engine-v3) — 新記事 config 雛形ジェネレータ（エンジン非改変）
 「configだけで新記事を開始」を実現する `scripts/new-article.mjs`（ビルド時のみ・**エンジン本体は無変更**）:
 - 記事固有値（--id/--jp/--ro/--lat/--lon ほか）から、貼付用 config・HTML4点・動画ビルドコマンド・チェックリストを出力

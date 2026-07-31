@@ -40,7 +40,8 @@
   - travel-17不変の担保: 既定3段の `at` を現行keyframeに一致させ、**CSS opacity(解析値) と JS opacity を各時刻でサンプリング比較**して同一を保証（ブラウザ不要の解析検証が可能）。
 - **案A2（代替）slotクラス**: CSSを `.ji-stage--i0/i1/i2`（降下index）へ改名。keyframe内容は不変＝travel-17完全同一。段数は事前定義セット（2/3/4段）に限定。
   - 利点: CSSリネームのみ＝最小リスク。欠点: 段数が固定セットに制限・CSS依存が残る。
-- **結論案**: A1（JS駆動）を本命、A2をフォールバック。Step2で A1 を実装しつつ、回帰が少しでも出れば A2 に切替できる構成にする。
+- **結論（Performance First により改定・採用A2）**: A1 は stage opacity を毎フレーム メインスレッドで計算/書込＝現行のコンポジタCSS（メインスレッド0コスト）から rAF 処理時間が必ず増える。追加条件「少しでも悪化するなら実装しない」に反するため **A2（slotインデックスCSS）を正式採用**。keyframe不変＝travel-17バイト等価／rAF追加コスト0／毎フレーム割当0。段数対応(N≠3)は slotセット拡張で対応（後続Step）。
+  - **Step1 実装済**: `.ji-stage-japan/ryukyu/miyako` → `.ji-stage--i0/i1/i2`、最終段 `.ji-stage--last`。プロバイダは降下indexでクラス付与。
 
 ### 判断B: 最終段の明るいfill（`.ji-stage-miyako .ji-land path`）
 → 記述子の任意プロパティ `fill`（または `hold:true` の段に既定適用）で汎用化。未指定は現行の標準fill。
