@@ -1,5 +1,13 @@
 # Journey Intro Engine ― Release Notes
 
+## v1.3.0-step3 (2026-07-31 / branch: journey-engine-v3) — V3 Step3: iOS Safari 安定化ハードニング
+- `<video>` に `webkit-playsinline` を追加（旧iOSのインライン再生）。`playsinline`/`muted`属性は明文化
+- **canplay gating**: `enterVideo` で `readyState≥2` なら即再生（通常/V2＝挙動不変）、未準備なら `canplay` を待って再生。iOSの早すぎる `play()` 拒否・黒画面を回避（待機中はposter表示、`loadBudgetMs`超過ならHero）
+- **iOS tier cap**: iOS(iPhone/iPad/iPadOS13+)では高解像度デコード回避のため最上位(desktop=maxWidth無し)を選ばず、maxWidth有りの最上位(tablet相当)にcap。V3の`sources`指定時のみ・iPhone/iPadは元々mobile/tabletなので実質iPad Pro級のみ対象
+- autoplay拒否/低電力モードは従来どおり即Hero（Step2の集約を踏襲）。`toHero`で保留canplayを無効化
+- 追加API（内部・テスト用）: `JourneyIntro._isIOS()`
+- **V2への影響なし**: 単一src(travel-17)はtier cap対象外。canplay gatingは「未準備時のみ」分岐＝先読み済みの通常再生は同一。属性追加は非iOSで無害
+
 ## v1.3.0-step2 (2026-07-31 / branch: journey-engine-v3) — V3 Step2: 回線フォールバック＋読込予算＋poster
 - `navigator.connection` から Save-Data / effective[slow-2g,2g] を判定。**V3設定(`video.sources`)時のみ** `saveDataFallback`（既定 `hero`）で動画を出さず 地図→到着セレモニー→Hero に直行。`lowest` 指定なら最低tierに差替えて再生
 - `video.loadBudgetMs`（既定6000）: enterVideo後この時間内に再生位置が進まなければ（未準備/停滞）→ Heroへ。従来の4sウォッチドッグを置換

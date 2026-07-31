@@ -55,11 +55,18 @@
      - ある場合は viewport幅(=デバイスクラス)を各source.maxWidthに突き合わせ「条件を満たす最小tier」を選択
        (mobile軽量を維持するため、DPRでtierを引き上げない。DPRは将来のdesktop 4K向け上げ幅に使用余地)
      - 回線(Save-Data/2G)による出し分けは Step2 で追加。ここでは端末別のみ。 */
-  function pickVideoSource(v, vwOverride) {
+  /* V3 Step3: iOS(iPhone/iPad/iPadOS)判定。iPadOS13+はMacを詐称するのでtouch数で補足 */
+  function isIOS() {
+    var n = global.navigator || {};
+    var ua = n.userAgent || '';
+    return /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && (n.maxTouchPoints || 0) > 1);
+  }
+  function pickVideoSource(v, vwOverride, iosOverride) {
     if (!v) return { src: null, tier: null, reason: 'no-video' };
     if (!v.sources || !v.sources.length) return { src: v.src || null, tier: 'v2-single', reason: 'no-sources' };
     var vw = vwOverride || global.innerWidth || 1024;
     var dpr = (global.devicePixelRatio || 1);
+    var ios = (iosOverride != null) ? iosOverride : isIOS();
     var sorted = v.sources.slice().sort(function (a, b) {
       return (a.maxWidth == null ? Infinity : a.maxWidth) - (b.maxWidth == null ? Infinity : b.maxWidth);
     });
@@ -67,7 +74,14 @@
     for (var i = 0; i < sorted.length; i++) {
       if (sorted[i].maxWidth == null || vw <= sorted[i].maxWidth) { chosen = sorted[i]; break; }
     }
-    return { src: chosen.src || v.src, tier: chosen.tier || null, reason: 'viewport', vw: vw, dpr: dpr };
+    /* V3 Step3: iOSは高解像度デコードが重い → 最上位(desktop=maxWidth無し)を避け、maxWidth有りの最上位(tablet相当)にcap */
+    var didCap = false;
+    if (ios && chosen.maxWidth == null) {
+      var capped = null;
+      for (var j = 0; j < sorted.length; j++) { if (sorted[j].maxWidth != null) capped = sorted[j]; }
+      if (capped) { chosen = capped; didCap = true; }
+    }
+    return { src: chosen.src || v.src, tier: chosen.tier || null, reason: (didCap ? 'viewport-ios-cap' : 'viewport'), vw: vw, dpr: dpr, ios: ios };
   }
 
   /* ================= V3 Step2: 回線判定 & 最低tier =================
@@ -227,7 +241,7 @@
       +   '<div class="a-coord"></div>'
       + '</div>'
       + '</div>'
-      + '<div class="ji-video" aria-hidden="true"><video playsinline muted preload="metadata"></video></div>';
+      + '<div class="ji-video" aria-hidden="true"><video playsinline webkit-playsinline muted preload="metadata"></video></div>';
     /* スキップ/出典は aria-hidden 領域の外(フォーカス可能) */
     if (cfg.skip.button) {
       var btn = document.createElement('button');
@@ -474,8 +488,16 @@
       try { vid.preload = 'auto'; vid.currentTime = cfg.video.startAt || 0; } catch (e) {}
       vid.onended = function () { if (self.state.phase === 2) toHero(); };
       vid.onerror = function () { if (self.state.phase === 2) toHero(); }; /* V3 Step2: デコード/取得失敗→必ずHero */
-      var pp = vid.play();
-      if (pp && pp.catch) pp.catch(function () { if (self.state.phase === 2) toHero(); }); /* autoplay拒否→即Heroフォールバック */
+      /* V3 Step3: canplay gating — 準備完了まで再生開始を遅延。iOSの早すぎるplay()拒否/黒画面を回避(準備中はposter表示) */
+      var launched = false;
+      function launchPlay() {
+        if (launched || self.state.phase !== 2) return;
+        launched = true; vid.oncanplay = null;
+        var pp = vid.play();
+        if (pp && pp.catch) pp.catch(function () { if (self.state.phase === 2) toHero(); }); /* autoplay拒否/低電力→即Hero */
+      }
+      if (vid.readyState >= 2) launchPlay();       /* 先読み済み(通常/V2)=即再生で挙動不変 */
+      else vid.oncanplay = launchPlay;             /* 未準備なら準備後に再生。来なければ下の予算でHeroへ */
       /* V3 Step2: 読み込み予算(loadBudgetMs)。超過しても再生位置が進んでいなければ(=停滞/未準備)Heroへ */
       var budget = (cfg.video.loadBudgetMs != null ? cfg.video.loadBudgetMs : 6000);
       clearTimeout(self._budget);
@@ -505,6 +527,7 @@
       self.state.phase = 3;
       cancelAnimationFrame(rafV);
       clearTimeout(self._budget); /* V3 Step2: 読込予算ウォッチドッグの後発火を防止 */
+      try { vid.oncanplay = null; } catch (e) {} /* V3 Step3: 保留中のcanplay再生を無効化 */
       /* 映画的マッチカット: 短いフェード + 動画のごく僅かな前進(scale)で「切り替わった」感を出す */
       fade(ov, 1, 0, T.heroCrossfadeMs, 'cubic-bezier(.4,0,.2,1)');
       if (cfg.fx.heroZoom) {
@@ -547,13 +570,14 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.0-step2',
+    version: '1.3.0-step3',
     current: null,
     registerMap: registerMap,
     providers: providers,
     _pickVideoSource: pickVideoSource, /* V3: 選択ロジックの単体テスト用(内部) */
     _planVideo: planVideo,             /* V3 Step2: 回線フォールバック判定の単体テスト用(内部) */
     _readNetwork: readNetwork,         /* V3 Step2: 回線情報の取得(テスト/デバッグ用) */
+    _isIOS: isIOS,                     /* V3 Step3: iOS判定(テスト/デバッグ用) */
     start: function (userCfg, opts) {
       var cfg = merge(DEFAULTS, userCfg || {});
       if (cfg.version !== SCHEMA_VERSION) {
