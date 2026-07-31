@@ -1,5 +1,13 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase1 Step3 (2026-07-31 / branch: journey-engine-v3) — config検証 JourneyIntro.validate（警告のみ）
+記事作成者が不足項目を把握しやすくする開発補助（v1.3.3→**1.3.4-validate**）:
+- `JourneyIntro.validate(cfg)` 公開。`[{level:'warn',path,msg}]` を返し console.warn 出力。**警告のみ・停止しない・configは非改変**
+- 自動起動(`auto()`)時に実行。**正しいconfigは0件**（travel-17=0件で検証済＝挙動/コンソール不変）
+- 点検: version / id / route.path / route.map(未登録は降格明示) / destination.jp・lat,lon(0/未指定) / video(src・sources無) / sources[].src / route.descent[].stage(map-data無) / hero要素(.ji-hero付け忘れ)
+- メッセージは「パス — 何が問題か＋対処」の形（例: `route.path — 航路パス未指定。飛行ラインが描画されません（例: "M258 44 …"）`）
+- try/catchで囲みvalidate自体の失敗も初期化を妨げない。CONFIG.md §5.5 追記。V2/V3後方互換維持
+
 ## Phase1 Step2 (2026-07-31 / branch: journey-engine-v3) — 降下ステージのconfig化（route.descent）
 エンジンにハードコードされていた降下順 `japan / ryukyu / miyako` を `config.route.descent` へ移設（v1.3.2→**1.3.3-descent**）:
 - `DEFAULTS.route.descent` に既定3ステージを定義。**未指定configは deep-merge でこの既定を継承＝現行と完全同一**

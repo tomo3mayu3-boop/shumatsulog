@@ -136,6 +136,19 @@ node scripts/build-video-renditions.mjs --in "<マスター動画>" --slug trave
 
 ---
 
+## 5.5 config の自己点検（validate・警告のみ）
+
+記事の自動起動時、エンジンが config を点検し**不足項目を console に警告**します（**警告のみ・再生は継続、挙動は不変**）。
+DevTools コンソールに `[JourneyIntro] config 検証: N件の注意` が出たら内容を確認してください。手動でも実行できます:
+
+```js
+JourneyIntro.validate(myConfig); // → [{ level:'warn', path, msg }] を返し、console.warn も出力
+```
+
+点検項目: `version` / `id` / `route.path` / `route.map`(未登録は降格) / `destination.jp` / `destination.lat,lon`(0や未指定) /
+`video`(src も sources も無い) / `video.sources[].src` / `route.descent[].stage`(map-dataに海岸線が無い) / `hero`要素の存在(`.ji-hero` 付け忘れ)。
+**正しい config は 0 件**（travel-17 は 0 件）。
+
 ## 6. エンジンが自動で面倒を見るもの（記事側の実装不要）
 
 Skip／`prefers-reduced-motion`（即Hero）／同一セッション2回目の自動スキップ／端末別解像度選択／Save-Data・2G→Hero直行／iOS canplay gating・autoplay拒否→Hero／読込予算超過→Hero／Intro中スクロールロック＆復元／完了後のDOM破棄＆デコーダ解放／出典表記の自動表示。

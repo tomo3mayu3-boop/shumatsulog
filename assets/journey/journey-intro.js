@@ -627,12 +627,65 @@
   function isSeen(cfg) { try { return sessionStorage.getItem(seenKey(cfg)) === '1'; } catch (e) { return false; } }
   function markSeen(cfg) { if (cfg.skip.oncePerSession) { try { sessionStorage.setItem(seenKey(cfg), '1'); } catch (e) {} } }
 
+  /* ================= config 検証(警告のみ・停止しない) =================
+     記事作成者が不足項目を把握しやすくする開発補助。挙動は一切変えず console.warn のみ。
+     戻り値: [{ level:'warn', path, msg }]。手動: JourneyIntro.validate(cfg) / 自動: auto() 内で実行 */
+  function validate(userCfg) {
+    var issues = [];
+    function warn(path, msg) { issues.push({ level: 'warn', path: path, msg: msg }); }
+    var c = userCfg || {};
+
+    if (c.version == null) warn('version', 'version 未指定です（推奨: ' + SCHEMA_VERSION + '）');
+    else if (c.version !== SCHEMA_VERSION) warn('version', 'version=' + c.version + ' がエンジンschema ' + SCHEMA_VERSION + ' と不一致です');
+    if (!c.id) warn('id', 'id 未指定。セッションスキップキーが location.pathname になります（記事ごとに一意な id を推奨）');
+
+    var r = c.route || {};
+    if (!c.route) warn('route', 'route 未指定（path/map/waypoints/descent が既定になります）');
+    if (!r.path) warn('route.path', '航路パス未指定。飛行ラインが描画されません（例: "M258 44 Q249 68 244 92 …"）');
+    if (r.map && !providers[r.map]) warn('route.map', 'map="' + r.map + '" は未登録プロバイダ。abstract-v1 に降格します（有効: ' + Object.keys(providers).join(' / ') + '）');
+
+    var d = c.destination || {};
+    if (!c.destination) warn('destination', 'destination 未指定（タイトル・座標が空になります）');
+    else {
+      if (!d.jp) warn('destination.jp', '目的地名(jp)未指定＝到着ラベルが空になります');
+      if (d.lat == null || d.lon == null || (d.lat === 0 && d.lon === 0)) warn('destination.lat/lon', '座標(lat/lon)未指定または0。地図の焦点合わせと座標表示が不正になります');
+    }
+
+    var v = c.video || {};
+    if (!(v.src || (v.sources && v.sources.length))) warn('video', 'video.src も video.sources も無し。動画は再生されず Hero へ直行します（意図的なら無視可）');
+    if (v.sources && v.sources.length) v.sources.forEach(function (s, i) {
+      if (!s || !s.src) warn('video.sources[' + i + '].src', 'sources[' + i + '] に src がありません');
+    });
+
+    /* descent の海岸線データ有無（vector-v2 かつ map-data 読込済のときのみ点検） */
+    var D = global.JOURNEY_MAP_DATA;
+    if (r.map === 'vector-v2' && D && D.stages && r.descent && r.descent.length) {
+      r.descent.forEach(function (dsc, i) {
+        if (dsc && dsc.stage && !D.stages[dsc.stage]) warn('route.descent[' + i + '].stage',
+          'stage="' + dsc.stage + '" の海岸線データが map-data にありません（そのステージはスキップ。別地域は build-map-data.mjs で追加）');
+      });
+    }
+
+    /* Hero 要素の存在（DOM がある実行時のみ） */
+    if (global.document && document.querySelector) {
+      var sel = c.hero || '.ji-hero';
+      try { if (!document.querySelector(sel)) warn('hero', 'Hero要素 "' + sel + '" がDOMに見つかりません（記事の <img> に class="ji-hero" 付け忘れ？ Hero先読みが効きません）'); } catch (e) {}
+    }
+
+    if (issues.length && global.console) try {
+      console.warn('[JourneyIntro] config 検証: ' + issues.length + ' 件の注意（警告のみ・再生は継続します）');
+      issues.forEach(function (it) { console.warn('  ⚠ ' + it.path + ' — ' + it.msg); });
+    } catch (e) {}
+    return issues;
+  }
+
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.3-descent',
+    version: '1.3.4-validate',
     current: null,
     registerMap: registerMap,
     providers: providers,
+    validate: validate,                /* Phase1 Step3: config検証(警告のみ・停止しない) */
     _pickVideoSource: pickVideoSource, /* V3: 選択ロジックの単体テスト用(内部) */
     _planVideo: planVideo,             /* V3 Step2: 回線フォールバック判定の単体テスト用(内部) */
     _readNetwork: readNetwork,         /* V3 Step2: 回線情報の取得(テスト/デバッグ用) */
@@ -662,6 +715,7 @@
     var cfg;
     try { cfg = JSON.parse(tag.textContent); }
     catch (e) { try { console.error('[JourneyIntro] config JSON parse error', e); } catch (_) {} return; }
+    try { validate(cfg); } catch (e) {} /* Phase1 Step3: 記事作成補助の警告(停止しない) */
     /* 本番(自動起動)は完了後にオーバーレイを破棄して動画デコーダ等を解放 */
     var inst;
     try { inst = JI.start(cfg, { onComplete: function () { if (inst) inst.destroy(); } }); }
