@@ -1,5 +1,12 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase3 Step2-fix (2026-08-01 / branch: journey-engine-v3) — プログレスバー100%到達＋比較ページ本番同一速度
+- **バー100%修正**: `jiFill` 最終値 `scaleX(.85)→scaleX(1)`＝**100%到達**。CSSアニメの最終フレームは `fill:both` で保持＝iPhone Safariでも確実描画。`completeProgress` は **WAAPI(fill:forwards)依存を撤去**しインラインで `scaleX(1)` を確定＋`progressCompleteMs(250)` の間を維持（接続16.0s・タイミング不変）
+  - タイムライン: 0→13000msで100%充填→CEREMONY中(13000-14620ms)は100%保持→enterVideoで100%確定→14870msで地図フェードと共に退場。**動画移行直前に必ず100%**
+- **比較ページ本番同一速度**: `_p3review2.html` の `phase1Ms` 短縮を撤去し **travel-17と完全同一の時間軸**（phase1 13s / CEREMONY 2920ms / enterVideo 14620ms / 接続16.0s / 座標・リップル時刻）。A/Bは**リップルと座標ロックの見た目のみ**切替（時間軸は短縮しない）
+- 保護不変: 地図/動画/Hero/画質/arrivalEase 不変。バーの最終値のみ 85%→100%（要望どおりの修正）。engine v1.3.7→**1.3.8-progress**
+- 性能: バーはCSSアニメ(コンポジタ)継続＝rAF増なし。completeProgressはむしろWAAPI廃止で軽量化。JS gzip +60 / CSS gzip +75
+
 ## Phase3 Step2 (2026-08-01 / branch: journey-engine-v3) — 到着セレモニーの余韻（リップル洗練・座標ロックの余韻）
 既存演出の微調整のみ。**新しい派手なエフェクトは追加せず**、強さ/速度/透明度と読み取れる余韻だけ整える（v1.3.6→**1.3.7-ripple**）:
 - **ピンのリップル**: 既存 driveCeremony の定数を `cfg.fx.ripple`（7値：opacity/opacityEcho/scaleFrom/scaleTo/durMs/offsetMs/easePow）へ**パラメータ化**し独立調整可能に。既定＝洗練版

@@ -476,15 +476,10 @@
     /* v1.3.1 #2: progressバーを100%まで満たしてから次のフェードへ移行 */
     function completeProgress(done) {
       var p = els.progress;
-      if (!p) { done(); return; }
-      var called = false; function fin() { if (called) return; called = true; done(); }
-      try {
-        p.style.animation = 'none'; p.style.transform = 'scaleX(0.85)'; void p.offsetWidth;
-        var a = p.animate([{ transform: 'scaleX(0.85)' }, { transform: 'scaleX(1)' }],
-          { duration: T.progressCompleteMs, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
-        waapi.push(a); a.onfinish = fin;
-      } catch (e) { fin(); return; }
-      setTimeout(fin, T.progressCompleteMs + 60); /* 保険 */
+      /* P3-2fix: jiFill(CSS)が既に100%(scaleX(1))で保持済。WAAPI fill:forwards(iPhoneで最終フレーム未描画の懸念)に頼らず、
+         インラインで scaleX(1) を確定＝100%を保証。progressCompleteMs の“間”を置いてから動画へ(既存タイミング不変・接続16.0s不変) */
+      if (p) { try { p.style.animation = 'none'; p.style.transform = 'scaleX(1)'; } catch (e) {} }
+      setTimeout(done, T.progressCompleteMs);
     }
     function tickShared(ms) {
       updateFlight(ms); updateLabels(ms);
@@ -718,7 +713,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.7-ripple',
+    version: '1.3.8-progress',
     current: null,
     registerMap: registerMap,
     providers: providers,

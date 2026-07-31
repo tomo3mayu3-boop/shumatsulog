@@ -120,7 +120,8 @@
 @keyframes jiGlow{ 0%,54%{opacity:0; transform:translate(-50%,-50%) scale(.6)} 74%{opacity:.5} 100%{opacity:.66; transform:translate(-50%,-50%) scale(1.1)} }
 @keyframes jiFrame{ 0%{opacity:0} 8%{opacity:1} 92%{opacity:1} 100%{opacity:0} }
 @keyframes jiReticle{ 0%,20%{opacity:0} 24%{opacity:.5} 100%{opacity:.5} }
-@keyframes jiFill{ 0%,10%{transform:scaleX(0)} 74%{transform:scaleX(.8)} 100%{transform:scaleX(.85)} }
+/* P3-2fix: 最終値を100%(scaleX(1))へ。CSSアニメの最終フレームは fill:both で保持＝iPhoneでも確実描画 */
+@keyframes jiFill{ 0%,10%{transform:scaleX(0)} 74%{transform:scaleX(.82)} 100%{transform:scaleX(1)} }
 @keyframes jiNode{ 0%,44%{opacity:0} 50%{opacity:.9} 100%{opacity:.9} }
 /* vector-v2 ステージ: 日本(東京)→南西諸島→宮古 のLODクロスフェード */
 @keyframes jiStJapan{ 0%,47%{opacity:0} 53%{opacity:1} 62%{opacity:1} 68%{opacity:0} 100%{opacity:0} }
