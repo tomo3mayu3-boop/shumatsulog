@@ -1,5 +1,15 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase3 Step1 (2026-08-01 / branch: journey-engine-v3) — 静的質感の底上げ（静か・清潔・上品／純CSS）
+「演出追加」でなく「高級感を磨く」方針で、質感を静かに整える（**engine無変更＝CSSのみ**）:
+- **grain 減衰**: opacity `.05→.03`（「入っているか分からない」上限・映画風回避）
+- **vignette 弱化**: 縁のみへ `transparent 58%→62%` ＆ `rgba(2,10,18,.3→.2)`
+- **ルート線グリント**: 純白 `rgba(255,255,255,.9)`→控えめなターコイズ寄り `rgba(224,246,250,.82)`（派手な白反射を避け清潔に）
+- **地図クレジット**: `rgba(.5→.42)` で一段静かに（情報系は控えめ）
+- **保護不変を厳守**: タイミング／動画区間(3.5–16.0s)／画質(720p・1080p CRF20 slow)／`arrivalEase:false` は**全て不変**（CSSのみ・JS/動画/尺 不触）
+- **性能**: JS 0B / CSS +334B raw(gzip +219)。静的スタイル値のみ＝init/seek/rAF/GC 影響なし・新要素なし・毎フレーム増なし
+- レビュー用 `_p3review.html`（css?v=p3s1・travel-17相当）。travel-17本番HTMLは無変更。config互換維持
+
 ## Phase2 Step5 (2026-08-01 / branch: journey-engine-v3) — travel-17 完全不変の総回帰（差分ゼロ判定）
 Phase2全体（`journey-v3-phase1-step4`→現在）の runtime 差分を精査し、travel-17 の挙動が不変であることを確定:
 - **travel-17.html 差分ゼロ / map-data 差分ゼロ**。変更 runtime は journey-intro.js・.css のみ

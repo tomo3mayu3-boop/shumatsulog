@@ -7,6 +7,8 @@
 
 ## 0. 方針（重要）
 
+- **目的は「演出を増やす」ではなく「高級感を磨く」**。動画を派手にする/エフェクトを大量追加する のではなく、**動きの滑らかさ・間・余韻・質感**を優先する。
+- 週末ログの世界観＝**静か・清潔・上品**。**映画風になり過ぎない**。grain/vignette は「入っているか分からない」くらいを上限。
 - **新機能の大量追加はしない**。既存の Journey Intro を「より上品・気持ちよく」見せる**質感の底上げ**が目的。
 - **保護不変（絶対に変えない）**: travel-17 の **タイミング／動画区間(startAt3.5・playSeconds16.0)／画質(720p mobile・1080p tablet/desktop・CRF20 slow)／`arrivalEase:false`（到着減速は復活させない）**。
 - **Performance First**: 追加はコンポジタ処理（transform/opacity、必要時のみ軽量filter）に限定。**毎フレームJSを増やさない・初期表示を遅らせない・重いSVG/backdrop blurを増やさない**。
@@ -54,7 +56,7 @@
 
 ### E. 動画→Hero Dissolve+Scale（優先:高）
 - 現状: travel-17 は `fx.heroZoom:false`（以前、**動画をscaleすると拡大で軟化**したためOFF）。
-- 案: **Scaleの対象を動画→Hero画像に変更**（`fx.heroScaleIn`・新規・既定は控えめ）。Dissolve(heroCrossfadeMs 1000)中に**Hero画像を1.00→1.03へKen Burns**。動画は等倍のまま＝**画質軟化ゼロ**、接続タイミング不変。以前OFFにした理由（動画の軟化）を回避しつつ「Dissolve+Scale」の上質さを獲得。
+- 案（**ユーザー確定制約**）: **Scaleは Hero画像のみ**（`fx.heroScaleIn`・新規）。Dissolve(heroCrossfadeMs 1000)中に**Hero画像を 1.00→1.02〜1.03 へKen Burns**。**動画には一切Scaleを掛けない**（等倍のまま）＝**画質低下ゼロ**、接続タイミング不変。以前OFFにした理由（動画の軟化）を根本回避しつつ「Dissolve+Scale」の上質さを獲得。
 - 効果: 高。WAAPI1本（compositor transform）。iPhoneは大画像scaleだがGPUで軽い。保護不変（動画画質・尺・timing不触）。
 
 ### F. スキップ/地図クレジット（優先:中）
@@ -88,10 +90,20 @@
 | **3** | 動画→Hero Dissolve+Scale（E・**Hero側**Ken Burns / `fx.heroScaleIn`） | WAAPI compositor | 微 | 小（タイミング不変を検証） |
 | **4** | reduced-motion の自然な代替（H） | CSS＋分岐 | なし | 小（reduced時のみ） |
 | **5** | iPhone/PC 見え方の統一（G） | CSSブレークポイント | なし〜微 | 中（PC見え方変更） |
-| **6** | 総回帰＋ブランド最終調整 | 検証中心 | — | — |
+| **6** | 総回帰（保護不変の維持確認）＋ブランド最終調整 | 検証中心 | — | — |
+| **7** | **UXレビュー工程**（下記5観点を確認してから完了判定） | レビュー | — | — |
+
+### Step7 UXレビュー工程（完了判定の前提・必須）
+実機（iPhone Safari / PC）で以下を確認し、問題があれば該当Stepへ差し戻し:
+1. **初見で長く感じないか**（尺・間・スキップ動機）
+2. **iPhone Safariで違和感がないか**（描画・カクつき・レイアウト）
+3. **Hero遷移が自然か**（Dissolve+Scale・接続）
+4. **スキップしたくならないか**（退屈・冗長でないか）
+5. **実際に旅行したくなるか**（情緒・ブランド体験）
+→ 5観点すべて良好で **Phase3完了判定** を発行。
 
 - **D（地図→動画接続）は原則見送り**（保護不変=タイミングに近い）。必要ならStep3でzero-timing-riskの範囲のみ。
-- 推奨順: **1→2→3→4→5→6**（低リスク・高効果順）。各Step完了時に 変更ファイル/見た目差分/性能(JS・CSSサイズ, init, seek, rAF, GC)/iPhone体感/travel-17保護不変の維持/rollback を報告。
+- 推奨順: **1→2→3→4→5→6→7**（低リスク・高効果順）。各Step完了時に 変更ファイル/見た目差分/性能(JS・CSSサイズ, init, seek, rAF, GC)/iPhone体感/travel-17保護不変の維持/rollback を報告。
 
 ---
 

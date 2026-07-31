@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase3 質感レビュー（Step1: 静的質感）</title>
+<link rel="stylesheet" href="assets/journey/journey-intro.css?v=p3s1">
+<meta name="color-scheme" content="light dark">
+<style>
+  html,body{ margin:0; background:#000; color:#eafaff; font-family:system-ui,sans-serif; }
+  .bg-hero{ position:fixed; inset:0; z-index:0; }
+  .bg-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .bg-hero .cap{ position:absolute; left:16px; bottom:120px; text-shadow:0 2px 10px #000; }
+  .bg-hero .cap h2{ margin:0 0 4px; font-size:22px; } .bg-hero .cap p{ margin:0; font-size:13px; opacity:.9; }
+  .bar{ position:fixed; left:0; right:0; bottom:0; z-index:100000; padding:12px 12px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(8,12,18,.94); border-top:1px solid rgba(255,255,255,.14); backdrop-filter:blur(4px); }
+  .bar button{ background:#2b8ca0; color:#04121a; border:0; border-radius:10px; padding:13px 18px; font-size:15px; font-weight:700; margin:2px 4px 2px 0; cursor:pointer; }
+  .bar .st{ font-size:11.5px; opacity:.85; margin-top:8px; line-height:1.5; }
+</style>
+</head><body>
+<div class="bg-hero"><img class="ji-hero" src="images/travel/sup/sup-1.webp" alt="レビュー"><div class="cap"><h2>質感レビュー（Step1）</h2><p>grain/vignette 弱め・グリント控えめ・クレジット静か</p></div></div>
+<div class="bar">
+  <button id="go">▶ 通し再生（質感確認）</button>
+  <div class="st" id="st">travel-17相当。地図フェーズで ルート線/グリント/粒状/ビネット/クレジット を確認。タイミング・動画区間・画質・arrivalEase:false は不変。</div>
+</div>
+<script src="assets/journey/map-data/journey-map.v1.js?v=p3s1"></script>
+<script src="assets/journey/journey-intro.js?v=p3s1"></script>
+<script>
+(function(){
+  var DIR='assets/video/travel-17/';
+  var CFG={ version:1, id:'p3review',
+    route:{ map:'vector-v2', path:'M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150',
+      waypoints:[ {jp:'東京',ro:'Tokyo',node:[258,44]}, {jp:'沖縄',ro:'Okinawa',node:[244,92]}, {jp:'宮古島',ro:'Miyakojima',node:[222,140]} ],
+      introLabel:{ jp:'世界', ro:'The World' } },
+    destination:{ jp:'ユニの浜', ro:'Uni Beach', lat:24.7880, lon:125.2480 }, hero:'.ji-hero',
+    video:{ src:DIR+'arrival-720.mp4?v=2', sources:[ {src:DIR+'arrival-720.mp4?v=2',maxWidth:640,tier:'mobile'},{src:DIR+'arrival-1080.mp4?v=2',maxWidth:1024,tier:'tablet'},{src:DIR+'arrival-1080.mp4?v=2',tier:'desktop'} ], poster:DIR+'arrival-poster.webp?v=2', startAt:3.5, playSeconds:16.0, arrivalEase:false },
+    fx:{ heroZoom:false }, timing:{ heroCrossfadeMs:1000 }, skip:{ button:true, label:'スキップ', oncePerSession:false } };
+  var go=document.getElementById('go'), st=document.getElementById('st');
+  if(!window.JourneyIntro){ st.textContent='ERROR: engine未ロード'; return; }
+  st.textContent='engine '+JourneyIntro.version+' / タップで通し再生（css?v=p3s1）';
+  go.onclick=function(){ if(window.__ji){try{window.__ji.destroy();}catch(e){}} window.__ji=JourneyIntro.start(JSON.parse(JSON.stringify(CFG)),{force:true,onComplete:function(){ st.textContent='完了 → Hero。質感Step1（grain.03/vignette.2/グリント控えめ/クレジット静か）'; }}); go.textContent='🔁 もう一度'; };
+})();
+</script>
+</body></html>
