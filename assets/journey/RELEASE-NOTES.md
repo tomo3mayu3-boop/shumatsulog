@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase2 Step3 (2026-07-31 / branch: journey-engine-v3) — 安全フォールバック強化（必ず記事本文へ到達）
+壊れたconfig / stage不足 / map-data不足 / destination不足 でも**必ず記事本文へ到達**するようフェイルセーフを追加（v1.3.5→**1.3.6-failsafe**）。全て失敗時のみ動作＝正常系はコスト0:
+- **構築/開始の例外**: `start()` を try/catch。失敗時は `.ji-overlay` 除去＋`documentElement.overflow` 復元＋null返し（スクロールロックを残さない）。node実証済
+- **rAFループの例外**: 地図tick・動画loopを try/catch → `abortToArticle()`（オーバーレイ除去＋スクロール復元＋onComplete）で記事へ復帰
+- **サイレント停滞**: 全体ウォッチドッグ（実尺+60s余裕）で未完了なら `abortToArticle()`。正常完了/破棄で解除。誤発火しない上限
+- 既存フォールバックは健在: map-data不足→abstract降格 / 未登録stageスキップ / destination既定(空・0で非クラッシュ) / JSON parse失敗→記事表示
+- **性能**: try/catchはV8で例外0時コスト0・毎フレーム割当なし。ウォッチドッグはsetTimeout1本(完了で解除)。**init/seek/rAF/FPS/mem 不変**。JS +2584B raw(gzip +673)/CSS 0
+- travel-17: 追加コードは失敗経路のみ＝**正常系は完全不変**。V2/V3後方互換維持・記事HTML変更ゼロ
+
 ## Phase2 Step2 (2026-07-31 / branch: journey-engine-v3) — map-dataビルドの地域汎用化（地域定義の外部データ化）
 地域(ステージ)定義を `build-map-data.mjs` のハードコードから **`scripts/map-regions.json` へ外部化**。**新地域はデータ追加のみ**（スクリプト無改変）で対応可能に:
 - `scripts/map-regions.json` 新規: world/japan/ryukyu/miyako を `{file, kind|bbox, minRingArea, mapshaper}` で定義。順序=出力stages順。旧inline定義とバイト一致（値・順序・attribution）を検証

@@ -492,10 +492,12 @@
     function live() {
       t0 = performance.now(); var cDone = false;
       (function tick(now) {
-        var ms = now - t0;
-        tickShared(ms);
-        if (ms >= FE + CEREMONY && !cDone) { cDone = true; enterVideo(); return; }
-        raf = requestAnimationFrame(tick);
+        try {
+          var ms = now - t0;
+          tickShared(ms);
+          if (ms >= FE + CEREMONY && !cDone) { cDone = true; enterVideo(); return; }
+          raf = requestAnimationFrame(tick);
+        } catch (e) { abortToArticle(e); } /* 実行時例外でも記事本文へ確実に復帰 */
       })(t0);
     }
     function play() {
@@ -511,6 +513,11 @@
       void els.abstract.offsetWidth;
       anims.forEach(function (el) { el.style.animation = ''; el.style.animationPlayState = 'running'; el.style.animationDelay = ''; });
       live();
+      /* 全体ウォッチドッグ: 想定上限を大幅に超えても未完了なら記事本文へ強制復帰(サイレント停滞の保険)。
+         通常完了/破棄で解除。上限は実尺(地図+動画+フェード)に十分な余裕(60s)を足し誤発火を防ぐ */
+      var maxMs = self.durations.scrubMax + ((cfg.video.playSeconds != null ? cfg.video.playSeconds : 20) * 1000) + T.heroCrossfadeMs + 60000;
+      clearTimeout(self._watchdog);
+      self._watchdog = setTimeout(function () { abortToArticle(new Error('watchdog: intro did not complete in ' + maxMs + 'ms')); }, maxMs);
     }
     function enterVideo() {
       if (self.state.phase !== 1) return;
@@ -559,6 +566,7 @@
       var ended = false;
       cancelAnimationFrame(rafV);
       (function loop() {
+       try {
         var dur = (cfg.video.playSeconds != null ? cfg.video.playSeconds : (vid.duration || 8));
         var ct = vid.currentTime;
         /* 到着減速(playbackRate ランプ)。arrivalEase:false で完全無効化=最後まで1.0固定(iOSカクつき切り分け用) */
@@ -579,13 +587,31 @@
           toHero(); return;
         }
         rafV = requestAnimationFrame(loop);
+       } catch (e) { abortToArticle(e); } /* 動画ループの例外でも記事本文へ確実に復帰 */
       })();
+    }
+    /* 最終フェイルセーフ: 例外/スタール時にオーバーレイ除去＋スクロール復元＝記事本文へ必ず到達 */
+    function abortToArticle(err) {
+      if (self.state.phase === 3) return; /* 既に完了/破棄済 */
+      self.state.phase = 3;
+      try { console.error('[JourneyIntro] 実行時エラー — 記事本文へ復帰します', err); } catch (e) {}
+      try { cancelAnimationFrame(raf); } catch (e) {}
+      try { cancelAnimationFrame(rafV); } catch (e) {}
+      try { clearTimeout(self._budget); } catch (e) {}
+      try { clearTimeout(self._watchdog); } catch (e) {}
+      try { cancelWaapi(); } catch (e) {}
+      try { vid.pause(); } catch (e) {}
+      try { restoreScroll(); } catch (e) {}
+      try { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
+      if (JI.current === self) JI.current = null;
+      try { if (self.opts.onComplete) self.opts.onComplete(); } catch (e) {}
     }
     function toHero() {
       if (self.state.phase === 3) return;
       self.state.phase = 3;
       cancelAnimationFrame(rafV);
       clearTimeout(self._budget); /* V3 Step2: 読込予算ウォッチドッグの後発火を防止 */
+      clearTimeout(self._watchdog); /* Phase2 Step3: 正常接続時は全体ウォッチドッグ解除 */
       try { vid.oncanplay = null; } catch (e) {} /* V3 Step3: 保留中のcanplay再生を無効化 */
       if (cfg.fx.heroPreload) preloadHero(); /* v1.3.1 #1: 保険(skip/失敗/直行など先読み前に来た場合) */
       /* 映画的マッチカット: 短いフェード + 動画のごく僅かな前進(scale)で「切り替わった」感を出す */
@@ -617,6 +643,7 @@
     this.play = play; this.seek = seek; this.enterVideo = enterVideo; this.skip = skipNow;
     this.destroy = function () {
       cancelAnimationFrame(raf); cancelAnimationFrame(rafV); cancelWaapi();
+      clearTimeout(self._budget); clearTimeout(self._watchdog); /* Phase2 Step3: タイマ解除 */
       restoreScroll();
       try { vid.pause(); vid.removeAttribute('src'); vid.load(); } catch (e) {} /* デコーダ解放 */
       try { provider.destroy(); } catch (e) {}
@@ -684,7 +711,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.5-slot',
+    version: '1.3.6-failsafe',
     current: null,
     registerMap: registerMap,
     providers: providers,
@@ -703,9 +730,18 @@
         if (global.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
         if (cfg.skip.oncePerSession && isSeen(cfg)) return null;
       }
-      var inst = new Instance(cfg, opts);
-      JI.current = inst;
-      if (opts.autoplay !== false) inst.play();
+      var inst;
+      try {
+        inst = new Instance(cfg, opts);
+        JI.current = inst;
+        if (opts.autoplay !== false) inst.play();
+      } catch (e) {
+        /* Phase2 Step3: 構築/開始の失敗でも記事本文へ確実に到達（オーバーレイ除去＋スクロール復元） */
+        try { var stray = document.querySelector('.ji-overlay'); if (stray && stray.parentNode) stray.parentNode.removeChild(stray); } catch (_) {}
+        try { document.documentElement.style.overflow = ''; } catch (_) {}
+        try { console.error('[JourneyIntro] 初期化失敗 — 記事本文を表示します', e); } catch (_) {}
+        return null;
+      }
       return inst;
     }
   };
