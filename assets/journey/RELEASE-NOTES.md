@@ -1,5 +1,13 @@
 # Journey Intro Engine ― Release Notes
 
+## v1.3.0-step2 (2026-07-31 / branch: journey-engine-v3) — V3 Step2: 回線フォールバック＋読込予算＋poster
+- `navigator.connection` から Save-Data / effective[slow-2g,2g] を判定。**V3設定(`video.sources`)時のみ** `saveDataFallback`（既定 `hero`）で動画を出さず 地図→到着セレモニー→Hero に直行。`lowest` 指定なら最低tierに差替えて再生
+- `video.loadBudgetMs`（既定6000）: enterVideo後この時間内に再生位置が進まなければ（未準備/停滞）→ Heroへ。従来の4sウォッチドッグを置換
+- 再生失敗を必ずHeroへ集約: `play()`拒否 / `error`イベント / 予算超過 / `ended` の全経路が `toHero`
+- `poster`（`video.poster`）を `<video>` に設定＝黒画面回避の接続フレーム（生成はStep4）
+- **V2への影響なし**: `sources` 無しの単一src(travel-17)は回線スキップ対象外＝常に再生（従来挙動）。失敗時フォールバックのみ強化
+- 追加API（内部・テスト用）: `JourneyIntro._planVideo(videoCfg, chosen, netOverride?)` / `._readNetwork()`
+
 ## v1.3.0-step1 (2026-07-31 / branch: journey-engine-v3) — V3 Step1: 端末別 動画ソース選択
 - config `video.sources`（任意・配列）に対応。viewport幅＝デバイスクラスで「条件を満たす最小tier」を選択（mobile軽量維持のためDPRでtier引上げしない）
 - `sources` 無しは従来の `video.src`（V2）をそのまま使用＝**後方互換**（travel-17は挙動不変）

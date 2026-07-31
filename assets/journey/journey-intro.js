@@ -23,7 +23,7 @@
       introLabel: { jp: '世界', ro: 'The World' }
     },
     destination: { jp: '', ro: '', lat: 0, lon: 0 },
-    video: { src: null, poster: null, startAt: 0, playSeconds: null, easeOutMs: 900, easeOutRate: 0.30, objectPosition: 'center' },
+    video: { src: null, poster: null, startAt: 0, playSeconds: null, easeOutMs: 900, easeOutRate: 0.30, objectPosition: 'center', loadBudgetMs: 6000, saveDataFallback: 'hero' },
     audio: { src: null, volume: 0.5, fadeInMs: 1400 },
     /* Phase2 fx: すべて既定ON・configでOFF可(後方互換: 未指定=従来見た目+質感) */
     fx: { trailGlint: true, glintLen: 0.07, pinRing: true, grain: true, vignette: true, heroZoom: true },
@@ -68,6 +68,40 @@
       if (sorted[i].maxWidth == null || vw <= sorted[i].maxWidth) { chosen = sorted[i]; break; }
     }
     return { src: chosen.src || v.src, tier: chosen.tier || null, reason: 'viewport', vw: vw, dpr: dpr };
+  }
+
+  /* ================= V3 Step2: 回線判定 & 最低tier =================
+     navigator.connection(Chrome系)から Save-Data / effectiveType を読む。Safari等は非対応→unsupported。 */
+  function readNetwork() {
+    var n = global.navigator || {};
+    var c = n.connection || n.mozConnection || n.webkitConnection;
+    if (!c) return { supported: false, saveData: false, effectiveType: null };
+    return { supported: true, saveData: !!c.saveData, effectiveType: c.effectiveType || null };
+  }
+  function isSlowNet(net) {
+    return !!(net.saveData || net.effectiveType === '2g' || net.effectiveType === 'slow-2g');
+  }
+  function lowestSource(v) {
+    if (!v || !v.sources || !v.sources.length) return null;
+    return v.sources.slice().sort(function (a, b) {
+      return (a.maxWidth == null ? Infinity : a.maxWidth) - (b.maxWidth == null ? Infinity : b.maxWidth);
+    })[0];
+  }
+  /* 端末選択(chosen)＋回線から「動画を再生するか/最低tierに落とすか」を決定 */
+  function planVideo(v, chosen, netOverride) {
+    var net = netOverride || readNetwork();
+    if (!chosen || !chosen.src) return { chosen: chosen, play: false, reason: 'no-src', net: net };
+    /* 回線フォールバックはV3オプトイン(sources指定)時のみ。V2単一srcは従来どおり常に再生し挙動不変 */
+    var v3 = !!(v.sources && v.sources.length);
+    if (v3 && isSlowNet(net)) {
+      var fb = v.saveDataFallback || 'hero';
+      if (fb === 'lowest') {
+        var low = lowestSource(v);
+        if (low) return { chosen: { src: low.src || v.src, tier: low.tier || null, reason: 'slow-net-lowest' }, play: true, reason: 'slow-net-lowest', net: net };
+      }
+      return { chosen: chosen, play: false, reason: (net.saveData ? 'save-data' : net.effectiveType), net: net };
+    }
+    return { chosen: chosen, play: true, reason: 'ok', net: net };
   }
 
   /* ================= MapProvider レジストリ ================= */
@@ -269,10 +303,13 @@
     /* ---- 動画 ---- */
     var vid = els.video;
     vid.muted = true; /* 音は audio フックで別管理(将来) */
-    var chosen = pickVideoSource(cfg.video);   /* V3: 端末別に1本選択(sources無しはV2のsrc) */
+    var chosen = pickVideoSource(cfg.video);   /* V3 Step1: 端末別に1本選択(sources無しはV2のsrc) */
+    var plan = planVideo(cfg.video, chosen);   /* V3 Step2: 回線判定→再生可否/最低tier差替 */
+    chosen = plan.chosen;
     self.chosenVideo = chosen;                 /* テスト/デバッグ用に公開 */
+    self.videoPlan = plan;                     /* {play,reason,net}: enterVideoが参照 */
     if (chosen.src) vid.src = chosen.src;
-    if (cfg.video.poster) vid.poster = cfg.video.poster;
+    if (cfg.video.poster) vid.poster = cfg.video.poster; /* V3 Step2: iOS安定&黒画面回避の接続フレーム */
     vid.style.objectPosition = cfg.video.objectPosition || 'center';
 
     /* ---- フライト(パス追従・決定論) ---- */
@@ -419,6 +456,15 @@
     }
     function enterVideo() {
       if (self.state.phase !== 1) return;
+      /* V3 Step2: Save-Data/2G/動画ソース無し → 動画を出さず地図セレモニーからHeroへ直行 */
+      if (!self.videoPlan || !self.videoPlan.play) {
+        self.state.phase = 2;
+        self._videoSkipped = (self.videoPlan && self.videoPlan.reason) || 'no-src';
+        cancelAnimationFrame(raf);
+        anims.forEach(function (el) { el.style.animationPlayState = 'paused'; });
+        toHero(); /* オーバーレイ(到着セレモニー)→Heroをクロスフェード */
+        return;
+      }
       self.state.phase = 2;
       cancelAnimationFrame(raf);
       anims.forEach(function (el) { el.style.animationPlayState = 'paused'; });
@@ -427,10 +473,15 @@
       vid.playbackRate = 1;
       try { vid.preload = 'auto'; vid.currentTime = cfg.video.startAt || 0; } catch (e) {}
       vid.onended = function () { if (self.state.phase === 2) toHero(); };
+      vid.onerror = function () { if (self.state.phase === 2) toHero(); }; /* V3 Step2: デコード/取得失敗→必ずHero */
       var pp = vid.play();
-      if (pp && pp.catch) pp.catch(function () { toHero(); }); /* autoplay拒否→即Heroフォールバック */
-      /* ウォッチドッグ: 4秒経ってもデコード開始しない(404/停滞)なら即Heroへ */
-      setTimeout(function () { if (self.state.phase === 2 && vid.readyState < 2) toHero(); }, 4000);
+      if (pp && pp.catch) pp.catch(function () { if (self.state.phase === 2) toHero(); }); /* autoplay拒否→即Heroフォールバック */
+      /* V3 Step2: 読み込み予算(loadBudgetMs)。超過しても再生位置が進んでいなければ(=停滞/未準備)Heroへ */
+      var budget = (cfg.video.loadBudgetMs != null ? cfg.video.loadBudgetMs : 6000);
+      clearTimeout(self._budget);
+      self._budget = setTimeout(function () {
+        if (self.state.phase === 2 && vid.currentTime <= (cfg.video.startAt || 0) + 0.05) toHero();
+      }, budget);
       watchVideo();
     }
     function watchVideo() {
@@ -453,6 +504,7 @@
       if (self.state.phase === 3) return;
       self.state.phase = 3;
       cancelAnimationFrame(rafV);
+      clearTimeout(self._budget); /* V3 Step2: 読込予算ウォッチドッグの後発火を防止 */
       /* 映画的マッチカット: 短いフェード + 動画のごく僅かな前進(scale)で「切り替わった」感を出す */
       fade(ov, 1, 0, T.heroCrossfadeMs, 'cubic-bezier(.4,0,.2,1)');
       if (cfg.fx.heroZoom) {
@@ -495,11 +547,13 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.0-step1',
+    version: '1.3.0-step2',
     current: null,
     registerMap: registerMap,
     providers: providers,
     _pickVideoSource: pickVideoSource, /* V3: 選択ロジックの単体テスト用(内部) */
+    _planVideo: planVideo,             /* V3 Step2: 回線フォールバック判定の単体テスト用(内部) */
+    _readNetwork: readNetwork,         /* V3 Step2: 回線情報の取得(テスト/デバッグ用) */
     start: function (userCfg, opts) {
       var cfg = merge(DEFAULTS, userCfg || {});
       if (cfg.version !== SCHEMA_VERSION) {
