@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3 到着減速 A/B — playbackRate 切り分け</title>
+<link rel="stylesheet" href="assets/journey/journey-intro.css">
+<meta name="color-scheme" content="light dark">
+<style>
+  html,body{ margin:0; background:#000; }
+  .bg-hero{ position:fixed; inset:0; z-index:0; }
+  .bg-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .bar{ position:fixed; left:0; right:0; bottom:0; z-index:10001; padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+    background:rgba(8,12,18,.93); color:#cfe6ea; font:13px/1.45 system-ui,sans-serif; backdrop-filter:blur(4px); border-top:1px solid rgba(255,255,255,.12); }
+  .row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0; }
+  .bar button{ border:0; border-radius:9px; padding:12px 16px; font-size:15px; cursor:pointer; color:#eafaff; }
+  .bA{ background:#5a3a2a; } .bB{ background:#2b6a3a; }
+  .bar button.small{ background:#39414d; padding:9px 12px; font-size:13px; }
+  .bar label{ display:flex; align-items:center; gap:5px; }
+  .bar .grp{ font-weight:600; opacity:.8; min-width:64px; }
+  .bar .now{ font-variant-numeric:tabular-nums; opacity:.92; flex-basis:100%; font-size:11.5px; }
+  .bar .cond{ flex-basis:100%; opacity:.62; font-size:11px; }
+</style>
+</head><body>
+<div class="bg-hero"><img class="ji-hero" src="images/travel/sup/sup-1.webp" alt="hero"></div>
+
+<div class="bar">
+  <div class="row">
+    <span class="grp">A/B</span>
+    <button class="bA" data-mode="A">A：到着減速あり（現行）</button>
+    <button class="bB" data-mode="B">B：減速なし・1.0固定</button>
+  </div>
+  <div class="row">
+    <span class="grp">開始</span>
+    <button class="small" data-start="14.5">接続部14.5s〜(高速)</button>
+    <button class="small" data-start="13.0">13.0s〜</button>
+    <button class="small" data-start="3.5">動画頭3.5s〜</button>
+    <label><input type="checkbox" id="loop" checked>ループ</label>
+  </div>
+  <div class="cond">共通条件: Hero先読みON / フェード1000ms / Dissolve+Scale(heroZoom ON) / video.pauseはフェード完了後。減速開始=接続16.0sの0.9s前(=15.1s)。</div>
+  <div class="now" id="now">—</div>
+</div>
+
+<script src="assets/journey/map-data/journey-map.v1.js?v=132"></script>
+<script src="assets/journey/journey-intro.js?v=132"></script>
+<script>
+(function(){
+  var DIR='assets/video/travel-17/';
+  var BASE = { version:1, id:'v3ease',
+    route:{ map:'vector-v2', path:'M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150',
+      waypoints:[ {jp:'東京',ro:'Tokyo',node:[258,44]}, {jp:'沖縄',ro:'Okinawa',node:[244,92]}, {jp:'宮古島',ro:'Miyakojima',node:[222,140]} ],
+      introLabel:{ jp:'世界', ro:'The World' } },
+    destination:{ jp:'ユニの浜', ro:'Uni Beach', lat:24.7880, lon:125.2480 },
+    hero:'.ji-hero',
+    /* 共通条件: Hero先読みON / heroZoom(Scale)ON / pauseAfterFade ON / フェード1000ms */
+    fx:{ heroPreload:true, progressComplete:true, heroZoom:true, pauseAfterFade:true },
+    timing:{ heroCrossfadeMs:1000 },
+    skip:{ button:true, label:'スキップ', oncePerSession:false } };
+  function mkVideo(){ return {
+    src:DIR+'arrival-720.mp4?v=2',
+    sources:[ {src:DIR+'arrival-720.mp4?v=2',maxWidth:640,tier:'mobile'}, {src:DIR+'arrival-1080.mp4?v=2',maxWidth:1024,tier:'tablet'}, {src:DIR+'arrival-1080.mp4?v=2',tier:'desktop'} ],
+    poster:DIR+'arrival-poster.webp?v=2', startAt:3.5, playSeconds:16.0 }; }
+
+  var now=document.getElementById('now'), loopChk=document.getElementById('loop');
+  var state={ mode:'A', start:14.5 }, loopTimer;
+  function play(){
+    clearTimeout(loopTimer);
+    var c=JSON.parse(JSON.stringify(BASE));
+    c.video=mkVideo();
+    c.video.startAt=state.start;
+    c.video.arrivalEase = (state.mode==='A'); // A=減速あり / B=減速なし(1.0固定)
+    c.timing.crossfadeMs=300; // 地図を出さず動画からなので短く
+    now.textContent='['+state.mode+(state.mode==='A'?' 減速あり':' 1.0固定')+'] start='+state.start+'s  arrivalEase='+c.video.arrivalEase+'  (engine '+JourneyIntro.version+')';
+    if(window.__ji) window.__ji.destroy();
+    window.__ji = JourneyIntro.start(c, { force:true,
+      onComplete:function(){ if(loopChk.checked){ loopTimer=setTimeout(play, 1200); } } });
+    if(window.__ji) window.__ji.enterVideo(); // 地図を飛ばして動画パートから
+  }
+  [].forEach.call(document.querySelectorAll('button[data-mode]'),function(b){ b.addEventListener('click',function(){ state.mode=b.dataset.mode; play(); }); });
+  [].forEach.call(document.querySelectorAll('button[data-start]'),function(b){ b.addEventListener('click',function(){ state.start=parseFloat(b.dataset.start); play(); }); });
+  if(!window.JourneyIntro){ now.textContent='ERROR: engine未ロード'; return; }
+  now.textContent='engine '+JourneyIntro.version+' / A か B を押して再生（同じ開始位置でA↔Bを見比べ）。減速開始15.1s付近のカクつき有無に注目。';
+})();
+</script>
+</body></html>

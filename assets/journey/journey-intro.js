@@ -24,7 +24,7 @@
     },
     destination: { jp: '', ro: '', lat: 0, lon: 0 },
     hero: '.ji-hero', /* 記事側Hero画像セレクタ(クロスフェード前に先読み/decode) */
-    video: { src: null, poster: null, startAt: 0, playSeconds: null, easeOutMs: 900, easeOutRate: 0.30, objectPosition: 'center', loadBudgetMs: 6000, saveDataFallback: 'hero' },
+    video: { src: null, poster: null, startAt: 0, playSeconds: null, easeOutMs: 900, easeOutRate: 0.30, arrivalEase: true, objectPosition: 'center', loadBudgetMs: 6000, saveDataFallback: 'hero' },
     audio: { src: null, volume: 0.5, fadeInMs: 1400 },
     /* Phase2 fx: すべて既定ON・configでOFF可(後方互換: 未指定=従来見た目+質感)
        v1.3.1 遷移スムーズ化: heroPreload/progressComplete/pauseAfterFade(既定ON)、heroZoomは比較用にOFF可 */
@@ -546,10 +546,13 @@
       (function loop() {
         var dur = (cfg.video.playSeconds != null ? cfg.video.playSeconds : (vid.duration || 8));
         var ct = vid.currentTime;
-        var easeAt = Math.max(0, dur - cfg.video.easeOutMs / 1000);
-        if (ct >= easeAt) {
-          var ep = Math.min(1, (ct - easeAt) / Math.max(0.001, dur - easeAt));
-          vid.playbackRate = 1 - (1 - cfg.video.easeOutRate) * ep;
+        /* 到着減速(playbackRate ランプ)。arrivalEase:false で完全無効化=最後まで1.0固定(iOSカクつき切り分け用) */
+        if (cfg.video.arrivalEase !== false) {
+          var easeAt = Math.max(0, dur - cfg.video.easeOutMs / 1000);
+          if (ct >= easeAt) {
+            var ep = Math.min(1, (ct - easeAt) / Math.max(0.001, dur - easeAt));
+            vid.playbackRate = 1 - (1 - cfg.video.easeOutRate) * ep;
+          }
         }
         if (self.opts.onTick) self.opts.onTick(ct * 1000, 2);
         /* v1.3.1 #1: Hero Crossfade開始の約 heroPreloadLeadMs 前にHeroを先読み/decode */
@@ -614,7 +617,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.1-transition',
+    version: '1.3.2-arrivalEase',
     current: null,
     registerMap: registerMap,
     providers: providers,

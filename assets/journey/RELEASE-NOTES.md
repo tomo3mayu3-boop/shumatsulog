@@ -1,5 +1,13 @@
 # Journey Intro Engine ― Release Notes
 
+## v1.3.2-arrivalEase (2026-07-31 / branch: journey-engine-v3) — 到着減速(playbackRate)の切り分けA/B
+iPhone実機でフェード直前の微小カクつきが残存。位置が到着減速開始(接続16.0sの0.9s前=15.1s)と一致するため、`playbackRate` 操作を原因候補として切り分け:
+- 新フラグ `video.arrivalEase`（既定true=現行）。**false で easeOut ランプを完全スキップ**＝初期化後 `playbackRate` に一切触れず 1.0固定（フェード中も1.0）
+- A/B比較ページ `_v3ease.html`（A=減速あり / B=1.0固定。共通: Hero先読みON・フェード1000ms・Dissolve+Scale(heroZoom ON)・pauseAfterFade。開始位置14.5/13.0/3.5s・ループ）
+- ramp検証: A は 15.1→16.0s で rate 1.0→0.30、B は全域 1.0（代入自体が走らない）
+- **後方互換**: 未指定=true=従来挙動。travel-17 は現状のまま（本A/Bはハーネスで隔離、確定後に反映）
+- 方針: iPhone SafariでBのみ滑らかなら到着減速を廃止し、フェード＋Scaleで到着感を維持（heroZoom再ON検討）
+
 ## v1.3.1-transition (2026-07-31 / branch: journey-engine-v3) — Hero Crossfade スムーズ化（4点A/B）
 `toHero`（動画→Hero）と `enterVideo`（地図→動画）の遷移を4点改善。すべて `cfg.fx` でトグル可＝A/B比較用:
 - **①heroPreload**（既定ON）: Hero Crossfade開始の約 `timing.heroPreloadLeadMs`(250ms) 前に記事Hero画像を `img.decode()` 先読み。reveal時のデコードジャンク回避。対象は `cfg.hero`（既定 `.ji-hero`）
