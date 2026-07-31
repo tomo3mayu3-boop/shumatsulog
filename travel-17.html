@@ -186,12 +186,21 @@
     "introLabel": { "jp": "世界", "ro": "The World" }
   },
   "destination": { "jp": "ユニの浜", "ro": "Uni Beach", "lat": 24.7880, "lon": 125.2480 },
-  "video": { "src": "assets/video/journey-arrival-v2.mp4", "startAt": 3.5, "playSeconds": 16.0 },
+  "video": {
+    "src": "assets/video/travel-17/arrival-720.mp4",
+    "sources": [
+      { "src": "assets/video/travel-17/arrival-540.mp4",  "maxWidth": 640,  "tier": "mobile" },
+      { "src": "assets/video/travel-17/arrival-720.mp4",  "maxWidth": 1024, "tier": "tablet" },
+      { "src": "assets/video/travel-17/arrival-1080.mp4",                   "tier": "desktop" }
+    ],
+    "poster": "assets/video/travel-17/arrival-poster.webp",
+    "startAt": 3.5, "playSeconds": 16.0
+  },
   "timing": { "heroCrossfadeMs": 1000 },
   "skip": { "button": true, "label": "スキップ", "oncePerSession": true }
 }
 </script>
-<script src="assets/journey/map-data/journey-map.v1.js?v=121" defer></script>
-<script src="assets/journey/journey-intro.js?v=121" defer></script>
+<script src="assets/journey/map-data/journey-map.v1.js?v=130" defer></script>
+<script src="assets/journey/journey-intro.js?v=130" defer></script>
 </body>
 </html>

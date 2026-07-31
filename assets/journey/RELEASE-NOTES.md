@@ -1,5 +1,13 @@
 # Journey Intro Engine ― Release Notes
 
+## v1.3.0-step4 (2026-07-31 / branch: journey-engine-v3) — V3 Step4: レンディション生成＋travel-17適用（実運用入り）
+- 新規 `scripts/build-video-renditions.mjs`（ffmpeg-static・build-map-data.mjsと同方式）: マスター4Kから 540/720/1080(縦・H.264 faststart 無音)＋poster.webp を生成。サイズレポート＆config貼付スニペットを出力
+- **travel-17 を `sources`/`poster` へ切替**＝V3で初の適応配信（エンジン読込を `?v=130` に更新しV3エンジンをロード）
+- 生成物 `assets/video/travel-17/`：arrival-540(1.09MB)/-720(2.90MB=現行v2と同一)/-1080(10.97MB)/-poster.webp(0.03MB)、いずれも19.69s
+- 検証: 手順書 `assets/journey/V3-VERIFY.md`＋比較ページ `_v3cmp.html`（PC/iPhone同条件・自動選択表示・手動画質比較・poster確認・サイズHEAD取得・選択マトリクス・ログ）
+- 選択ログ（実config）: iPhone375→mobile / iPad768・iPadPro1366→tablet(iOS cap) / PC1440→desktop / 2g・SaveData→Hero直行 / 3g→mobile再生
+- **V2への影響なし**: エンジンコード無変更（Step3のまま）。旧 `journey-arrival-v2.mp4` は温存。travel-17以外の記事は単一src＝従来挙動
+
 ## v1.3.0-step3 (2026-07-31 / branch: journey-engine-v3) — V3 Step3: iOS Safari 安定化ハードニング
 - `<video>` に `webkit-playsinline` を追加（旧iOSのインライン再生）。`playsinline`/`muted`属性は明文化
 - **canplay gating**: `enterVideo` で `readyState≥2` なら即再生（通常/V2＝挙動不変）、未準備なら `canplay` を待って再生。iOSの早すぎる `play()` 拒否・黒画面を回避（待機中はposter表示、`loadBudgetMs`超過ならHero）

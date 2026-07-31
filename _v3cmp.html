@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3 Step4 検証 — 動画レンディション比較 (travel-17)</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="assets/journey/journey-intro.css">
+<meta name="color-scheme" content="light dark">
+<style>
+  body{ font-family:system-ui,sans-serif; }
+  .wrap{ max-width:760px; margin:0 auto; padding:16px 14px 220px; }
+  h1{ font-size:18px; margin:8px 0 4px; } h2{ font-size:14px; margin:18px 0 6px; opacity:.85; }
+  .card{ background:rgba(127,127,127,.08); border:1px solid rgba(127,127,127,.22); border-radius:10px; padding:10px 12px; margin:8px 0; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  th,td{ border:1px solid rgba(127,127,127,.25); padding:5px 7px; text-align:left; }
+  th{ background:rgba(127,127,127,.12); }
+  .hit{ background:rgba(60,180,120,.22); font-weight:700; }
+  code{ font-size:12px; } .mono{ font-variant-numeric:tabular-nums; }
+  .btns{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0; }
+  button{ background:#17505e; color:#eafaff; border:0; border-radius:8px; padding:10px 14px; font-size:14px; cursor:pointer; }
+  button.alt{ background:#3a3f46; }
+  #log{ white-space:pre-wrap; font:12px/1.5 ui-monospace,monospace; background:#0d1117; color:#c9d6e5; border-radius:8px; padding:10px; max-height:220px; overflow:auto; }
+  .poster{ max-width:220px; border-radius:8px; border:1px solid rgba(127,127,127,.3); display:block; }
+  .k{ opacity:.7; } .v{ font-weight:700; }
+</style>
+</head><body>
+<div class="wrap">
+  <h1>Journey V3 Step4 — 動画レンディション検証 (travel-17)</h1>
+
+  <div class="card" id="dev"></div>
+
+  <h2>① この端末での自動選択（実際のengine判定）</h2>
+  <div class="card" id="autopick"></div>
+
+  <h2>② 解像度を手動で再生比較（実機で画質確認）</h2>
+  <div class="btns">
+    <button data-w="540">540 mobile を再生</button>
+    <button data-w="720">720 tablet を再生</button>
+    <button data-w="1080">1080 desktop を再生</button>
+    <button data-w="auto" class="alt">auto（この端末の自動選択）を再生</button>
+  </div>
+  <p class="k" style="font-size:12px;">※ 地図フェーズを飛ばし、動画パート(開始3.5s→接続16.0s)から再生。Heroまで通しで確認できます。</p>
+
+  <h2>③ poster 表示確認（再生前フレーム / 黒画面回避）</h2>
+  <div class="card">
+    <img class="poster" src="assets/video/travel-17/arrival-poster.webp" alt="poster">
+    <p class="k" style="font-size:12px;margin:6px 0 0;">上=poster.webp を直接表示。下=preload無しの&lt;video poster&gt;（実機で再生前にこの絵が出るか）:</p>
+    <video id="postervid" class="poster" style="margin-top:6px;" playsinline webkit-playsinline muted preload="none"
+      poster="assets/video/travel-17/arrival-poster.webp" src="assets/video/travel-17/arrival-720.mp4"></video>
+  </div>
+
+  <h2>④ 各解像度のファイルサイズ（この配信元から取得）</h2>
+  <div class="card"><table id="sizes"><thead><tr><th>tier</th><th>ファイル</th><th>解像度</th><th>サイズ</th></tr></thead><tbody></tbody></table></div>
+
+  <h2>⑤ 選択マトリクス（viewport幅 × iOS → 選ばれるtier）</h2>
+  <div class="card"><table id="matrix"><thead><tr><th>viewport</th><th>非iOS</th><th>iOS</th></tr></thead><tbody></tbody></table></div>
+
+  <h2>ログ</h2>
+  <div id="log"></div>
+</div>
+
+<!-- 記事と同じ配信物・同じ順再生条件 -->
+<script src="assets/journey/map-data/journey-map.v1.js?v=130s4"></script>
+<script src="assets/journey/journey-intro.js?v=130s4"></script>
+<script>
+(function(){
+  var LOGEL = document.getElementById('log');
+  function log(){ var s=[].slice.call(arguments).join(' '); LOGEL.textContent += s+'\n'; LOGEL.scrollTop=LOGEL.scrollHeight; console.log('[v3cmp]', s); }
+
+  var DIR = 'assets/video/travel-17/';
+  var VIDEO = {
+    src: DIR+'arrival-720.mp4',
+    sources: [
+      { src: DIR+'arrival-540.mp4',  maxWidth:640,  tier:'mobile' },
+      { src: DIR+'arrival-720.mp4',  maxWidth:1024, tier:'tablet' },
+      { src: DIR+'arrival-1080.mp4',                tier:'desktop' }
+    ],
+    poster: DIR+'arrival-poster.webp',
+    startAt:3.5, playSeconds:16.0
+  };
+  var BASE = { version:1, id:'v3cmp',
+    route:{ map:'vector-v2', path:'M258 44 Q249 68 244 92 Q236 118 222 140 Q190 152 150 150',
+      waypoints:[ {jp:'東京',ro:'Tokyo',node:[258,44]}, {jp:'沖縄',ro:'Okinawa',node:[244,92]}, {jp:'宮古島',ro:'Miyakojima',node:[222,140]} ],
+      introLabel:{ jp:'世界', ro:'The World' } },
+    destination:{ jp:'ユニの浜', ro:'Uni Beach', lat:24.7880, lon:125.2480 },
+    timing:{ heroCrossfadeMs:1000 },
+    skip:{ button:true, label:'スキップ', oncePerSession:false } };
+
+  if(!window.JourneyIntro){ log('ERROR: JourneyIntro 未ロード'); return; }
+  var JI = window.JourneyIntro;
+  log('engine version:', JI.version);
+
+  /* --- 端末情報 --- */
+  var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+  var dev = document.getElementById('dev');
+  dev.innerHTML =
+    '<span class="k">innerWidth</span> <span class="v">'+window.innerWidth+'px</span> &nbsp; '+
+    '<span class="k">DPR</span> <span class="v">'+(window.devicePixelRatio||1)+'</span> &nbsp; '+
+    '<span class="k">isIOS</span> <span class="v">'+JI._isIOS()+'</span><br>'+
+    '<span class="k">connection</span> <span class="v">'+
+      (c.effectiveType?('effectiveType='+c.effectiveType):'(非対応=Safari等)')+
+      (c.saveData?' / Save-Data:ON':'')+'</span>';
+
+  /* --- ① 自動選択（実judgment） --- */
+  var picked = JI._pickVideoSource(VIDEO);       // 端末別tier
+  var plan = JI._planVideo(VIDEO, picked);        // 回線フォールバック込み
+  document.getElementById('autopick').innerHTML =
+    '<span class="k">選択tier</span> <span class="v">'+(picked.tier||'-')+'</span> '+
+    '(<code>'+ (picked.src||'').replace(DIR,'') +'</code>) <span class="k">reason=</span>'+picked.reason+'<br>'+
+    '<span class="k">再生可否</span> <span class="v">'+(plan.play?'再生する':'Hero直行(スキップ)')+'</span> '+
+    '<span class="k">reason=</span>'+plan.reason;
+  log('AUTO pick tier='+picked.tier+' reason='+picked.reason+' src='+(picked.src||'').replace(DIR,''));
+  log('AUTO plan play='+plan.play+' reason='+plan.reason);
+
+  /* --- ② 手動再生 --- */
+  function playTier(w){
+    var cfg = JSON.parse(JSON.stringify(BASE));
+    if(w==='auto'){ cfg.video = JSON.parse(JSON.stringify(VIDEO)); }
+    else { cfg.video = { src: DIR+'arrival-'+w+'.mp4', poster: VIDEO.poster, startAt:3.5, playSeconds:16.0 }; }
+    cfg.timing.crossfadeMs = 300;
+    if(window.__ji) window.__ji.destroy();
+    window.__ji = JI.start(cfg, { force:true,
+      onTick:function(ms,phase){ if(phase===2 && Math.floor(ms/1000)!==window.__lastS){ window.__lastS=Math.floor(ms/1000); } },
+      onComplete:function(){ log('再生完了 → Hero'); }
+    });
+    var chosen = window.__ji.chosenVideo, pl = window.__ji.videoPlan;
+    log('▶ 再生: '+(w==='auto'?'AUTO':w)+' → chosen tier='+(chosen&&chosen.tier)+' src='+((chosen&&chosen.src)||'').replace(DIR,'')+' | plan.play='+(pl&&pl.play)+' reason='+(pl&&pl.reason));
+    if(window.__ji.enterVideo) window.__ji.enterVideo();  // 地図を飛ばして動画パートから
+  }
+  [].forEach.call(document.querySelectorAll('button[data-w]'), function(b){
+    b.addEventListener('click', function(){ playTier(b.dataset.w); });
+  });
+
+  /* --- ④ ファイルサイズ(HEAD) --- */
+  var files = [
+    { tier:'mobile',  file:'arrival-540.mp4',  res:'540×960' },
+    { tier:'tablet',  file:'arrival-720.mp4',  res:'720×1280' },
+    { tier:'desktop', file:'arrival-1080.mp4', res:'1080×1920' },
+    { tier:'poster',  file:'arrival-poster.webp', res:'720×1280' }
+  ];
+  var tb = document.querySelector('#sizes tbody');
+  files.forEach(function(f){
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+f.tier+'</td><td><code>'+f.file+'</code></td><td class="mono">'+f.res+'</td><td class="mono" id="sz_'+f.file.replace(/\W/g,'')+'">…</td>';
+    tb.appendChild(tr);
+    fetch(DIR+f.file, { method:'HEAD' }).then(function(r){
+      var len = r.headers.get('content-length');
+      var txt = len ? (len/1024/1024).toFixed(2)+' MB' : '(不明)';
+      document.getElementById('sz_'+f.file.replace(/\W/g,'')).textContent = txt;
+      log('size '+f.file+' = '+txt);
+    }).catch(function(){ document.getElementById('sz_'+f.file.replace(/\W/g,'')).textContent='取得失敗'; });
+  });
+
+  /* --- ⑤ 選択マトリクス --- */
+  var vws = [ {label:'375 (iPhone)',vw:375}, {label:'768 (iPad縦)',vw:768}, {label:'1024 (iPad横)',vw:1024}, {label:'1440 (PC)',vw:1440} ];
+  var mtb = document.querySelector('#matrix tbody');
+  vws.forEach(function(row){
+    var noniOS = JI._pickVideoSource(VIDEO, row.vw, false);
+    var ios    = JI._pickVideoSource(VIDEO, row.vw, true);
+    var cur = (row.vw===window.innerWidth);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+row.label+'</td>'+
+      '<td>'+noniOS.tier+'<br><span class="k" style="font-size:11px">'+noniOS.reason+'</span></td>'+
+      '<td>'+ios.tier+'<br><span class="k" style="font-size:11px">'+ios.reason+'</span></td>';
+    mtb.appendChild(tr);
+  });
+  log('マトリクス描画完了。準備OK。');
+})();
+</script>
+</body></html>
