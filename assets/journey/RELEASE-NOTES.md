@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase2 Step5 (2026-08-01 / branch: journey-engine-v3) — travel-17 完全不変の総回帰（差分ゼロ判定）
+Phase2全体（`journey-v3-phase1-step4`→現在）の runtime 差分を精査し、travel-17 の挙動が不変であることを確定:
+- **travel-17.html 差分ゼロ / map-data 差分ゼロ**。変更 runtime は journey-intro.js・.css のみ
+- **値計算・演出・タイミング関数はバイト不変**: tickShared/updateFlight/updateLabels/driveCeremony/updateCoordText/arcFrac/seek/enterVideo本体/watchVideo計算/toHero演出(fade,heroZoom)/DEFAULTS(timing,fx,video) は差分なし（`tickShared(ms)` はtry包みのインデント差のみ＝呼び出し同一）
+- **happy-pathの唯一の差はステージdivのクラス名**（`ji-stage-japan/ryukyu/miyako`→`ji-stage--i0/i1/i2(+--last)`）。travel-17の3段は同keyframe(jiStJapan/Ryukyu/Miyako)・同fill(.38)へ写像＝**レンダリング等価**
+- 他のJS差分は全て**失敗経路のみ**（tick/loopのtry/catch・abortToArticle・start guard）＋**正常完了で解除されるwatchdog**＝正常系で不実行/無効果
+- 回帰対象（seek/stage opacity/flight/ceremony/video/Hero transition/タイミング/見た目）**全て不変**。**差分なし**
+- コミット無し（検証のみ）。Phase2完了判定を発行
+
 ## Phase2 Step4 (2026-08-01 / branch: journey-engine-v3) — 非宮古サンプル地域で動作確認（config切替の実証）
 宮古島以外（石垣・川平湾）でも Journey Intro が **config だけで成立**することを実証。**engine/CSS/map-data/travel-17 は無変更**（runtime変更ゼロ）:
 - サンプルハーネス `_p2region.html`（未公開）: 石垣・川平湾(24.454,124.145) を destination＋descent だけで切替。段送りは Step1のindex依存で地域名非依存
