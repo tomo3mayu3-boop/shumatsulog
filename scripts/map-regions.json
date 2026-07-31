@@ -1,0 +1,14 @@
+{
+  "_doc": "Journey地図の地域(ステージ)定義。build-map-data.mjs が読む。新地域はここに1エントリ追加＋geojson供給で対応（コード変更不要）。順序=出力stagesの順序。",
+  "attribution": "地図データ: 国土地理院（地球地図日本）／Natural Earth",
+  "regions": {
+    "world":  { "file": "world.json",  "kind": "equirect-world",
+      "mapshaper": "npx -y mapshaper ne110/ne_110m_land.shp -simplify weighted 40% keep-shapes -o format=geojson precision=0.1 out/world.json" },
+    "japan":  { "file": "japan.json",  "bbox": [127, 29.5, 147, 46.5], "minRingArea": 2.0,
+      "mapshaper": "npx -y mapshaper polbnda_jpn.shp -dissolve2 -clip bbox=127,29.5,147,46.5 -simplify weighted 5% keep-shapes -filter-islands min-area=4km2 -o format=geojson precision=0.005 out/japan.json" },
+    "ryukyu": { "file": "ryukyu.json", "bbox": [122, 23, 132.5, 30], "minRingArea": 1.2,
+      "mapshaper": "npx -y mapshaper polbnda_jpn.shp -dissolve2 -clip bbox=122,23,132.5,30 -simplify weighted 22% keep-shapes -filter-islands min-area=1km2 -o format=geojson precision=0.002 out/ryukyu.json" },
+    "miyako": { "file": "miyako.json", "bbox": [124.55, 24.55, 125.75, 25.15], "minRingArea": 0.4,
+      "mapshaper": "npx -y mapshaper polbnda_jpn.shp -dissolve2 -clip bbox=124.55,24.55,125.75,25.15 -simplify weighted 85% keep-shapes -o format=geojson precision=0.0005 out/miyako.json" }
+  }
+}

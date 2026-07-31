@@ -18,25 +18,33 @@
      npx -y mapshaper polbnda_jpn.shp -dissolve2 -clip bbox=124.55,24.55,125.75,25.15 \
         -simplify weighted 85% keep-shapes -o format=geojson precision=0.0005 out/miyako.json
 
-   使い方: node scripts/build-map-data.mjs <geojsonディレクトリ>
+   地域(ステージ)定義は scripts/map-regions.json に外部化（新地域はそこに追加＋geojson供給でOK・当スクリプトは無改変）。
+   使い方: node scripts/build-map-data.mjs <geojsonディレクトリ> [--regions <json>] [--out <dir>]
    ============================================================ */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const SRC = process.argv[2];
-if (!SRC) { console.error('usage: node scripts/build-map-data.mjs <dir with world/japan/ryukyu/miyako.json>'); process.exit(1); }
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ARGV = process.argv.slice(2);
+function flag(name, def) {
+  const i = ARGV.indexOf('--' + name);
+  if (i === -1) return def;
+  const v = ARGV[i + 1];
+  return (v === undefined || v.startsWith('--')) ? true : v;
+}
+const SRC = ARGV.find(a => !a.startsWith('--')); /* 最初の非フラグ引数 = geojsonディレクトリ */
+if (!SRC) { console.error('usage: node scripts/build-map-data.mjs <geojson dir> [--regions <json>] [--out <dir>]'); process.exit(1); }
 
-const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'journey', 'map-data');
+const REGIONS_FILE = flag('regions', join(HERE, 'map-regions.json'));
+const OUT = flag('out', join(HERE, '..', 'assets', 'journey', 'map-data'));
 mkdirSync(OUT, { recursive: true });
 
-/* ステージ定義: bbox(経緯度) と投影(equirect + cos(中央緯度)補正)。世界のみ素のequirect */
-const STAGES = {
-  world:  { file: 'world.json',  kind: 'equirect-world' },
-  japan:  { file: 'japan.json',  bbox: [127, 29.5, 147, 46.5],       minRingArea: 2.0 },
-  ryukyu: { file: 'ryukyu.json', bbox: [122, 23, 132.5, 30],         minRingArea: 1.2 },
-  miyako: { file: 'miyako.json', bbox: [124.55, 24.55, 125.75, 25.15], minRingArea: 0.4 },
-};
+/* 地域定義を外部JSONから読む（bbox=経緯度, 投影=equirect+cos(中央緯度)補正。世界のみ素のequirect）。
+   順序=出力stagesの順序。処理ロジックは従来と同一＝同一入力で同一出力（既存3地域はバイト一致） */
+const regionsCfg = JSON.parse(readFileSync(REGIONS_FILE, 'utf8'));
+const STAGES = regionsCfg.regions;
+const ATTRIBUTION = regionsCfg.attribution || '地図データ: 国土地理院（地球地図日本）／Natural Earth';
 const W = 1000; // 各ステージの基準幅(viewBox units)
 
 function project(stage) {
@@ -65,7 +73,7 @@ function geometries(gj) {
 }
 
 const data = { version: 1, generated: new Date().toISOString().slice(0, 10),
-  attribution: '地図データ: 国土地理院（地球地図日本）／Natural Earth', stages: {} };
+  attribution: ATTRIBUTION, stages: {} };
 let report = [];
 
 for (const [name, st] of Object.entries(STAGES)) {

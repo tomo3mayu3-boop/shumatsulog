@@ -178,8 +178,9 @@ Skip／`prefers-reduced-motion`（即Hero）／同一セッション2回目の�
   (a) `map-data` に対応する海岸線データ `D.stages[stage]` と (b) 段送りアニメの CSS `.ji-stage-<stage>` が必要。
   現状データ/CSSが揃うのは `japan / ryukyu / miyako`（宮古・八重山エリア）のみ。
   → 同エリアの記事は `descent` 省略（既定）でそのまま高精度。**別地域**は
-  (a) `scripts/build-map-data.mjs` でその地域の `D.stages` を追加、(b) `.ji-stage-<key>` の段送りCSSを追加、
-  してから `route.descent` に列挙する（データ/CSSの汎用化は Phase 2 予定）。それまで別地域は `route.map:"abstract-v1"`（地域非依存）が無難。
+  (a) `scripts/map-regions.json` に地域定義（bbox/minRingArea/mapshaper）を**追加**し geojson を供給して `build-map-data.mjs` を実行（＝**データ追加のみ・スクリプト無改変**／Phase2 Step2）、
+  (b) `route.descent` にその stage を列挙する。段送りアニメは**降下index依存（`.ji-stage--i0/i1/i2`）で地域名非依存**（Phase2 Step1）＝3段構造なら**CSS追加不要**。
+  未整備の間は `route.map:"abstract-v1"`（地域非依存）が無難。
 - `descent` の `stage` に対応データが無い場合はそのステージのみスキップ（他ステージは描画・全体は破綻しない）。
 - 音声(`audio`)はフックのみ（無音運用）。
 - `route` の緯度経度→航路座標の自動投影は未対応（航路は viewBox 座標で手動指定）。

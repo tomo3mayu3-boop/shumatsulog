@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase2 Step2 (2026-07-31 / branch: journey-engine-v3) — map-dataビルドの地域汎用化（地域定義の外部データ化）
+地域(ステージ)定義を `build-map-data.mjs` のハードコードから **`scripts/map-regions.json` へ外部化**。**新地域はデータ追加のみ**（スクリプト無改変）で対応可能に:
+- `scripts/map-regions.json` 新規: world/japan/ryukyu/miyako を `{file, kind|bbox, minRingArea, mapshaper}` で定義。順序=出力stages順。旧inline定義とバイト一致（値・順序・attribution）を検証
+- `build-map-data.mjs`: 定義をJSONから読む形へ改修（**処理ロジックは無改変＝同一入力で同一出力**）。`--regions <json>` `--out <dir>` オプション追加（テスト用に本番を触らず出力可）
+- **runtime `journey-map.v1.js` は再生成せず据置**＝**travel-17完全不変**（git差分なしを確認）。**engine(js/css)は無変更**
+- 実証: 合成地域を map-regions.json への追加のみでビルド→ `stages.<新地域>` 生成を確認（本番未変更のまま）
+- 段送りアニメは Step1で地域名非依存化済のため、3段構造の別地域は **データ追加のみ・CSS追加不要**
+- **性能**: runtime変更ゼロ（build-timeのみ）。init/seek/rAF/FPS/mem すべて不変。V2/V3後方互換維持・記事HTML変更ゼロ
+
 ## Phase2 Step1 (2026-07-31 / branch: journey-engine-v3) — 段送りアニメの脱・名前依存（slotインデックス化 / Performance First採用=A2）
 降下ステージのCSSアニメを地域名依存から降下index依存へ（v1.3.4→**1.3.5-slot**）。**Performance First により JS駆動(A1)ではなくコンポジタ維持のslotCSS(A2)を採用**:
 - CSS: `.ji-stage-japan/ryukyu/miyako` → `.ji-stage--i0/i1/i2`（keyframe `jiStJapan/Ryukyu/Miyako` は不変）、最終段の明るいfillは `.ji-stage--last` へ
