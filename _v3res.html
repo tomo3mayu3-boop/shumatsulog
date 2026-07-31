@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3 解像度診断 — リサンプリング要因の確認</title>
+<meta name="color-scheme" content="light dark">
+<style>
+  body{ font-family:system-ui,sans-serif; margin:0; background:#0d1117; color:#c9d6e5; }
+  .wrap{ max-width:720px; margin:0 auto; padding:14px 12px 60px; }
+  h1{ font-size:17px; margin:6px 0; } h2{ font-size:13px; opacity:.85; margin:16px 0 6px; }
+  .card{ background:#161c26; border:1px solid #2a3340; border-radius:10px; padding:10px 12px; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  th,td{ border:1px solid #2a3340; padding:6px 8px; text-align:left; } th{ background:#1b2330; }
+  .warn{ color:#ffb357; font-weight:700; } .ok{ color:#7fe0a0; font-weight:700; }
+  .now{ font-variant-numeric:tabular-nums; }
+  .btns{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+  button{ background:#17505e; color:#eafaff; border:0; border-radius:8px; padding:11px 14px; font-size:14px; cursor:pointer; }
+  .tip{ font-size:12px; opacity:.78; line-height:1.5; }
+  /* 本番Journey Introと同一の表示条件: 全画面 + object-fit:cover */
+  #fs{ position:fixed; inset:0; z-index:9999; background:#03080f; display:none; }
+  #fs video{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+  #fsbar{ position:fixed; left:0; right:0; bottom:0; z-index:10000; display:none; gap:6px; padding:8px calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) 8px; background:rgba(6,12,20,.82); }
+  #fsbar button{ padding:9px 11px; font-size:13px; } #fsbar .lab{ color:#cfe6ea; font-size:12px; align-self:center; margin-right:auto; }
+</style>
+</head><body>
+<div class="wrap">
+  <h1>Journey V3 — 動画の解像度・リサンプリング診断</h1>
+  <p class="tip">本番Journey Introは動画を<strong>全画面 + object-fit:cover</strong>で表示します。ネイティブ解像度で出ることはほぼ無く、必ず画面のデバイスピクセルへ拡大/縮小(GPUバイリニア)されます。この端末での実倍率を下に表示し、各解像度を<strong>本番と同じ全画面</strong>で見比べられます（＝小窓の _v3q より本番に近い甘さが出ます）。</p>
+
+  <h2>① この端末の実測</h2>
+  <div class="card" id="dev"></div>
+
+  <h2>② 各tierの全画面表示倍率（object-fit:cover / この端末）</h2>
+  <div class="card"><table id="tbl"><thead><tr><th>tier / source</th><th>ネイティブ</th><th>全画面表示(device px)</th><th>倍率</th><th>判定</th></tr></thead><tbody></tbody></table></div>
+  <p class="tip">倍率&gt;1.0 = 拡大(＝甘くなる)。1.0前後=ほぼ等倍(シャープ)。&lt;1.0=縮小(シャープ)。“全画面表示”はcoverで画面を覆う実効ピクセル。</p>
+
+  <h2>③ 本番と同じ全画面で見比べ</h2>
+  <div class="btns">
+    <button data-w="720">720 (mobile) を全画面再生</button>
+    <button data-w="1080">1080 (tablet/desktop) を全画面再生</button>
+  </div>
+  <p class="tip">再生中は下バーで解像度を即切替。海/空でどれだけ甘さが違うか、実機の全画面で確認できます。（×で戻る）</p>
+</div>
+
+<div id="fs"><video id="fsv" playsinline webkit-playsinline muted loop controls></video></div>
+<div id="fsbar">
+  <span class="lab" id="fslab">—</span>
+  <button data-w="720">720</button><button data-w="1080">1080</button>
+  <button id="fsclose">×</button>
+</div>
+
+<script>
+(function(){
+  var SRC = {
+    '720':  'assets/video/travel-17/arrival-720.mp4?v=2',
+    '1080': 'assets/video/travel-17/arrival-1080.mp4?v=2'
+  };
+  var NAT = { '720':[720,1280], '1080':[1080,1920] };
+  var dpr = window.devicePixelRatio || 1;
+
+  function metrics(){
+    var wcss = window.innerWidth, hcss = window.innerHeight;
+    var wdev = Math.round(wcss*dpr), hdev = Math.round(hcss*dpr);
+    document.getElementById('dev').innerHTML =
+      '<table><tr><th>viewport (CSS px)</th><td class="now">'+wcss+' × '+hcss+'</td></tr>'+
+      '<tr><th>devicePixelRatio</th><td class="now">'+dpr+'</td></tr>'+
+      '<tr><th>デバイスピクセル(実解像度)</th><td class="now">'+wdev+' × '+hdev+'</td></tr>'+
+      '<tr><th>viewport 縦横比</th><td class="now">'+(wcss/hcss).toFixed(3)+'（動画は 0.5625 = 9:16）</td></tr></table>';
+    return { wdev:wdev, hdev:hdev };
+  }
+  // object-fit:cover の拡大率(ネイティブ→全画面device px)
+  function coverFactor(nat, m){
+    var s = Math.max(m.wdev/nat[0], m.hdev/nat[1]); // cover = max
+    return s;
+  }
+  function build(){
+    var m = metrics();
+    var tb = document.querySelector('#tbl tbody'); tb.innerHTML='';
+    ['720','1080'].forEach(function(k){
+      var nat = NAT[k], s = coverFactor(nat, m);
+      var dispW = Math.round(nat[0]*s), dispH = Math.round(nat[1]*s);
+      var judge = s>1.6 ? '<span class="warn">強い拡大→甘い</span>' : (s>1.15? '<span class="warn">やや拡大</span>' : '<span class="ok">ほぼ等倍〜縮小</span>');
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>'+k+' / arrival-'+k+'.mp4</td>'+
+        '<td class="now">'+nat[0]+'×'+nat[1]+'</td>'+
+        '<td class="now">'+dispW+'×'+dispH+'</td>'+
+        '<td class="now">'+s.toFixed(2)+'×</td><td>'+judge+'</td>';
+      tb.appendChild(tr);
+    });
+  }
+  build();
+  window.addEventListener('resize', build);
+  window.addEventListener('orientationchange', function(){ setTimeout(build,300); });
+
+  // 全画面テスト
+  var fs=document.getElementById('fs'), fsv=document.getElementById('fsv'), fsbar=document.getElementById('fsbar'), fslab=document.getElementById('fslab');
+  function play(k){
+    var t = fsv.currentTime||0;
+    fsv.src = SRC[k]; fsv.load();
+    fsv.addEventListener('loadedmetadata', function h(){ fsv.removeEventListener('loadedmetadata',h); try{fsv.currentTime=t;}catch(e){} fsv.play(); }, {once:true});
+    var m = metrics(), s = coverFactor(NAT[k], m);
+    fslab.textContent = k+' → 全画面 '+s.toFixed(2)+'×';
+    fs.style.display='block'; fsbar.style.display='flex';
+  }
+  function close(){ fs.style.display='none'; fsbar.style.display='none'; fsv.pause(); }
+  [].forEach.call(document.querySelectorAll('button[data-w]'), function(b){ b.addEventListener('click', function(){ play(b.dataset.w); }); });
+  document.getElementById('fsclose').addEventListener('click', close);
+})();
+</script>
+</body></html>

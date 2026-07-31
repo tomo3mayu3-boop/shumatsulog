@@ -14,13 +14,16 @@ cd /c/homepage && python -m http.server 8731 --bind 0.0.0.0
 ## 1. ①自動選択の確認（同条件比較の要）
 ページ上部に「この端末での自動選択」が出る。PC と iPhone で開き、下表と一致するか確認:
 
+> tier方針（2026-07-31確定）: 高DPI端末での拡大表示による甘さ対策で **540pは廃止**。
+> mobile=**720p** / tablet=**1080p** / desktop=**1080p**（すべて CRF20 / preset slow / bt709色タグ）。
+
 | 端末（viewport） | 通常回線 | 選択tier / ファイル |
 |---|---|---|
-| iPhone（375）| 4g/3g | **mobile** / arrival-540.mp4 |
-| iPad 縦（768）| 4g | **tablet** / arrival-720.mp4 |
-| iPad Pro（1366, iOS cap）| 4g | **tablet** / arrival-720.mp4 |
+| iPhone（375）| 4g/3g | **mobile** / arrival-720.mp4 |
+| iPad 縦（768）| 4g | **tablet** / arrival-1080.mp4 |
+| iPad Pro（1366, iOS cap）| 4g | **tablet** / arrival-1080.mp4 |
 | PC（1440）| 4g | **desktop** / arrival-1080.mp4 |
-| Safari（回線API非対応）| — | viewport のみで選択（PCなら desktop）|
+| Safari（回線API非対応）| — | viewport のみで選択（PCなら desktop=1080）|
 
 低速・省データ時（iPhoneのみ判定可）:
 | 条件 | 挙動 |
@@ -33,8 +36,9 @@ cd /c/homepage && python -m http.server 8731 --bind 0.0.0.0
 - 低速回線の擬似: Mac Safari + iPhone実機なら「デベロッパ > Service Worker/Network Link Conditioner」または実際の低速環境で。PC Chrome は DevTools > Network > Throttling で `effectiveType` が変わる。
 
 ## 2. ②手動再生で画質比較
-「540 / 720 / 1080 / auto」ボタンで、地図を飛ばして動画パート（開始3.5s→接続16.0s→Hero）を再生。
-同じ端末で 3 解像度を切替え、**画質差**と**Hero接続の自然さ**を目視比較。ログに `chosen tier / src` が出る。
+「720(mobile) / 1080(tablet/desktop) / auto」ボタンで、地図を飛ばして動画パート（開始3.5s→接続16.0s→Hero）を再生。
+同じ端末で切替え、**画質差**と**Hero接続の自然さ**を目視比較。ログに `chosen tier / src` が出る。
+（全画面での拡大率そのものは `_v3res.html` で数値確認できる。）
 
 ## 3. ③poster 表示確認
 - 上段: `arrival-poster.webp` を直接表示（絵柄確認）。
@@ -42,12 +46,11 @@ cd /c/homepage && python -m http.server 8731 --bind 0.0.0.0
 
 ## 4. ④ファイルサイズ（配信元から HEAD 取得）
 ページ④の表に Content-Length ベースの実サイズが出る。基準値:
-| tier | ファイル | 解像度 | サイズ |
-|---|---|---|---|
-| mobile | arrival-540.mp4 | 540×960 | 1.09 MB |
-| tablet | arrival-720.mp4 | 720×1280 | 2.90 MB |
-| desktop| arrival-1080.mp4| 1080×1920| 10.97 MB |
-| poster | arrival-poster.webp | 720×1280 | 0.03 MB |
+| tier | ファイル | 解像度 | 設定 | サイズ |
+|---|---|---|---|---|
+| mobile | arrival-720.mp4 | 720×1280 | CRF20 slow | 6.94 MB |
+| tablet/desktop | arrival-1080.mp4 | 1080×1920 | CRF20 slow | 16.89 MB |
+| poster | arrival-poster.webp | 720×1280 | webp q82 | 0.03 MB |
 
 ## 5. ⑤選択マトリクス
 ページ⑤に viewport×iOS の選択結果が表で出る（上記①と同じ判定を一覧化）。

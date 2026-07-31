@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## v1.3.0 動画品質確定 (2026-07-31 / branch: journey-engine-v3) — tier再設計＋高画質再エンコード
+実機診断で「甘さの主因はエンコードでなく **高DPI端末での540p全画面拡大**（object-fit:cover による2.6〜2.9倍拡大）」と判明。tier方針を再設計:
+- **540pを廃止**。mobile=**720p** / tablet=**1080p** / desktop=**1080p**（全tier **CRF20 / preset slow / bt709色タグ明示 / faststart / 無音**）
+- 再エンコード: `arrival-720.mp4`=6.94MB / `arrival-1080.mp4`=16.89MB（29.97fps・8bit・bt709 保持）。poster据置(0.03MB)
+- travel-17 config を新 `sources`（mobile→720 / tablet・desktop→1080）へ更新。差替え検知のため video/poster に `?v=2` を付与
+- `scripts/build-video-renditions.mjs` を新方針に更新（CRF/preset引数化・色タグ・720/1080生成・config出力）。生成物は決定論的に再現
+- **エンジンコードは無変更**（v1.3.0-step3のまま）。Save-Data/2G/loadBudget/poster/Heroフォールバック/iOS cap/V2後方互換は現状維持
+- 検証: `_v3cmp.html`(選択/画質/poster/サイズ/マトリクス) ＋ `_v3res.html`(全画面拡大率の実測・本番同条件の全画面比較)
+
 ## v1.3.0-step4 (2026-07-31 / branch: journey-engine-v3) — V3 Step4: レンディション生成＋travel-17適用（実運用入り）
 - 新規 `scripts/build-video-renditions.mjs`（ffmpeg-static・build-map-data.mjsと同方式）: マスター4Kから 540/720/1080(縦・H.264 faststart 無音)＋poster.webp を生成。サイズレポート＆config貼付スニペットを出力
 - **travel-17 を `sources`/`poster` へ切替**＝V3で初の適応配信（エンジン読込を `?v=130` に更新しV3エンジンをロード）

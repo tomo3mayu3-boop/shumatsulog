@@ -33,9 +33,8 @@
 
   <h2>② 解像度を手動で再生比較（実機で画質確認）</h2>
   <div class="btns">
-    <button data-w="540">540 mobile を再生</button>
-    <button data-w="720">720 tablet を再生</button>
-    <button data-w="1080">1080 desktop を再生</button>
+    <button data-w="720">720 (mobile) を再生</button>
+    <button data-w="1080">1080 (tablet/desktop) を再生</button>
     <button data-w="auto" class="alt">auto（この端末の自動選択）を再生</button>
   </div>
   <p class="k" style="font-size:12px;">※ 地図フェーズを飛ばし、動画パート(開始3.5s→接続16.0s)から再生。Heroまで通しで確認できます。</p>
@@ -45,7 +44,7 @@
     <img class="poster" src="assets/video/travel-17/arrival-poster.webp" alt="poster">
     <p class="k" style="font-size:12px;margin:6px 0 0;">上=poster.webp を直接表示。下=preload無しの&lt;video poster&gt;（実機で再生前にこの絵が出るか）:</p>
     <video id="postervid" class="poster" style="margin-top:6px;" playsinline webkit-playsinline muted preload="none"
-      poster="assets/video/travel-17/arrival-poster.webp" src="assets/video/travel-17/arrival-720.mp4"></video>
+      poster="assets/video/travel-17/arrival-poster.webp?v=2" src="assets/video/travel-17/arrival-720.mp4?v=2"></video>
   </div>
 
   <h2>④ 各解像度のファイルサイズ（この配信元から取得）</h2>
@@ -68,13 +67,13 @@
 
   var DIR = 'assets/video/travel-17/';
   var VIDEO = {
-    src: DIR+'arrival-720.mp4',
+    src: DIR+'arrival-720.mp4?v=2',
     sources: [
-      { src: DIR+'arrival-540.mp4',  maxWidth:640,  tier:'mobile' },
-      { src: DIR+'arrival-720.mp4',  maxWidth:1024, tier:'tablet' },
-      { src: DIR+'arrival-1080.mp4',                tier:'desktop' }
+      { src: DIR+'arrival-720.mp4?v=2',  maxWidth:640,  tier:'mobile' },
+      { src: DIR+'arrival-1080.mp4?v=2', maxWidth:1024, tier:'tablet' },
+      { src: DIR+'arrival-1080.mp4?v=2',                tier:'desktop' }
     ],
-    poster: DIR+'arrival-poster.webp',
+    poster: DIR+'arrival-poster.webp?v=2',
     startAt:3.5, playSeconds:16.0
   };
   var BASE = { version:1, id:'v3cmp',
@@ -115,7 +114,7 @@
   function playTier(w){
     var cfg = JSON.parse(JSON.stringify(BASE));
     if(w==='auto'){ cfg.video = JSON.parse(JSON.stringify(VIDEO)); }
-    else { cfg.video = { src: DIR+'arrival-'+w+'.mp4', poster: VIDEO.poster, startAt:3.5, playSeconds:16.0 }; }
+    else { cfg.video = { src: DIR+'arrival-'+w+'.mp4?v=2', poster: VIDEO.poster, startAt:3.5, playSeconds:16.0 }; }
     cfg.timing.crossfadeMs = 300;
     if(window.__ji) window.__ji.destroy();
     window.__ji = JI.start(cfg, { force:true,
@@ -132,9 +131,8 @@
 
   /* --- ④ ファイルサイズ(HEAD) --- */
   var files = [
-    { tier:'mobile',  file:'arrival-540.mp4',  res:'540×960' },
-    { tier:'tablet',  file:'arrival-720.mp4',  res:'720×1280' },
-    { tier:'desktop', file:'arrival-1080.mp4', res:'1080×1920' },
+    { tier:'mobile',        file:'arrival-720.mp4',  res:'720×1280' },
+    { tier:'tablet/desktop',file:'arrival-1080.mp4', res:'1080×1920' },
     { tier:'poster',  file:'arrival-poster.webp', res:'720×1280' }
   ];
   var tb = document.querySelector('#sizes tbody');
