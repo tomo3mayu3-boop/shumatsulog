@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase2 Step4 (2026-08-01 / branch: journey-engine-v3) — 非宮古サンプル地域で動作確認（config切替の実証）
+宮古島以外（石垣・川平湾）でも Journey Intro が **config だけで成立**することを実証。**engine/CSS/map-data/travel-17 は無変更**（runtime変更ゼロ）:
+- サンプルハーネス `_p2region.html`（未公開）: 石垣・川平湾(24.454,124.145) を destination＋descent だけで切替。段送りは Step1のindex依存で地域名非依存
+- 使用データは**既存 `ryukyu` ステージ**（南西諸島全体・53paths が石垣を包含）＝**新規map-data不要**。descent=[japan@東京, ryukyu@沖縄(中間), ryukyu@石垣(保持)]
+- 検証: 全descentステージが画面内に解決（i0 63/64・i1 54/54・i2 20/79%）／サンプルconfigは validate 0件／engine・CSS・map-data・travel-17 の git差分ゼロ
+- 「地図のみ(動画なし→Hero)」モードで地図降下を単独確認可。参考に宮古(既定descent)も同ページで比較
+- 補足: 石垣の“最終クローズアップ”専用データは無いため最終段も ryukyu スケール（パン表現）。近接図が要る地域は build-map-data.mjs でデータ追加（Step2の手順・データのみ）
+- **性能**: runtime変更ゼロ＝init/seek/rAF/FPS/mem すべて Step3 と同一。JS/CSS 0B。既存記事影響なし・後方互換維持
+
 ## Phase2 Step3 (2026-07-31 / branch: journey-engine-v3) — 安全フォールバック強化（必ず記事本文へ到達）
 壊れたconfig / stage不足 / map-data不足 / destination不足 でも**必ず記事本文へ到達**するようフェイルセーフを追加（v1.3.5→**1.3.6-failsafe**）。全て失敗時のみ動作＝正常系はコスト0:
 - **構築/開始の例外**: `start()` を try/catch。失敗時は `.ji-overlay` 除去＋`documentElement.overflow` 復元＋null返し（スクロールロックを残さない）。node実証済

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase2 Step4 — 非宮古サンプル地域（石垣・川平湾）config切替</title>
+<link rel="stylesheet" href="assets/journey/journey-intro.css">
+<meta name="color-scheme" content="light dark">
+<style>
+  html,body{ margin:0; background:#000; color:#eafaff; font-family:system-ui,sans-serif; }
+  .bg-hero{ position:fixed; inset:0; z-index:0; }
+  .bg-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .bg-hero .cap{ position:absolute; left:16px; bottom:120px; text-shadow:0 2px 10px #000; }
+  .bg-hero .cap h2{ margin:0 0 4px; font-size:22px; } .bg-hero .cap p{ margin:0; font-size:13px; opacity:.9; }
+  .bar{ position:fixed; left:0; right:0; bottom:0; z-index:100000; padding:12px 12px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(8,12,18,.94); border-top:1px solid rgba(255,255,255,.14); backdrop-filter:blur(4px); }
+  .bar button{ background:#2b8ca0; color:#04121a; border:0; border-radius:10px; padding:13px 18px; font-size:15px; font-weight:700; margin:2px 4px 2px 0; cursor:pointer; }
+  .bar button.alt{ background:#39414d; color:#eafaff; }
+  .bar .st{ font-size:11.5px; opacity:.85; margin-top:8px; line-height:1.5; font-variant-numeric:tabular-nums; }
+  code{ font-size:11px; }
+</style>
+</head><body>
+<div class="bg-hero">
+  <img class="ji-hero" src="images/travel/sup/sup-1.webp" alt="サンプル">
+  <div class="cap"><h2>川平湾でSUPした日（サンプル）</h2><p>📍 川平湾・石垣島（非宮古）</p></div>
+</div>
+
+<div class="bar">
+  <button id="go">▶ 通し再生（石垣・非宮古）</button>
+  <button id="gomap" class="alt">地図のみ（動画なし→Hero）</button>
+  <button id="got17" class="alt">参考: 宮古(travel-17)構成</button>
+  <div class="st" id="st">同一 engine/CSS/map-data のまま、config の destination＋descent だけで非宮古(石垣)へ切替。既存 ryukyu ステージを使用（新規データ不要）。</div>
+</div>
+
+<script src="assets/journey/map-data/journey-map.v1.js?v=141"></script>
+<script src="assets/journey/journey-intro.js?v=141"></script>
+<script>
+(function(){
+  var DIR='assets/video/travel-17/';
+  // ---- 非宮古サンプル: 石垣・川平湾。descent は既存 ryukyu を2段(沖縄中間→石垣保持)で使用 ----
+  var ISHIGAKI = { version:1, id:'sample-ishigaki',
+    route:{ map:'vector-v2', path:'M258 44 Q249 68 244 92 Q236 118 222 140 Q188 150 150 148',
+      waypoints:[ {jp:'東京',ro:'Tokyo',node:[258,44]}, {jp:'沖縄',ro:'Okinawa',node:[244,92]}, {jp:'石垣島',ro:'Ishigaki',node:[222,140]} ],
+      introLabel:{ jp:'世界', ro:'The World' },
+      descent:[ {stage:'japan',anchor:[35.69,139.69]}, {stage:'ryukyu',anchor:[26.2,127.68]}, {stage:'ryukyu',anchor:'destination'} ] },
+    destination:{ jp:'川平湾', ro:'Kabira Bay', lat:24.454, lon:124.145 },
+    hero:'.ji-hero',
+    video:{ src:DIR+'arrival-720.mp4?v=2', sources:[ {src:DIR+'arrival-720.mp4?v=2',maxWidth:640,tier:'mobile'},{src:DIR+'arrival-1080.mp4?v=2',maxWidth:1024,tier:'tablet'},{src:DIR+'arrival-1080.mp4?v=2',tier:'desktop'} ], poster:DIR+'arrival-poster.webp?v=2', startAt:3.5, playSeconds:16.0, arrivalEase:false },
+    fx:{ heroZoom:false }, timing:{ heroCrossfadeMs:1000 }, skip:{ button:true, label:'スキップ', oncePerSession:false } };
+  // 参考: 宮古(travel-17相当・既定descent)
+  var MIYAKO = JSON.parse(JSON.stringify(ISHIGAKI));
+  MIYAKO.id='sample-miyako'; MIYAKO.destination={ jp:'ユニの浜', ro:'Uni Beach', lat:24.788, lon:125.248 };
+  MIYAKO.route.waypoints[2]={jp:'宮古島',ro:'Miyakojima',node:[222,140]};
+  delete MIYAKO.route.descent; // 既定(japan/ryukyu/miyako)
+
+  var st=document.getElementById('st');
+  if(!window.JourneyIntro){ st.textContent='ERROR: engine未ロード'; return; }
+  st.textContent='engine '+JourneyIntro.version+' / タップで再生。config差分のみで地域切替（下記）';
+
+  function run(cfg, label){
+    if(window.__ji){ try{window.__ji.destroy();}catch(e){} }
+    var v = JSON.parse(JSON.stringify(cfg));
+    window.__ji = JourneyIntro.start(v, { force:true, onComplete:function(){ st.textContent=label+' 完了 → Hero。engine/CSS/data 無改変・config のみ。'; } });
+    var d=(v.route.descent||['(既定 japan/ryukyu/miyako)']);
+    st.textContent=label+' 再生中… descent='+JSON.stringify(d)+' / dest='+v.destination.jp+'('+v.destination.lat+','+v.destination.lon+')';
+  }
+  document.getElementById('go').onclick=function(){ run(ISHIGAKI,'石垣(非宮古・動画つき)'); };
+  document.getElementById('gomap').onclick=function(){ var c=JSON.parse(JSON.stringify(ISHIGAKI)); c.video={src:null}; run(c,'石垣(地図のみ→Hero)'); };
+  document.getElementById('got17').onclick=function(){ run(MIYAKO,'宮古(既定descent・参考)'); };
+})();
+</script>
+</body></html>
