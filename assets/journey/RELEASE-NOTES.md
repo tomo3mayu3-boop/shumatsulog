@@ -1,5 +1,13 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase3 Step6 (2026-08-02 / branch: journey-engine-v3) — 総回帰確認＋確定（保護不変の維持）
+Phase3全体（`journey-v3-phase2-step5`→現在）の総回帰。**保護不変はすべて維持**、意図的な仕上げのみ反映を確認:
+- **不変（git/実値で確認）**: travel-17.html / map-data / **動画ファイル（再エンコード無し）** すべて差分ゼロ。コアtiming定数（phase1Ms/flight/crossfade/heroCrossfade/arrival）変更なし。**CEREMONY 2920ms・enterVideo 14620ms・接続 動画16.0s** 不変。tier **PC/Tablet=1080p・Mobile=720p**。**playbackRate 1.0固定**（arrivalEase false）。Hero遷移=Dissolve＋**Hero画像側のみScale**（動画は等倍）
+- **意図的な仕上げ（全反映）**: grain .03／vignette .2／リップル洗練＋座標ロック余韻／progressバー100%到達／Hero側Scale＋1.0固定化／reduced-motion 静止カード代替／**PC横画面=中央の縦フレーム**（iPhoneは全画面）
+- Phase3の変更は engine(js/css) のみ＝記事HTML/データ/動画は不変。**通常再生のrAF実行時コスト増なし**（静的CSS・パラメータ化・WAAPI/CSS一度きり・reduced/pcframeは分岐/横長のみ）
+- 将来拡張メモ追記（`_spec_journey_engine_phase3.md §3.5`）: 動画の縦/横をメタデータで自動判定→クラス＋CSSでレイアウト切替できる構造（現フェーズ未実装・後方互換）
+- 確定: PC縦フレーム採用。4K化/再エンコードは行わない（画質問題の主因は過拡大・クロップと判断）
+
 ## Phase3 Step5 (2026-08-01 / branch: journey-engine-v3) — iPhone/PC 見え方の統一（PC縦フレーム）
 横長(PC)で縦動画が全画面coverにより「中央の帯にクロップ＋過拡大(ソフト化)」される問題を解消（v1.3.10→**1.3.11-pcframe**）:
 - **横長ビューポートのみ**、`.ji-video` を中央の**縦フレーム(9:16)**で表示（`width:min(56.25vh,100vw)` 中央寄せ）。iPhone(縦)は `min-aspect-ratio:1/1` 非適用＝**従来どおり全画面**

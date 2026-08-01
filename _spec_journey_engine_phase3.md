@@ -107,6 +107,18 @@
 
 ---
 
+## 3.5 将来拡張（設計メモ・現フェーズ未実装）: 動画の縦/横 自動判定レイアウト
+
+ドローン動画を**縦・横どちらにも差し替え可能**にするための、後方互換な拡張方針（今は実装しない・構造だけ用意）:
+- **判定**: `loadedmetadata` で `video.videoWidth/videoHeight` から縦横を判定（または `config.video.orientation: 'auto'|'portrait'|'landscape'`）。
+- **切替**: 現在の `pcPortraitFrame` は **overlayのクラス(`ji-pc-frame`)＋CSS** で成立＝**クラスを差し替えるだけ**でレイアウトを切替えられる構造。
+  - 縦動画（現行）: 横長ビューポートで `ji-pc-frame`＝中央の縦フレーム／iPhone(縦)は全画面。
+  - 横動画（将来）: 逆に**縦ビューポート(iPhone)で横フレーム(レターボックス)**、横ビューポート(PC)は全画面cover が自然。→ 例 `ji-video-portrait` / `ji-video-landscape` を判定結果で付与し、`@media (orientation)` × クラスで4象限のレイアウトをCSSで定義。
+- **非影響設計**: 判定は再生前の一度きり（毎フレーム無し）、レイアウトはCSS(compositor)。タイミング/接続/Hero遷移ロジックは共通のまま。tier選択(`pickVideoSource`)も縦横非依存で流用可。
+- **config**: `video.orientation`（既定'auto'）を足すだけで有効化でき、既存の縦動画configは 'auto'→portrait 判定で現行と完全一致（後方互換）。
+
+→ 現構造（クラス＋config駆動・判定はメタデータ・レイアウトはCSS）で**この拡張は容易**。現フェーズは縦動画で確定。
+
 ## 4. 全Step共通の担保
 - 保護不変（timing/動画区間/画質/arrivalEase:false）に触れない。触れる必要が出た項目は**そのStepで実装せず代替案提示**。
 - 追加演出は `cfg.fx.*` トグルで**既定新・旧に戻せる**＝config互換・rollback容易。
