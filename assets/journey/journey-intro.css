@@ -128,4 +128,12 @@
 @keyframes jiStRyukyu{ 0%,60%{opacity:0} 66%{opacity:1} 74%{opacity:1} 80%{opacity:0} 100%{opacity:0} }
 @keyframes jiStMiyako{ 0%,72%{opacity:0} 80%{opacity:.95} 100%{opacity:.95} }
 
-@media (prefers-reduced-motion: reduce){ .ji-overlay{ display:none; } }
+/* P3-4: reduced-motion の自然な代替（静的な到着カード・motion無し・opacityのみ）。
+   フル演出のオーバーレイは従来どおり非表示(二重防御)、代替カード(.ji-reduced)のみ許可 */
+@media (prefers-reduced-motion: reduce){ .ji-overlay:not(.ji-reduced){ display:none; } }
+.ji-reduced{ display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle at 50% 42%, #0c3143 0%, #071f2c 58%, #03080f 100%); }
+.ji-reduced-card{ text-align:center; padding:0 24px; }
+.ji-reduced-dest .jp{ display:block; font-size:clamp(26px,7vw,44px); font-weight:600; letter-spacing:.08em; color:#f2f6f7; text-shadow:0 2px 12px rgba(5,17,30,.55); }
+.ji-reduced-dest .ro{ display:block; margin-top:10px; font-size:12px; font-weight:600; letter-spacing:.5em; text-indent:.5em; text-transform:uppercase; color:rgba(233,252,254,.82); }
+.ji-reduced-coord{ margin-top:18px; font-family:"SFMono-Regular",Consolas,"Courier New",monospace; font-size:11px; letter-spacing:.22em; color:rgba(242,246,247,.72); font-variant-numeric:tabular-nums; }

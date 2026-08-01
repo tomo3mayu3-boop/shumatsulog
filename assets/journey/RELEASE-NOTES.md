@@ -1,5 +1,15 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase3 Step4 (2026-08-01 / branch: journey-engine-v3) — reduced-motion の自然な代替表示
+`prefers-reduced-motion: reduce` 時に**イントロ完全スキップ**だった挙動を、**動きの無い上品な代替**へ（v1.3.9→**1.3.10-reduced**）:
+- 新 `reducedIntro`: 静的な到着カード（目的地 jp/ro ＋座標・静止）を calm な背景に表示→`reducedHoldMs(1400)` 保持→**opacityのみ**の soft fade（`reducedFadeMs(800)`）→Hero。**transform/mapアニメ/動画は一切無し**＝motion無し
+- `fx.reducedAlt`（既定true）＝代替表示ON / false で従来どおり即Hero。`opts.reduced` でOS設定に依らず発火可（テスト/確認用）
+- CSS: media query を `.ji-overlay:not(.ji-reduced)` に限定＝フル演出は従来どおり非表示(二重防御)、代替カードのみ許可。`.ji-reduced*` は静的スタイルのみ
+- スキップボタン対応・Hero先読み・完了/破棄で確実にクリーンアップ（記事本文へ到達）
+- **通常系(reduced-motion無し)は一切不変**＝reduced分岐を通らず従来の Instance へ。**runtime実行時コスト増なし**（normal playbackに影響なし）
+- 性能: 代替パスは 小DOM＋opacity WAAPI1本＋timer2本のみ。JS gzip +828 / CSS gzip +296（代替機能の追加分）
+- 確認 `_p3review4.html`（reduced代替／通常イントロ／reduced OFF のA/B・OS設定不要でボタン再現）
+
 ## Phase3 Step3 (2026-08-01 / branch: journey-engine-v3) — 動画→Hero Dissolve+Scale（Hero画像側のみ）
 動画→Heroの接続に上品な Dissolve+Scale を追加。**Scaleは Hero画像側のみ・動画は等倍（画質低下ゼロ）**（v1.3.8→**1.3.9-heroscale**）:
 - 新 `fx.heroScaleIn`（既定true）＝`toHero` のDissolve(heroCrossfadeMs 1000)中に **Hero画像(`cfg.hero`=.ji-hero)を `heroScaleFrom(1.025)→heroScaleTo(1.0)` の settle**（自然サイズへ収束）。WAAPI compositor transform・毎フレームJS無し
