@@ -1,5 +1,12 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase3 Step7 QA / Completed (2026-08-02 / branch: journey-engine-v3) — QA＋保守性ハードニング1件
+QA全項目PASS（リーク/例外/console/不要コード/破綻耐性）。保守性ハードニング1件のみ適用（v1.3.11→**1.3.12-herozoom-default**）:
+- **`DEFAULTS.fx.heroZoom: true → false`**（動画側Scaleを既定OFF）。将来 記事configで `heroZoom` を書き忘れても**動画が拡大＝軟化しない**ための堅牢化。Hero画像側の `heroScaleIn` は維持。travel-17 は明示 `heroZoom:false` のため**挙動不変**。他変更なし
+- QA所見: イベント/タイマ/rAF/WAAPI/デコーダは destroy・abortToArticle で確実に解放（リークなし）。start/tick/loop/reducedIntro を try/catch（例外時も記事本文へ到達）。旧ステージ名クラス・未使用keyframe 0。valid config の validate 0件
+- 実機依存（Lighthouse Perf/BP・実ブラウザconsole）は要実機（外部リソース0・defer・CLS非影響で緑見込み）
+- **Phase3 Completed**
+
 ## Phase3 Step6 (2026-08-02 / branch: journey-engine-v3) — 総回帰確認＋確定（保護不変の維持）
 Phase3全体（`journey-v3-phase2-step5`→現在）の総回帰。**保護不変はすべて維持**、意図的な仕上げのみ反映を確認:
 - **不変（git/実値で確認）**: travel-17.html / map-data / **動画ファイル（再エンコード無し）** すべて差分ゼロ。コアtiming定数（phase1Ms/flight/crossfade/heroCrossfade/arrival）変更なし。**CEREMONY 2920ms・enterVideo 14620ms・接続 動画16.0s** 不変。tier **PC/Tablet=1080p・Mobile=720p**。**playbackRate 1.0固定**（arrivalEase false）。Hero遷移=Dissolve＋**Hero画像側のみScale**（動画は等倍）

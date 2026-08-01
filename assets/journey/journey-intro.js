@@ -36,7 +36,7 @@
     audio: { src: null, volume: 0.5, fadeInMs: 1400 },
     /* Phase2 fx: すべて既定ON・configでOFF可(後方互換: 未指定=従来見た目+質感)
        v1.3.1 遷移スムーズ化: heroPreload/progressComplete/pauseAfterFade(既定ON)、heroZoomは比較用にOFF可 */
-    fx: { trailGlint: true, glintLen: 0.07, pinRing: true, grain: true, vignette: true, heroZoom: true, heroPreload: true, progressComplete: true, pauseAfterFade: true,
+    fx: { trailGlint: true, glintLen: 0.07, pinRing: true, grain: true, vignette: true, heroZoom: false, heroPreload: true, progressComplete: true, pauseAfterFade: true,
       /* P3-3: Dissolve+Scale は Hero画像側のみ(動画にはScaleを掛けない=画質低下回避)。既定=settle(1.025→1.0で自然サイズに収まる) */
       heroScaleIn: true, heroScaleFrom: 1.025, heroScaleTo: 1.0,
       /* P3-2: 到着リップルの独立調整値（既定=洗練版。driveCeremony既存計算をパラメータ化・rAF処理は増やさない）。
@@ -779,7 +779,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.11-pcframe',
+    version: '1.3.12-herozoom-default',
     current: null,
     registerMap: registerMap,
     providers: providers,
