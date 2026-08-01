@@ -43,7 +43,9 @@
          現行比較値: opacity .5 / echo .26 / scaleTo 2.23 / durMs 650 / offsetMs 300 / easePow 2 */
       ripple: { opacity: 0.46, opacityEcho: 0.20, scaleFrom: 0.38, scaleTo: 2.05, durMs: 720, offsetMs: 330, easePow: 2.4 },
       /* P3-4: reduced-motion時の自然な代替（true=静的な到着カード→soft fade / false=従来どおり即Hero） */
-      reducedAlt: true },
+      reducedAlt: true,
+      /* P3-5: 横長(PC)で縦動画を中央の縦フレーム表示(iPhoneの縦印象に統一＋実効倍率を下げシャープ化)。false=全画面cover(従来) */
+      pcPortraitFrame: true },
     timing: {
       phase1Ms: 13000, flightStartPct: 0.46, flightEndPct: 0.90,
       crossfadeMs: 900, heroCrossfadeMs: 240, /* v1.1: 映画的マッチカット(旧1000msはconfigで指定可) */
@@ -225,7 +227,7 @@
 
   function buildDom(cfg) {
     var ov = document.createElement('div');
-    ov.className = 'ji-overlay';
+    ov.className = 'ji-overlay' + (cfg.fx.pcPortraitFrame !== false ? ' ji-pc-frame' : ''); /* P3-5: 横長で縦動画を縦フレーム表示 */
     var wpHtml = cfg.route.waypoints.map(function (w, i) {
       return '<div class="ji-label" data-wp="' + i + '"><span class="jp">' + esc(w.jp) + '</span><span class="ro">' + esc(w.ro) + '</span></div>';
     }).join('');
@@ -777,7 +779,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.10-reduced',
+    version: '1.3.11-pcframe',
     current: null,
     registerMap: registerMap,
     providers: providers,

@@ -1,5 +1,14 @@
 # Journey Intro Engine ― Release Notes
 
+## Phase3 Step5 (2026-08-01 / branch: journey-engine-v3) — iPhone/PC 見え方の統一（PC縦フレーム）
+横長(PC)で縦動画が全画面coverにより「中央の帯にクロップ＋過拡大(ソフト化)」される問題を解消（v1.3.10→**1.3.11-pcframe**）:
+- **横長ビューポートのみ**、`.ji-video` を中央の**縦フレーム(9:16)**で表示（`width:min(56.25vh,100vw)` 中央寄せ）。iPhone(縦)は `min-aspect-ratio:1/1` 非適用＝**従来どおり全画面**
+- 効果(1) **iPhoneの縦印象に統一**（PCでも縦動画を縦で提示・帯クロップ解消）／(2) **PC動画がシャープ**：実効cover倍率 DPR1 1.78→**0.56**・DPR2 3.56→**1.13**（過拡大→ほぼ等倍/縮小）。**再エンコード無し**
+- `fx.pcPortraitFrame`（既定true・overlayに `ji-pc-frame` クラス）で切替可。false=全画面cover(従来)
+- **非影響**: 動画尺・接続16.0s・画質(エンコード)・Hero遷移・タイミングは不変（CSSのみ・video表示ボックスだけ変更・compositor）。地図レイアウトは変更せず(overflow/composition退行回避)
+- 性能: CSSのみ・毎フレームJS無し・新要素無し・iPhone非適用。JS gzip +137 / CSS gzip +217
+- 確認 `_p3review5.html`（縦フレーム↔全画面cover のA/B・通し。PCで差、iPhoneは同一）
+
 ## Phase3 Step4 (2026-08-01 / branch: journey-engine-v3) — reduced-motion の自然な代替表示
 `prefers-reduced-motion: reduce` 時に**イントロ完全スキップ**だった挙動を、**動きの無い上品な代替**へ（v1.3.9→**1.3.10-reduced**）:
 - 新 `reducedIntro`: 静的な到着カード（目的地 jp/ro ＋座標・静止）を calm な背景に表示→`reducedHoldMs(1400)` 保持→**opacityのみ**の soft fade（`reducedFadeMs(800)`）→Hero。**transform/mapアニメ/動画は一切無し**＝motion無し
