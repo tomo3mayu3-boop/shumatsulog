@@ -1,0 +1,144 @@
+/* ============================================================
+   Journey Intro Engine v1.0 ― styles
+   - 尺は --ji-p1 (Phase1全長) で可変。キーフレーム%はそのままスケール
+   - ラベル/フライト/セレモニーはJS駆動(決定論シークのため)
+   - 動かすのは transform / opacity のみ(GPU合成)
+   ============================================================ */
+:root{ --ji-turq:#6fd3dd; --ji-champ:rgba(230,218,184,.55); --ji-text:#f2f6f7; --ji-p1:13s; }
+
+.ji-overlay{ position:fixed; inset:0; z-index:9999; overflow:hidden; background:#03080f; }
+.ji-overlay, .ji-overlay *{ box-sizing:border-box; }
+
+/* ---- Phase1 ラッパ ---- */
+.ji-abstract{ position:absolute; inset:0; }
+
+/* ---- 大気レイヤー ---- */
+.ji-atmo{ position:absolute; inset:-2%; }
+.ji-atmo-space{ background:radial-gradient(120% 95% at 50% 44%, #0e2740 0%, #081a2b 44%, #040c15 74%, #03080f 100%); animation:jiSpace var(--ji-p1) linear both; }
+.ji-atmo-ocean{ background:radial-gradient(120% 105% at 50% 55%, #6fe0e6 0%, #2ea6bb 24%, #146077 52%, #0a3846 76%, #062935 100%); opacity:0; animation:jiOcean var(--ji-p1) ease-in-out both; }
+.ji-stars{ position:absolute; inset:0; opacity:0; animation:jiStars var(--ji-p1) ease-in-out both; }
+.ji-stars i{ position:absolute; width:2px; height:2px; border-radius:50%; background:#dfeef2; }
+
+/* ---- 降下シーン(MapProviderのマウント先) ---- */
+.ji-scenes{ position:absolute; inset:0; transform-origin:50% 47%; animation:jiZoom var(--ji-p1) cubic-bezier(.55,0,.7,.85) both; will-change:transform; }
+
+/* ---- abstract-v1 プロバイダ(様式化グローブ) ---- */
+.ji-globe{ position:absolute; left:50%; top:47%; width:min(48vmin,440px); height:min(48vmin,440px); margin:calc(min(48vmin,440px) / -2) 0 0 calc(min(48vmin,440px) / -2); border-radius:50%; overflow:hidden; background:radial-gradient(circle at 40% 36%, #164a63 0%, #0c3143 58%, #072433 100%); box-shadow:inset 0 0 30px rgba(4,16,26,.7), 0 0 46px rgba(70,170,190,.18); opacity:0; animation:jiGlobe var(--ji-p1) ease-in-out both; will-change:opacity,transform; }
+.ji-strip{ position:absolute; top:0; left:0; height:100%; width:400%; display:flex; animation:jiSpin var(--ji-p1) cubic-bezier(.4,0,.6,1) both; }
+.ji-strip .ji-world{ width:50%; height:100%; }
+.ji-strip svg{ width:100%; height:100%; display:block; }
+.ji-globe-shade{ position:absolute; inset:0; border-radius:50%; pointer-events:none; background:radial-gradient(circle at 37% 33%, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 32%), radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 58%, rgba(2,12,20,.6) 100%); }
+.ji-glow{ position:absolute; left:50%; top:47%; width:44vmin; height:44vmin; transform:translate(-50%,-50%); background:radial-gradient(circle, rgba(158,230,236,.58) 0%, rgba(110,211,221,.4) 24%, rgba(110,211,221,.1) 48%, rgba(110,211,221,0) 66%); opacity:0; animation:jiGlow var(--ji-p1) ease-in-out both; }
+
+/* ---- vector-v2 プロバイダ(実測海岸線ステージ) ---- */
+.ji-land path{ fill:rgba(206,228,231,.72); }                                  /* 地球儀上(暗背景) */
+.ji-stage{ position:absolute; left:50%; top:47%; width:min(120vmin,1100px); opacity:0; will-change:opacity; }
+.ji-stage svg{ display:block; width:100%; height:auto; overflow:visible; }
+.ji-stage .ji-land path{ fill:rgba(224,244,246,.30); stroke:rgba(234,250,252,.55); stroke-width:.8; vector-effect:non-scaling-stroke; } /* 海上(ターコイズ背景)は透過+細い海岸線 */
+/* 段送りは降下index(slot)依存＝地域名非依存。keyframeは不変。最終段は --last */
+.ji-stage--last .ji-land path{ fill:rgba(230,247,249,.38); }
+.ji-stage--i0{ animation:jiStJapan var(--ji-p1) ease-in-out both; }
+.ji-stage--i1{ animation:jiStRyukyu var(--ji-p1) ease-in-out both; }
+.ji-stage--i2{ animation:jiStMiyako var(--ji-p1) ease-in-out both; }
+
+/* ---- Phase2 fx: 質感(静的・アニメなし=GPU負荷ゼロ) ---- */
+/* 粒状ノイズ: data:URI の SVG feTurbulence タイル。P3-1: 静か・清潔優先で「入っているか分からない」上限に減衰(.05→.03) */
+.ji-grain{ position:absolute; inset:0; pointer-events:none; opacity:.03; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.55'/></svg>"); }
+/* ビネット: 周辺をわずかに沈めて中央(目的地)へ視線誘導。P3-1: 映画風を避け弱める(縁のみ・.3→.2) */
+.ji-vignette{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(120% 90% at 50% 46%, transparent 62%, rgba(2,10,18,.2) 100%); }
+
+/* ---- 固定UI ---- */
+.ji-ui{ position:absolute; inset:0; }
+.ji-frame{ position:absolute; inset:26px; opacity:0; animation:jiFrame var(--ji-p1) ease-in-out both; }
+.ji-frame span{ position:absolute; width:22px; height:22px; border:1px solid var(--ji-champ); }
+.ji-frame span:nth-child(1){ left:0; top:0; border-right:0; border-bottom:0; }
+.ji-frame span:nth-child(2){ right:0; top:0; border-left:0; border-bottom:0; }
+.ji-frame span:nth-child(3){ left:0; bottom:0; border-right:0; border-top:0; }
+.ji-frame span:nth-child(4){ right:0; bottom:0; border-left:0; border-top:0; }
+
+/* 航路 + 旅客機(JSパス追従) */
+.ji-flight{ position:absolute; left:50%; top:50%; width:min(80vmin,720px); height:min(80vmin,720px); transform:translate(-50%,-50%); pointer-events:none; overflow:visible; }
+.ji-trail{ fill:none; stroke:rgba(200,248,253,.95); stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1; stroke-dashoffset:1; filter:drop-shadow(0 0 3px rgba(2,16,26,.6)); }
+/* 機体直後を流れる細いハイライト(JS駆動・dash区間0.07) */
+/* P3-1: グリントを純白→控えめなターコイズ寄りに（清潔・上品／派手な白の反射を避ける） */
+.ji-trail-hl{ fill:none; stroke:rgba(224,246,250,.82); stroke-width:1.1; stroke-linecap:round; opacity:0; }
+.ji-node{ fill:rgba(9,30,44,.72); stroke:rgba(200,248,253,.92); stroke-width:1.3; opacity:0; animation:jiNode var(--ji-p1) ease-in-out both; }
+.ji-plane{ opacity:0; transform-box:fill-box; transform-origin:center; filter:drop-shadow(0 0 2px rgba(2,14,24,.75)); will-change:transform,opacity; }
+.ji-plane ellipse, .ji-plane path{ fill:#ffffff; stroke:rgba(6,24,34,.5); stroke-width:.55; stroke-linejoin:round; }
+
+.ji-reticle{ position:absolute; left:50%; top:50%; width:120px; height:120px; transform:translate(-50%,-50%); opacity:0; animation:jiReticle var(--ji-p1) ease-in-out both; }
+.ji-reticle::before,.ji-reticle::after{ content:""; position:absolute; background:rgba(242,246,247,.55); }
+.ji-reticle::before{ left:50%; top:0; width:1px; height:100%; transform:translateX(-.5px); }
+.ji-reticle::after{ top:50%; left:0; height:1px; width:100%; transform:translateY(-.5px); }
+.ji-reticle b{ position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border:1px solid rgba(242,246,247,.5); border-radius:50%; }
+
+/* 地名ラベル(JS駆動: opacity/transformはインラインで制御) */
+.ji-labels{ position:absolute; left:0; right:0; top:33%; text-align:center; pointer-events:none; }
+.ji-label{ position:absolute; left:0; right:0; top:0; opacity:0; color:var(--ji-text); text-shadow:0 2px 24px rgba(0,0,0,.55); }
+.ji-label .jp{ display:block; font-weight:200; letter-spacing:.18em; font-size:clamp(30px,7.4vw,58px); line-height:1.1; }
+.ji-label .ro{ display:block; margin-top:12px; font-size:12px; font-weight:400; letter-spacing:.5em; text-indent:.5em; text-transform:uppercase; color:rgba(190,236,240,.82); }
+
+.ji-progress{ position:absolute; left:50%; bottom:12%; transform:translateX(-50%); width:min(210px,54vw); height:1px; background:rgba(242,246,247,.16); }
+.ji-progress i{ position:absolute; left:0; top:0; height:100%; width:100%; transform-origin:left center; transform:scaleX(0); background:linear-gradient(90deg, rgba(230,218,184,.4), var(--ji-turq)); animation:jiFill var(--ji-p1) cubic-bezier(.55,0,.7,.85) both; }
+.ji-brand{ position:absolute; left:0; right:0; bottom:6.5%; text-align:center; font-size:10px; letter-spacing:.42em; text-indent:.42em; text-transform:uppercase; color:rgba(242,246,247,.42); opacity:0; animation:jiFrame var(--ji-p1) ease-in-out both; }
+
+/* ---- 到着セレモニー(地図上・JS時間駆動) ---- */
+.ji-arrival{ position:absolute; inset:0; pointer-events:none; }
+.ji-arrival .a-label{ position:absolute; left:0; right:0; top:33%; text-align:center; opacity:0; }
+.ji-arrival .a-label::before{ content:""; position:absolute; left:50%; top:40px; transform:translate(-50%,-50%); width:min(440px,86vw); height:200px; z-index:-1; pointer-events:none; background:radial-gradient(ellipse 58% 52% at 50% 50%, rgba(7,22,38,.34) 0%, rgba(7,22,38,.14) 52%, transparent 74%); }
+.ji-arrival .a-jp{ display:block; font-weight:200; letter-spacing:.18em; font-size:clamp(30px,7.4vw,58px); line-height:1.1; color:#fff; text-shadow:0 1px 2px rgba(5,17,30,.6), 0 3px 20px rgba(5,17,30,.72); }
+.ji-arrival .a-ro{ display:block; margin-top:12px; font-size:12px; font-weight:600; letter-spacing:.5em; text-indent:.5em; text-transform:uppercase; color:#e9fcfe; text-shadow:0 1px 6px rgba(5,17,30,.62); }
+.ji-arrival .a-pin{ position:absolute; left:50%; top:50%; transform:translate(-50%,-140%) scale(.85); opacity:0; filter:drop-shadow(0 6px 10px rgba(0,0,0,.4)); }
+/* ピン着地リング(Google Maps風・JS時間駆動で1〜2回だけ) */
+.ji-arrival .a-ring{ position:absolute; left:50%; top:50%; width:84px; height:84px; margin:-42px 0 0 -42px; border:1px solid rgba(140,225,235,.9); border-radius:50%; opacity:0; pointer-events:none; will-change:transform,opacity; }
+.ji-arrival .a-pin svg{ display:block; }
+/* P3-2: ロック時の余韻を一度きりのtransitionで滑らかに(paint・毎フレーム不介入)。opacityはJS駆動のため対象外。
+   余韻の長さ/グロー色は --ji-coord-settle / --ji-coord-glow で独立調整可 */
+.ji-arrival .a-coord{ position:absolute; left:50%; top:calc(50% + 30px); transform:translateX(-50%); font-family:"SFMono-Regular",Consolas,"Courier New",monospace; font-size:11px; letter-spacing:.22em; color:rgba(242,246,247,.85); white-space:nowrap; font-variant-numeric:tabular-nums; text-shadow:0 1px 6px rgba(5,17,30,.6); opacity:0; transition:color var(--ji-coord-settle,.5s) ease, text-shadow var(--ji-coord-settle,.5s) ease; }
+/* ロック: 暗い下地(可読性維持)＋控えめなターコイズのグロー。数値ロールアップ完了が“カチッ”と静かに定着 */
+.ji-arrival .a-coord.locked{ color:#eafeff; text-shadow:0 1px 6px rgba(5,17,30,.6), 0 0 10px var(--ji-coord-glow, rgba(111,211,221,.55)); }
+
+/* ---- Phase2: 動画 ---- */
+.ji-video{ position:absolute; inset:0; opacity:0; background:#03080f; }
+.ji-video video{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+/* P3-5: 横長ビューポート(PC)では縦動画を全画面coverで帯クロップ＋過拡大せず、中央の縦フレーム(9:16)で表示。
+   iPhone(縦)は非適用=従来どおり全画面。動画尺/画質(エンコード)/Hero遷移には非影響・CSSのみ・compositor */
+@media (min-aspect-ratio: 1/1){
+  .ji-pc-frame .ji-video{ left:50%; right:auto; width:min(56.25vh, 100vw); transform:translateX(-50%); }
+}
+
+/* ---- スキップ / 出典表記(aria-hidden領域の外・フォーカス可能) ---- */
+.ji-skip{ position:absolute; right:18px; bottom:16px; z-index:2; padding:8px 16px; border:1px solid rgba(242,246,247,.35); border-radius:999px; background:rgba(6,16,26,.45); color:rgba(242,246,247,.85); font-size:11px; letter-spacing:.22em; text-indent:.22em; cursor:pointer; backdrop-filter:blur(3px); }
+.ji-skip:hover{ border-color:rgba(242,246,247,.7); color:#fff; }
+/* P3-1: 地図クレジットを一段静かに（.5→.42・情報系は控えめに） */
+.ji-attrib{ position:absolute; left:14px; bottom:14px; font-size:10px; color:rgba(242,246,247,.42); letter-spacing:.06em; pointer-events:none; }
+@media (max-width:640px){ .ji-attrib{ max-width:46vw; line-height:1.5; } } /* スキップボタンと重ならないよう2行に折返し */
+
+/* ================= Phase1 キーフレーム(--ji-p1でスケール) ================= */
+@keyframes jiZoom{ 0%{transform:scale(1)} 42%{transform:scale(1.05)} 60%{transform:scale(1.4)} 92%{transform:scale(2.55)} 100%{transform:scale(2.62)} }
+@keyframes jiSpace{ 0%{opacity:1} 40%{opacity:1} 54%{opacity:0} 100%{opacity:0} }
+@keyframes jiOcean{ 0%{opacity:0} 40%{opacity:0} 58%{opacity:1} 100%{opacity:1} }
+@keyframes jiStars{ 0%{opacity:0} 3%{opacity:.9} 38%{opacity:.7} 46%{opacity:0} 100%{opacity:0} }
+@keyframes jiGlobe{ 0%{opacity:0; transform:scale(.25)} 14%{opacity:0; transform:scale(.4)} 20%{opacity:1; transform:scale(1)} 44%{opacity:1; transform:scale(1)} 54%{opacity:0; transform:scale(1.1)} 100%{opacity:0} }
+@keyframes jiSpin{ 0%{transform:translateX(0)} 17%{transform:translateX(0)} 44%{transform:translateX(-50%)} 100%{transform:translateX(-50%)} }
+@keyframes jiGlow{ 0%,54%{opacity:0; transform:translate(-50%,-50%) scale(.6)} 74%{opacity:.5} 100%{opacity:.66; transform:translate(-50%,-50%) scale(1.1)} }
+@keyframes jiFrame{ 0%{opacity:0} 8%{opacity:1} 92%{opacity:1} 100%{opacity:0} }
+@keyframes jiReticle{ 0%,20%{opacity:0} 24%{opacity:.5} 100%{opacity:.5} }
+/* P3-2fix: 最終値を100%(scaleX(1))へ。CSSアニメの最終フレームは fill:both で保持＝iPhoneでも確実描画 */
+@keyframes jiFill{ 0%,10%{transform:scaleX(0)} 74%{transform:scaleX(.82)} 100%{transform:scaleX(1)} }
+@keyframes jiNode{ 0%,44%{opacity:0} 50%{opacity:.9} 100%{opacity:.9} }
+/* vector-v2 ステージ: 日本(東京)→南西諸島→宮古 のLODクロスフェード */
+@keyframes jiStJapan{ 0%,47%{opacity:0} 53%{opacity:1} 62%{opacity:1} 68%{opacity:0} 100%{opacity:0} }
+@keyframes jiStRyukyu{ 0%,60%{opacity:0} 66%{opacity:1} 74%{opacity:1} 80%{opacity:0} 100%{opacity:0} }
+@keyframes jiStMiyako{ 0%,72%{opacity:0} 80%{opacity:.95} 100%{opacity:.95} }
+
+/* P3-4: reduced-motion の自然な代替（静的な到着カード・motion無し・opacityのみ）。
+   フル演出のオーバーレイは従来どおり非表示(二重防御)、代替カード(.ji-reduced)のみ許可 */
+@media (prefers-reduced-motion: reduce){ .ji-overlay:not(.ji-reduced){ display:none; } }
+.ji-reduced{ display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle at 50% 42%, #0c3143 0%, #071f2c 58%, #03080f 100%); }
+.ji-reduced-card{ text-align:center; padding:0 24px; }
+.ji-reduced-dest .jp{ display:block; font-size:clamp(26px,7vw,44px); font-weight:600; letter-spacing:.08em; color:#f2f6f7; text-shadow:0 2px 12px rgba(5,17,30,.55); }
+.ji-reduced-dest .ro{ display:block; margin-top:10px; font-size:12px; font-weight:600; letter-spacing:.5em; text-indent:.5em; text-transform:uppercase; color:rgba(233,252,254,.82); }
+.ji-reduced-coord{ margin-top:18px; font-family:"SFMono-Regular",Consolas,"Courier New",monospace; font-size:11px; letter-spacing:.22em; color:rgba(242,246,247,.72); font-variant-numeric:tabular-nums; }

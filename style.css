@@ -810,6 +810,13 @@ nav span {
   object-fit: contain;
 }
 
+/* Journey Intro導入記事のHero写真のみ: 表示幅を狭め人物を遠目に(.ji-heroを付けた画像限定・他画像非影響) */
+.viewer-photo.ji-hero {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ===== ダークモード ===== */
 @media (prefers-color-scheme: dark) {
   body { background: #121212; color: #e0e0e0; }
