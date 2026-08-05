@@ -35,3 +35,13 @@ _template_*.md
 drafts/*.json
 staging/*
 !staging/.gitkeep
+
+# --- Journey Engine 検証用（ローカルのみ・公開/コミットしない）---
+_cmp_journey_video.html
+_cmp_transition.html
+_iosdiag.html
+_p4test.html
+_preview_x60.html
+_v3q.html
+_v3test.html
+assets/video/_q/
