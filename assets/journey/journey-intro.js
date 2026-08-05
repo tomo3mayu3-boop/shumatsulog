@@ -553,7 +553,6 @@
       try { vid.preload = 'auto'; vid.currentTime = cfg.video.startAt || 0; } catch (e) {}
       vid.onended = function () { if (self.state.phase === 2) toHero(); };
       vid.onerror = function () { if (self.state.phase === 2) toHero(); }; /* V3 Step2: デコード/取得失敗→必ずHero */
-      /* V3 Step3: canplay gating — 準備完了まで再生開始を遅延。iOSの早すぎるplay()拒否/黒画面を回避(準備中はposter表示) */
       var launched = false;
       function launchPlay() {
         if (launched || self.state.phase !== 2) return;
@@ -561,8 +560,11 @@
         var pp = vid.play();
         if (pp && pp.catch) pp.catch(function () { if (self.state.phase === 2) toHero(); }); /* autoplay拒否/低電力→即Hero */
       }
-      if (vid.readyState >= 2) launchPlay();       /* 先読み済み(通常/V2)=即再生で挙動不変 */
-      else vid.oncanplay = launchPlay;             /* 未準備なら準備後に再生。来なければ下の予算でHeroへ */
+      /* P4: play()を先行して必ず試行(muted)。
+         - 通常(PC/非低電力iOS): muted の play() は準備でき次第 resolve＝再生。poster表示で黒画面なし＝挙動/タイミング不変。
+         - 低電力モード等で自動再生ブロック: play() が即 reject(NotAllowedError) → 即座に自然にHeroへ(6sのloadBudget待ちを回避)。
+         onended/onerror と下記 loadBudget は最終保険として残置。 */
+      launchPlay();
       /* V3 Step2: 読み込み予算(loadBudgetMs)。超過しても再生位置が進んでいなければ(=停滞/未準備)Heroへ */
       var budget = (cfg.video.loadBudgetMs != null ? cfg.video.loadBudgetMs : 6000);
       clearTimeout(self._budget);
@@ -779,7 +781,7 @@
 
   /* ================= エントリポイント ================= */
   var JI = {
-    version: '1.3.12-herozoom-default',
+    version: '1.3.13-lpm-fallback',
     current: null,
     registerMap: registerMap,
     providers: providers,
