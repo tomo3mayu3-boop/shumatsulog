@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "status": "ready",
+  "category": "cooking",
+  "id": 1,
+  "slug": "cooking-1",
+  "title": "肉じゃがを作った",
+  "date": "2026-08-02",
+  "listingTitle": "肉じゃが",
+  "listingDescription": "余った野菜で肉じゃが。<br>甘めに寄せた。",
+  "imageFolder": "nikujaga",
+  "thumbnail": "nikujaga-1.webp",
+  "images": [
+    { "index": 1, "alt": "完成した肉じゃが", "caption": "できた。" }
+  ],
+  "body": {
+    "raw": "野菜を切って、鍋にいれた。\n\n---\n\n少し甘めに寄せた。",
+    "sections": [
+      { "type": "photo", "paragraphs": ["野菜を切って、鍋にいれた。"] },
+      { "type": "text", "paragraphs": ["少し甘めに寄せた。"] }
+    ]
+  },
+  "categoryData": {
+    "dishName": "肉じゃが",
+    "catchCopy": "余った野菜で。",
+    "servings": "2人分",
+    "cookTime": "30分",
+    "ingredients": ["じゃがいも 3個", "にんじん 1本", "牛こま 150g", "玉ねぎ 1個"],
+    "seasonings": ["醤油 大さじ2", "みりん 大さじ2", "砂糖 大さじ1"],
+    "steps": ["野菜を切る", "肉を炒める", "だしと調味料で煮る", "味を染ませる"],
+    "cookTools": ["鍋"],
+    "plating": "深めの皿に。",
+    "taste": "甘めでちょうどよかった。",
+    "arrange": "",
+    "nutrition": "",
+    "notes": ""
+  },
+  "build": null,
+  "meta": {
+    "createdAt": "2026-08-02T09:00:00.000Z",
+    "updatedAt": "2026-08-02T09:00:00.000Z",
+    "source": "iphone-form-v1"
+  }
+}

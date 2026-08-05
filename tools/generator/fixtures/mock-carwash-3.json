@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "status": "ready",
+  "category": "carwash",
+  "id": 3,
+  "slug": "carwash-3",
+  "title": "2026/08 の洗車メモ",
+  "date": "2026-08-03",
+  "listingTitle": "2026/08 の洗車メモ",
+  "listingDescription": "夏のゆる洗車。<br>鉄粉除去まで軽く。",
+  "imageFolder": "202608",
+  "thumbnail": "202608-1.webp",
+  "images": [
+    { "index": 1, "alt": "洗車前", "caption": "洗車前 — 正面" },
+    { "index": 2, "alt": "泡のせ", "caption": "プレウォッシュ" },
+    { "index": 3, "alt": "仕上がり", "caption": "仕上がり — 正面" }
+  ],
+  "body": {
+    "raw": "暑いので手早く。\n\n---\n\nそれでもツヤは戻った。",
+    "sections": [
+      { "type": "photo", "paragraphs": ["暑いので手早く。"] },
+      { "type": "text", "paragraphs": ["それでもツヤは戻った。"] }
+    ]
+  },
+  "categoryData": {
+    "washDate": "2026/08",
+    "vehicle": "黒のセダン",
+    "place": "自宅",
+    "mapQuery": "",
+    "tools": ["カーシャンプー", "フォームガン", "鉄粉除去剤", "マイクロファイバークロス"],
+    "work": "予洗い → 泡 → 手洗い → 拭き上げ。",
+    "summary": "短時間でも、やればちゃんと変わる。"
+  },
+  "build": null,
+  "meta": {
+    "createdAt": "2026-08-03T09:00:00.000Z",
+    "updatedAt": "2026-08-03T09:00:00.000Z",
+    "source": "iphone-form-v1"
+  }
+}

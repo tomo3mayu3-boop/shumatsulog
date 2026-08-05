@@ -7,18 +7,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>料理記録 | 週末ログ</title>
   <meta property="og:title" content="料理記録 | 週末ログ">
-  <meta property="og:description" content="作った料理やレシピのメモをまとめています。">
+  <meta property="og:description" content="作ったものと、その日の記録。">
   <meta property="og:image" content="https://shumatsulog.com/cooking.webp">
   <meta property="og:url" content="https://shumatsulog.com/cooking">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="週末ログ">
-  <meta name="description" content="作った料理やレシピのメモをまとめています。うまくいった日も崩れた日も記録。">
+  <meta name="description" content="作った料理と、その日の記録をゆるくまとめています。レシピというより、作ったものの覚え書き。">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="canonical" href="https://shumatsulog.com/cooking">
   <meta name="color-scheme" content="light dark">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"Article","headline":"料理記録 | 週末ログ","description":"作った料理やレシピのメモをまとめています。うまくいった日も崩れた日も記録。","image":"https://shumatsulog.com/cooking.webp","url":"https://shumatsulog.com/cooking","publisher":{"@type":"Person","name":"週末ログ"}}
+  {"@context":"https://schema.org","@type":"CollectionPage","headline":"料理記録 | 週末ログ","description":"作った料理と、その日の記録をゆるくまとめています。レシピというより、作ったものの覚え書き。","image":"https://shumatsulog.com/cooking.webp","url":"https://shumatsulog.com/cooking","publisher":{"@type":"Person","name":"週末ログ"}}
   </script>
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@potato_weekend">
@@ -33,23 +33,48 @@
     <nav id="main-nav">
       <a href="index.html">ホーム</a>
       <a href="carwash.html">洗車</a>
-      <a href="cooking.html">料理</a>
+      <a href="cooking.html" aria-current="page">料理</a>
       <a href="travel.html">旅行</a>
+      <a href="yurulog.html">ゆるログ</a>
     </nav>
   </header>
 
-  <main class="single-page">
-    <article class="post">
-      <h2>料理メモ</h2>
-      <img src="cooking.webp" alt="" class="detail-photo" loading="lazy" width="1200" height="1508">
-      <h3>今回の料理</h3>
-      <p>作った料理の感想やメモをここに書く。</p>
+  <main class="layout">
+    <div class="content">
 
-      <h3>ポイント</h3>
-      <p>材料、火加減、盛り付けなどを自由に記録。</p>
+      <section class="hero">
+        <h2>🍳 料理</h2>
+        <p>作ったものと、その日の記録。<br>レシピというより、覚え書き。</p>
+      </section>
 
-      <p><a href="index.html" class="btn">トップに戻る</a></p>
-    </article>
+      <section>
+        <p>記録はこれから少しずつ増えていきます。</p>
+      </section>
+
+      <section>
+        <p><a href="index.html" class="btn">← ホームに戻る</a></p>
+      </section>
+
+    </div>
+
+    <aside class="sidebar">
+      <div class="sidebar-box">
+        <h3>🔗 SNS</h3>
+        <ul class="sns-list">
+          <li><a href="https://x.com/potato_weekend" target="_blank" rel="noopener noreferrer">𝕏（Twitter）</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-box">
+        <h3>📂 カテゴリ</h3>
+        <ul>
+          <li><a href="carwash.html">🚗 洗車</a></li>
+          <li><a href="cooking.html" aria-current="page">🍳 料理</a></li>
+          <li><a href="travel.html">✈️ 旅行</a></li>
+          <li><a href="yurulog.html">🗒️ ゆるログ</a></li>
+        </ul>
+      </div>
+    </aside>
   </main>
 
   <footer>
@@ -59,9 +84,9 @@
       ／
       <a href="https://shumatsulog.com/" target="_blank" rel="noopener noreferrer">HP</a>
     </p>
-  </footer>
+    <p style="text-align:center;margin:0 0 8px;"><a href="https://twitter.com/intent/tweet?text=料理記録%20%7C%20週末ログ&url=https://shumatsulog.com/cooking" target="_blank" rel="noopener noreferrer" class="share-x">𝕏 この記事をシェア</a></p>
+</footer>
 <script src="script.js"></script>
 <button id="back-to-top" aria-label="トップへ戻る" title="トップへ戻る">▲</button>
 </body>
 </html>
-
