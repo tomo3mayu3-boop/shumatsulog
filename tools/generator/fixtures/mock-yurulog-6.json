@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "status": "ready",
+  "category": "yurulog",
+  "id": 6,
+  "slug": "yurulog-6",
+  "title": "テスト：夕方の散歩",
+  "date": "2026-08-01",
+  "listingTitle": "夕方の散歩",
+  "listingDescription": "仕事終わりに、少しだけ歩いた。<br>知らない路地に入ってみた。",
+  "imageFolder": "yugata-sanpo",
+  "thumbnail": "yugata-sanpo-1.webp",
+  "images": [
+    { "index": 1, "alt": "夕方の路地", "caption": "知らない路地。" },
+    { "index": 2, "alt": "小さな公園", "caption": "小さな公園に出た。" }
+  ],
+  "body": {
+    "raw": "仕事終わり、少しだけ歩いた。\n\n---\n\n公園のベンチに座った。\n\n---\n\nそのまま帰った。",
+    "sections": [
+      { "type": "photo", "paragraphs": ["仕事終わり、少しだけ歩いた。"] },
+      { "type": "photo", "paragraphs": ["公園のベンチに座った。"] },
+      { "type": "text", "paragraphs": ["そのまま帰った。"] }
+    ]
+  },
+  "categoryData": { "catchCopy": "少しだけ歩いた。" },
+  "build": null,
+  "meta": {
+    "createdAt": "2026-08-01T09:00:00.000Z",
+    "updatedAt": "2026-08-01T09:00:00.000Z",
+    "source": "iphone-form-v1"
+  }
+}
