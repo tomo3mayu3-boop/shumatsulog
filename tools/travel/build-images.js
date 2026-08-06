@@ -39,6 +39,10 @@ const OG_QUALITY = 80;
 const OG_WIDTH = 1200;
 const OG_HEIGHT = 630;
 const SRC_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.tif', '.tiff'];
+// Image category subdir under images/. --base selects one; default 'travel'
+// keeps existing behavior byte-identical. Restricted to known categories so a
+// typo can't scatter output into images/{typo}/.
+const ALLOWED_BASES = ['travel', 'cooking', 'carwash', 'yurulog'];
 
 /**
  * @param {string[]} argv
@@ -49,6 +53,7 @@ function parseArgs(argv) {
     src: null,
     folder: null,
     prefix: null,
+    base: 'travel',
     variants: DEFAULT_VARIANTS.slice(),
     maxFull: MAX_FULL_WIDTH,
     ogIndex: 1,
@@ -67,6 +72,10 @@ function parseArgs(argv) {
       args.src = requireValue(argv, ++i, '--src');
     } else if (arg === '--folder') {
       args.folder = requireValue(argv, ++i, '--folder');
+    } else if (arg === '--base') {
+      // Image category subdir under images/. Default 'travel' keeps existing
+      // behavior byte-identical; pass e.g. --base cooking for images/cooking/.
+      args.base = requireValue(argv, ++i, '--base');
     } else if (arg === '--prefix') {
       args.prefix = requireValue(argv, ++i, '--prefix');
     } else if (arg === '--out-json') {
@@ -87,10 +96,13 @@ function parseArgs(argv) {
   }
 
   if (!args.src || !args.folder) {
-    fail('Usage: node tools/travel/build-images.js --src <dir> --folder <name> [--prefix p-] [--variants 400,800] [--og-index 1] [--dry-run] [--force] [--out-json path]');
+    fail('Usage: node tools/travel/build-images.js --src <dir> --folder <name> [--base travel] [--prefix p-] [--variants 400,800] [--og-index 1] [--dry-run] [--force] [--out-json path]');
   }
   if (args.prefix === null) {
     args.prefix = args.folder + '-';
+  }
+  if (ALLOWED_BASES.indexOf(args.base) === -1) {
+    fail('--base must be one of: ' + ALLOWED_BASES.join(', ') + ' (got "' + args.base + '")');
   }
   return args;
 }
@@ -182,8 +194,8 @@ async function main() {
     fail('no source images (' + SRC_EXTS.join(', ') + ') in ' + srcDir);
   }
 
-  var targetDir = path.join(REPO_ROOT, 'images', 'travel', args.folder);
-  var relTargetDir = 'images/travel/' + args.folder;
+  var targetDir = path.join(REPO_ROOT, 'images', args.base, args.folder);
+  var relTargetDir = 'images/' + args.base + '/' + args.folder;
 
   // Collision guard (unless --force / --dry-run).
   if (fs.existsSync(targetDir) && !args.force && !args.dryRun) {
