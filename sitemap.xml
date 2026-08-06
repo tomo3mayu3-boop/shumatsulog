@@ -133,7 +133,12 @@
   </url>
   <url>
     <loc>https://shumatsulog.com/cooking</loc>
-    <lastmod>2026-06-12</lastmod>
+    <lastmod>2026-07-24</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://shumatsulog.com/cooking-1</loc>
+    <lastmod>2026-07-24</lastmod>
     <priority>0.6</priority>
   </url>
 </urlset>
