@@ -707,6 +707,45 @@ footer a:hover {
   border-radius: 16px;
 }
 
+/* ===== トップページ カテゴリ紹介：画像ボックスを全カテゴリで統一 =====
+   料理カード（500×300 = 5:3）を基準に、洗車・料理・旅行・ゆるログの
+   画像枠を同一サイズ・同一縦横比にそろえる。#id で index.html のみに限定するため、
+   一覧ページ・記事本文（.viewer-photo 等）や他ページの .photo には影響しない。
+
+   【なぜ旅行・ゆるログだけ違っていたか】
+   画像は <picture>（＝flex 項目）に包まれ幅が中身に合わせて縮む（shrink-to-fit）。
+   従来は .photo / .travel-photo が height:300px を固定していたため、picture の幅は
+   「300px × 元画像の縦横比」で決まっていた。
+     ・料理 16:9 → 533px → max-width:500px で頭打ち → 500×300
+     ・洗車 mosaic-wrap は 500×300 固定
+     ・旅行/ゆるログ 4:3 → 400px（500 未満なので頭打ちにならず）→ 400×300
+   これで旅行・ゆるログだけ横幅が狭く（＝相対的に縦長に）見えていた。
+
+   【対処】高さ固定をやめ、枠（picture / mosaic-wrap）を width＋aspect-ratio(5/3) で定義。
+   元画像の縦横比に関わらず枠が一定になり、画像は object-fit:cover で枠いっぱいに表示・
+   はみ出し分だけトリミングする。スマホでは幅が縮んでも 5:3 を保つ。 */
+#carwash .article-row .mosaic-wrap,
+#cooking .article-row picture,
+#travel .article-row picture,
+#yurulog .article-row picture {
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  aspect-ratio: 5 / 3;
+  flex-shrink: 0;
+}
+#carwash .article-row .photo,
+#cooking .article-row .photo,
+#travel .article-row .photo,
+#yurulog .article-row .photo {
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  aspect-ratio: 5 / 3;
+  object-fit: cover;
+}
+
 .category.disabled {
   color: #aaa;
   cursor: not-allowed;
