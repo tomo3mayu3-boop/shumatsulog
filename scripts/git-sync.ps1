@@ -34,8 +34,11 @@ function Write-Log {
 function Ensure-ImageFolders {
     param([string]$RepoRoot)
 
-    $htmlFiles = Get-ChildItem -Path $RepoRoot -Filter '*.html' -File -ErrorAction SilentlyContinue
-    if (-not $htmlFiles) { return }
+    $htmlFiles = @(Get-ChildItem -Path $RepoRoot -Filter '*.html' -File -ErrorAction SilentlyContinue)
+    if ($htmlFiles.Count -eq 0) {
+        Write-Log 'ENSURE' 'No *.html found in repo root; nothing to scan'
+        return
+    }
 
     # Capture the two folder segments after "images/". Segment/file names use
     # word chars, hyphen and dot; top-level files like images/car1.webp (only
@@ -44,25 +47,33 @@ function Ensure-ImageFolders {
     $wanted  = New-Object 'System.Collections.Generic.HashSet[string]'
 
     foreach ($f in $htmlFiles) {
+        Write-Host ('SCAN: {0}' -f $f.Name)
         $content = Get-Content -Path $f.FullName -Raw -ErrorAction SilentlyContinue
         if (-not $content) { continue }
         foreach ($m in $regex.Matches($content)) {
-            [void]$wanted.Add(('images/{0}/{1}' -f $m.Groups[1].Value, $m.Groups[2].Value))
+            $rel = 'images/{0}/{1}' -f $m.Groups[1].Value, $m.Groups[2].Value
+            if ($wanted.Add($rel)) {
+                Write-Host ('FOUND: {0}' -f $rel)
+            }
         }
     }
 
+    $created = 0
     foreach ($rel in $wanted) {
         $full = Join-Path $RepoRoot ($rel -replace '/', '\')
         if (-not (Test-Path -LiteralPath $full)) {
             try {
                 New-Item -ItemType Directory -Path $full -Force -ErrorAction Stop | Out-Null
+                $created++
+                Write-Host ('MKDIR: {0}' -f $full)
                 Write-Log 'MKDIR' $rel
-                Write-Host ('Created image folder: {0}' -f $rel)
             } catch {
                 Write-Log 'ERROR' ('Failed to create folder ' + $rel + ' -- ' + $_.Exception.Message)
             }
         }
     }
+
+    Write-Log 'ENSURE' ('scanned={0} html, referenced={1} folders, created={2}' -f $htmlFiles.Count, $wanted.Count, $created)
 }
 
 # --- Move into the repo ---
@@ -92,8 +103,12 @@ if ($branch -ne 'main') {
 $dirty = & git status --porcelain
 if ($LASTEXITCODE -ne 0) { Write-Log 'ERROR' 'git status failed'; exit 1 }
 if ($dirty) {
-    Write-Log 'SKIP' 'Uncommitted or untracked changes present; aborting (no change made)'
+    Write-Log 'SKIP' 'Uncommitted or untracked changes present; aborting pull (no git change made)'
     foreach ($l in $dirty) { Write-Log 'DIRTY' $l }
+    # Even when the pull is skipped, still ensure image folders exist. This only
+    # creates empty directories (invisible to git), so it does NOT alter tracked
+    # files and never turns a clean tree dirty — the ff-only sync stays safe.
+    Ensure-ImageFolders -RepoRoot $repo
     exit 0
 }
 
@@ -106,8 +121,10 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Log 'OK' ('Sync complete: ' + ($out -join ' '))
 
-# After a successful sync, make sure every image folder referenced by the
-# article HTML exists (creates missing ones only; existing ones are left as-is).
+# After a successful sync (including "Already up to date"), make sure every image
+# folder referenced by the article HTML exists (creates missing ones only;
+# existing ones are left as-is). Runs on this path AND on the dirty-skip path
+# above, so folder creation happens on every run while on main.
 Ensure-ImageFolders -RepoRoot $repo
 
 exit 0
