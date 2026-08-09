@@ -22,6 +22,7 @@ description: iPhoneから複数の写真＋一言メモだけで週末ログの�
 ## 入力
 - **写真**: チャット添付。渡された順を基本に、**採用写真と順番は内容から判断してよい**（1枚目がヒーロー＝`eager`/`preload`対象）。洗車で施工前後が分かる場合は Before→After の並びを活かす。
 - **メモ**: 数行。カテゴリ・状況・場所/料理名・時間・気分の断片で可。ここから本文を書く。
+- **OGP画像（任意）**: 「OGP画像は◯枚目」「OGPは3枚目」等の指定があれば、その採用写真をSNSカード画像に使う（下記 Step 3「メタ」参照）。指定が無ければ従来どおり1枚目基準の `{prefix}og.jpg` を使う（既定を変えない）。全カテゴリ共通。
 
 ---
 
@@ -100,10 +101,17 @@ Hero（タイトル ／ 一文 ／ 上表「Hero下の一行」）
 
 **✅ 確認項目**
 1. **共通ナビ・ヘッダ・フッタ・サイドバー**を基本形と同等に。カテゴリ用に：header `<h1>` は上表。ナビは共通5項目で対象カテゴリを `aria-current="page"`（**料理ナビの解除状態を維持し `category disabled` へ戻さない**）。サイドバーは上表（travel=地図＋カテゴリ、他=SNS＋カテゴリ）。カテゴリボックスも対象を `aria-current="page"`。
-2. **メタ**：`<title>={title} {上表接尾}`／`meta description`／OGP(`og:type=article`,`og:site_name=週末ログ`,`og:image=https://shumatsulog.com/images/{base}/{folder}/{prefix}og.jpg`,1200×630)／`og:url`・`canonical`=上表canonical（**拡張子なし**）／JSON-LD **Article**（image=og.jpg,url=canonical,datePublished=`{date}`）／JSON-LD **BreadcrumbList**（1 ホーム=`https://shumatsulog.com/`,2 上表パンくず,3 タイトル=canonical）／twitter一式（image=og.jpg）／footer シェアURL（text=`{title} {接尾}`,url=canonical,encodeURIComponent）。**サイト内リンクは `.html` 付き、canonical/og:url は拡張子なし**（既存規約）。`date`=`YYYY-MM-DD`（メモの日付。無ければ確認）。
+2. **メタ**：`<title>={title} {上表接尾}`／`meta description`／OGP(`og:type=article`,`og:site_name=週末ログ`,`og:image`=**下記6のOGP画像**,幅高さ)／`og:url`・`canonical`=上表canonical（**拡張子なし**）／JSON-LD **Article**（image=OGP画像,url=canonical,datePublished=`{date}`）／JSON-LD **BreadcrumbList**（1 ホーム=`https://shumatsulog.com/`,2 上表パンくず,3 タイトル=canonical）／twitter一式（`twitter:card=summary_large_image`,image=OGP画像）／footer シェアURL（text=`{title} {接尾}`,url=canonical,encodeURIComponent）。**サイト内リンクは `.html` 付き、canonical/og:url は拡張子なし**（既存規約）。`date`=`YYYY-MM-DD`（メモの日付。無ければ確認）。
 3. **画像**：各写真の `<picture>` は avif/webp `<source srcset>`＋`<img class="viewer-photo" …>`。`sizes="(max-width: 640px) 100vw, (max-width: 1024px) 60vw, 780px"`。`srcset` は断片 `variants` から（フル幅=サフィックス無し、縮小=`-{v}`）、URLベース `images/{base}/{folder}/`。`width`/`height` は断片実寸。**1枚目だけ** `loading="eager" fetchpriority="high"` ＋ head `<link rel="preload" as="image">`（1枚目avif）、他は `lazy`。`alt` は写真内容を簡潔に（画像を見て記述）。記事コンテナのクラスは基本形に準拠（travel は `travel-article travel-article-landscape`。縦写真でも `-portrait` に変えない）。
 4. **本文**：各 Section に短い段落（改行 `<br>`、段落 `<p>` 分割）。締めは写真なしの短い余韻。**上表「カテゴリ固有の方針」に従う**（travel=現行維持／cooking=料理と時間の記録・レシピ任意／carwash=Before/After自然活用／yurulog=短い記録可）。
 5. **構造化データ（cooking のみ・条件付き）**：料理名・材料・工程が揃う or「レシピとして」指定時のみ JSON-LD `Recipe` を追加。情報不足で架空Recipeを作らない（その場合 Article のみ）。
+6. **OGP画像（SNSカード画像。全カテゴリ共通）**：`og:image`・`twitter:image`・JSON-LD Article `image` の3つに使う画像。`twitter:card` は常に `summary_large_image`。**必ず `https://shumatsulog.com/...` の絶対URL**。
+   - **既定（OGP指定なし）**：**従来どおり** `{prefix}og.jpg`（1200×630）。`og:image={SITE}/images/{base}/{folder}/{prefix}og.jpg`、`og:image:width=1200`・`og:image:height=630`。**既存記事と挙動を変えない。**
+   - **OGP指定あり（「OGP画像は◯枚目」）**：その採用写真Nの**既存フル幅webpをそのまま参照**（別コピー・別ファイルは作らない）。
+     - `og:image` = `twitter:image` = JSON-LD Article `image` = `{SITE}/images/{base}/{folder}/{prefix}{N}.webp`
+     - `og:image:width`／`og:image:height` = 断片JSON `photos[N-1]` の実寸（`width`/`height`）
+     - `head` の **preload（1枚目・LCP用）は変更しない**（OGPと用途が別）。`--og-index` での再変換も不要（HTMLのメタだけで完結）。
+   - 例：5枚目を指定 → `<meta property="og:image" content="https://shumatsulog.com/images/travel/hasshoku/hasshoku-5.webp">` ／ `<meta name="twitter:card" content="summary_large_image">` ／ `<meta name="twitter:image" content="https://shumatsulog.com/images/travel/hasshoku/hasshoku-5.webp">`
 
 ### Step 4 — 一覧・sitemap・トップを更新
 1. **一覧（`{listing}`）**：hero直後に新記事カードを **prepend**（`article-row`：代表画像 ＋ `post-date`(YYYY.MM.DD) ＋ `<h3>タイトル</h3>` ＋ 説明文 ＋ `<a href="{category}-{id}.html" class="btn">のぞく</a>`）。フォーマットは対象一覧の既存カードに合わせる（travel.html は `<picture>`、cooking/carwash/yurulog は `<img class="photo">` 系）。既存カードは触らない。cooking で空状態プレースホルダがあれば削除してよい（**COMING SOONへ戻さない**）。
@@ -137,5 +145,5 @@ git push origin main
 - 追加/更新してよいのは：新規 `{category}-{id}.html`、対象一覧 `{listing}`(hero直後prependのみ)、`sitemap.xml`(新URL追加のみ)、`images/{base}/{folder}/`、`index.html`(**対象カテゴリのセクションのみ**更新)、travelのみ `tools/travel/next-id.json`。
 - **触らない**：他カテゴリの記事・一覧、`style.css`、`script.js`、`tools/travel/*`（画像スクリプトは実行のみ）、Labs。`index.html` も対象セクション以外は触らない。**既存トラベル記事・表示、Windows起動時同期を壊さない。**
 - 料理ナビ・料理一覧（`cooking.html`）の**解除済み状態を維持**（`category disabled`/COMING SOON へ戻さない）。
-- 新規ページのJSは外部 `script.js` のみ（本番CSPで inline `<script>` は実行されない）。OGは JPG（`{prefix}og.jpg` 1200×630）。
+- 新規ページのJSは外部 `script.js` のみ（本番CSPで inline `<script>` は実行されない）。OGP既定は JPG（`{prefix}og.jpg` 1200×630）。「OGP画像は◯枚目」指定時のみ、その既存webpを絶対URLで直接参照する（Step 3-6。別コピーは作らない）。
 - 修正依頼は指定箇所のみ編集。迷ったら公開前に止まって確認する。
