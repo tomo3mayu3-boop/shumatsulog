@@ -35,3 +35,13 @@ _template_*.md
 drafts/*.json
 staging/*
 !staging/.gitkeep
+
+# ルート直下のローカルなテスト/プレビュー/診断HTML（_cmp_ / _v3 / _p4test /
+# _preview_ / _iosdiag などの実験用。公開記事は travel-*.html 等で _始まりは無い）
+/_*.html
+
+# 動画の一時・実験用フォルダ（公開資産は assets/video/<記事>/ 側）
+assets/video/_q/
+
+# Windows のインターネットショートカット（サイト資産ではない。images/ 等への誤保存対策）
+*.url
