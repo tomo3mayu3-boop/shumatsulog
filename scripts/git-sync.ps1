@@ -20,6 +20,51 @@ function Write-Log {
     try { Add-Content -Path $log -Value $line -Encoding UTF8 } catch { }
 }
 
+# --- Ensure image folders referenced by the article HTML exist ---
+# Scans every *.html in the repo root for image paths shaped like
+#   images/<category>/<folder>/<file>   (e.g. images/travel/hasshoku/hasshoku-1.webp)
+# and creates <repo>\images\<category>\<folder>\ when it is missing.
+# Notes on safety:
+#   - Works for any category (travel / cooking / yurulog / carwash / ...).
+#   - Existing folders are left untouched (Test-Path guard).
+#   - Only empty folders are created; git ignores empty directories, so this
+#     never makes the working tree "dirty" and cannot break the ff-only sync.
+#   - Created folder names are printed to the console (visible on manual runs)
+#     and recorded in git-sync.log (visible for background/logon runs).
+function Ensure-ImageFolders {
+    param([string]$RepoRoot)
+
+    $htmlFiles = Get-ChildItem -Path $RepoRoot -Filter '*.html' -File -ErrorAction SilentlyContinue
+    if (-not $htmlFiles) { return }
+
+    # Capture the two folder segments after "images/". Segment/file names use
+    # word chars, hyphen and dot; top-level files like images/car1.webp (only
+    # one segment) intentionally do not match, so no folder is created for them.
+    $regex   = [regex]'images/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/[A-Za-z0-9_.-]+'
+    $wanted  = New-Object 'System.Collections.Generic.HashSet[string]'
+
+    foreach ($f in $htmlFiles) {
+        $content = Get-Content -Path $f.FullName -Raw -ErrorAction SilentlyContinue
+        if (-not $content) { continue }
+        foreach ($m in $regex.Matches($content)) {
+            [void]$wanted.Add(('images/{0}/{1}' -f $m.Groups[1].Value, $m.Groups[2].Value))
+        }
+    }
+
+    foreach ($rel in $wanted) {
+        $full = Join-Path $RepoRoot ($rel -replace '/', '\')
+        if (-not (Test-Path -LiteralPath $full)) {
+            try {
+                New-Item -ItemType Directory -Path $full -Force -ErrorAction Stop | Out-Null
+                Write-Log 'MKDIR' $rel
+                Write-Host ('Created image folder: {0}' -f $rel)
+            } catch {
+                Write-Log 'ERROR' ('Failed to create folder ' + $rel + ' -- ' + $_.Exception.Message)
+            }
+        }
+    }
+}
+
 # --- Move into the repo ---
 try {
     Set-Location -Path $repo -ErrorAction Stop
@@ -60,4 +105,9 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Log 'OK' ('Sync complete: ' + ($out -join ' '))
+
+# After a successful sync, make sure every image folder referenced by the
+# article HTML exists (creates missing ones only; existing ones are left as-is).
+Ensure-ImageFolders -RepoRoot $repo
+
 exit 0
