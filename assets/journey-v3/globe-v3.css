@@ -1,0 +1,87 @@
+/* Globe Intro V3 — 3D地球(Natural Earth地図帳) の被せオーバーレイ。V2の journey-intro.css は無改変で併用。 */
+.gv3-overlay{
+  position:fixed; inset:0; z-index:8000;      /* V2オーバーレイ(ji)より下＝引き継ぎ時にV2が前面へ */
+  /* ANA風: 宇宙の黒に、地球周辺だけ淡い青を帯びさせる(大気グローの下地) */
+  background:radial-gradient(120% 92% at 50% 47%, #0b2247 0%, #071633 34%, #040a1c 66%, #02060f 100%);
+  overflow:hidden;
+  opacity:0; transition:opacity 700ms ease; contain:strict; touch-action:auto;
+}
+.gv3-overlay.gv3-show{ opacity:1; }
+.gv3-overlay.gv3-hide{ opacity:0; pointer-events:none; }
+.gv3-overlay canvas.gv3-webgl{ position:absolute; inset:0; width:100%; height:100%; display:block; transition:opacity 900ms ease; }
+.gv3-overlay.gv3-toflight canvas.gv3-webgl{ opacity:0; }     /* V2へ引き継ぐ時に地球を暗転 */
+.gv3-static-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.9; }
+
+.gv3-labels{ position:absolute; inset:0; pointer-events:none; }
+.gv3-label{
+  position:absolute; left:50%; transform:translateX(-50%);
+  color:#eaf2ff; font-family:"SFMono-Regular",Menlo,Consolas,"Courier New",monospace;
+  letter-spacing:.2em; text-transform:uppercase; text-align:center;
+  text-shadow:0 1px 14px rgba(0,0,0,.7); opacity:0; transition:opacity 600ms ease; white-space:nowrap;
+}
+.gv3-label.gv3-on{ opacity:1; }
+.gv3-route{ top:7%; font-size:clamp(13px,3.2vw,20px); font-weight:600; }
+.gv3-sub{ top:calc(7% + 26px); font-size:clamp(10px,2.2vw,12px); color:#f0a24b; letter-spacing:.3em; }
+.gv3-arrive{ bottom:18%; font-size:clamp(11px,2.4vw,14px); color:#cfe0ff; letter-spacing:.26em; }
+.gv3-dest{ bottom:calc(18% - 32px); font-size:clamp(16px,4.2vw,26px); font-weight:700; letter-spacing:.22em; }
+
+/* 都市ドット＋ラベル(地球上の都市を指す。JSで画面座標へ毎フレーム配置) */
+.gv3-cities{ position:absolute; inset:0; pointer-events:none; }
+.gv3-cityLabel{ position:absolute; opacity:0; will-change:opacity,left,top; white-space:nowrap; }
+.gv3-cityLabel .gv3-dot{ position:absolute; left:-3.5px; top:-3.5px; width:7px; height:7px; border-radius:50%;
+  background:#eaf6ff; box-shadow:0 0 7px rgba(150,210,255,.95), 0 0 2px #fff; }
+.gv3-cityLabel .gv3-cname{ position:absolute; left:11px; top:-9px;
+  color:#eaf2ff; font:600 12px/1 "SFMono-Regular",Menlo,Consolas,"Courier New",monospace;
+  letter-spacing:.10em; text-shadow:0 1px 8px rgba(0,0,0,.85),0 0 2px rgba(0,0,0,.9); }
+.gv3-cityDest .gv3-dot{ background:#a9e6ff; box-shadow:0 0 9px rgba(120,200,255,1), 0 0 3px #fff; }
+.gv3-cityDest .gv3-cname{ color:#bfeaff; font-weight:700; }
+/* 補助都市(東京/羽田・那覇/沖縄・マニラ)は主役より小さく・淡く(不透明度上限はJSで0.65) */
+.gv3-cityAux .gv3-cname{ font-size:10.5px; color:#cdd9ee; }
+.gv3-cityAux .gv3-dot{ width:5.5px; height:5.5px; left:-2.75px; top:-2.75px; box-shadow:0 0 5px rgba(150,210,255,.8); }
+/* スマホ縦(狭幅)は補助都市の地名を隠しドットのみ＝主役(青森/台北)と重ならない */
+@media (max-width:430px){ .gv3-cityAux .gv3-cname{ display:none; } }
+/* 目的地(台北)の脈動リング — 到着地点を強調 */
+.gv3-cityDest .gv3-dot::after{ content:""; position:absolute; left:50%; top:50%; width:7px; height:7px;
+  transform:translate(-50%,-50%); border-radius:50%; border:1.5px solid rgba(160,220,255,.85);
+  animation:gv3ring 1800ms ease-out infinite; }
+@keyframes gv3ring{
+  0%{ width:7px; height:7px; opacity:.9; }
+  100%{ width:34px; height:34px; opacity:0; }
+}
+
+/* 航路に沿って飛ぶ機体アイコン */
+.gv3-plane{ position:absolute; opacity:0; pointer-events:none; will-change:left,top,transform,opacity;
+  filter:drop-shadow(0 0 4px rgba(150,210,255,.9)); transition:opacity 180ms linear; }
+.gv3-plane svg{ display:block; }
+/* 航路先端の光点(機体のすぐ前で視線を誘導) */
+.gv3-lead{ position:absolute; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%;
+  background:#f4fbff; box-shadow:0 0 12px rgba(170,225,255,1), 0 0 4px #fff; opacity:0;
+  pointer-events:none; will-change:left,top,opacity; transition:opacity 180ms linear; }
+
+/* 機内マップ風の上部UIバー(ノッチ/safe-area対応) */
+.gv3-topbar{ position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center;
+  gap:10px; pointer-events:none; opacity:0; transition:opacity 600ms ease;
+  padding-top:max(14px, env(safe-area-inset-top));
+  padding-left:max(clamp(14px,4vw,30px), env(safe-area-inset-left));
+  padding-right:max(clamp(14px,4vw,30px), env(safe-area-inset-right));
+  padding-bottom:14px;
+  background:linear-gradient(180deg, rgba(4,12,28,.62) 0%, rgba(4,12,28,0) 100%); }
+.gv3-topbar.gv3-on{ opacity:1; }
+.gv3-topbar .gv3-tb-route{ color:#eaf2ff; font:600 clamp(12px,3vw,17px)/1 "SFMono-Regular",Menlo,Consolas,"Courier New",monospace;
+  letter-spacing:.18em; text-shadow:0 1px 12px rgba(0,0,0,.7); white-space:nowrap; }
+.gv3-topbar .gv3-tb-air{ color:#f0a24b; font:600 clamp(10px,2.2vw,12px)/1 "SFMono-Regular",Menlo,Consolas,"Courier New",monospace;
+  letter-spacing:.28em; text-shadow:0 1px 12px rgba(0,0,0,.7); white-space:nowrap; }
+
+.gv3-controls{ position:absolute; display:flex; gap:8px; z-index:2;
+  right:max(14px, env(safe-area-inset-right)); bottom:max(14px, env(safe-area-inset-bottom)); }
+.gv3-btn{
+  -webkit-appearance:none; appearance:none; cursor:pointer;
+  background:rgba(255,255,255,.06); color:#dbe6f7; border:1px solid rgba(255,255,255,.22); border-radius:999px;
+  font:600 11px/1 "SFMono-Regular",Menlo,Consolas,monospace; letter-spacing:.16em; padding:7px 12px; text-transform:uppercase;
+}
+.gv3-btn:hover{ background:rgba(255,255,255,.13); }
+.gv3-btn:focus-visible{ outline:2px solid #f0a24b; outline-offset:3px; }
+
+@media (prefers-reduced-motion: reduce){
+  .gv3-overlay, .gv3-overlay canvas.gv3-webgl, .gv3-label{ transition-duration:200ms !important; }
+}
