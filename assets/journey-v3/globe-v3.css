@@ -81,9 +81,10 @@
 }
 .gv3-btn:hover{ background:rgba(255,255,255,.13); }
 .gv3-btn:focus-visible{ outline:2px solid #f0a24b; outline-offset:3px; }
-/* 演出終了時にJSが本文へフォーカスを移す一時コンテナ(main.layout[tabindex="-1"])には、
-   プログラム的フォーカス由来の枠を出さない。キーボード操作(:focus-visible)時は枠を維持し、全体無効化はしない。 */
-main.layout[tabindex="-1"]:focus:not(:focus-visible){ outline:none; }
+/* 演出終了時にJSが本文へフォーカスを移す一時コンテナ(main.layout[tabindex="-1"])だけ、フォーカス枠を出さない。
+   このコンテナはタブ順に入らない(tabindex=-1)ため、キーボードのフォーカス視認性は損なわれない。
+   SKIPボタン等の操作要素の:focus-visible・他要素の既定フォーカス表示・Tab操作は不変。全体無効化はしない。 */
+main.layout[tabindex="-1"]:focus{ outline:none; }
 
 @media (prefers-reduced-motion: reduce){
   .gv3-overlay, .gv3-overlay canvas.gv3-webgl, .gv3-label{ transition-duration:200ms !important; }
