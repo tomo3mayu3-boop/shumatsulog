@@ -103,8 +103,9 @@ if ($branch -ne 'main') {
 $dirty = & git status --porcelain
 if ($LASTEXITCODE -ne 0) { Write-Log 'ERROR' 'git status failed'; exit 1 }
 if ($dirty) {
-    Write-Log 'SKIP' 'Uncommitted or untracked changes present; aborting pull (no git change made)'
-    foreach ($l in $dirty) { Write-Log 'DIRTY' $l }
+    $entries = @($dirty)
+    Write-Log 'SKIP' ('ff-only sync PAUSED: ' + $entries.Count + ' uncommitted/untracked change(s) in the mirror. No file was overwritten, deleted, stashed, or reset (safety). C:\homepage must stay a pure mirror of origin/main -- clean it (run homepage-mirror-fix.ps1) so sync can resume. Offending entries follow:')
+    foreach ($l in $entries) { Write-Log 'DIRTY' $l }
     # Even when the pull is skipped, still ensure image folders exist. This only
     # creates empty directories (invisible to git), so it does NOT alter tracked
     # files and never turns a clean tree dirty — the ff-only sync stays safe.
